@@ -6,7 +6,7 @@ Before proposing or changing code, read these repository files in order:
 2. `docs/ARCHITECTURE.md` — approved conceptual architecture and domain boundaries.
 3. `docs/PROJECT_HANDOFF.md` — product decisions, scope and priorities.
 4. `docs/LAUNCH_LEGAL_MARKETING.md` — legal/privacy/provider-launch checklist.
-5. `docs/design.md` **only when supplied and approved by the project owner**. UI palette, library, typography and visual direction are intentionally undecided.
+5. Repository-root `DESIGN.md` — received on 2026-10-27. Preserve the supplied visual reference; see `docs/adr/0003-design-handoff-status.md`. The owner has deferred selecting a UI design system/library; do not introduce a new one.
 
 For any conflict, protect legal/security/privacy/provider requirements first; flag irreconcilable issues and propose an ADR.
 
@@ -47,3 +47,28 @@ After implementing each task, report:
 3. Outstanding issues and what needs owner approval.
 
 Do not make paid purchases, launch public services, publish client data or change production infrastructure without explicit owner approval.
+
+## UI Design Requirements
+
+All UI implementation MUST follow the
+repository-root DESIGN.md.
+
+- Use the defined design tokens.
+- Follow the typography and radius scale.
+- Do not introduce arbitrary brand colors.
+- Use 12px radius for standard cards.
+- Use pill-shaped primary buttons.
+- Follow responsive and accessibility rules.
+- Do not copy MongoDB proprietary assets.
+
+Security and data integrity requirements
+take precedence over visual styling.
+
+## Owner decisions — 2026-10-28
+
+- The confirmed public product name is **Next Signal** (with a space). Existing repository paths and `@kyb` identifiers need not be renamed.
+- Docker Desktop is installed. Verify that its engine is running before any Docker-dependent task; installation alone is not evidence of readiness.
+- If a required development or verification tool is missing or unavailable, tell the owner what is needed and why. Do not bypass that tool or substitute a less representative test and report the required check as passed.
+- Existing PGlite fixture checks cover only their documented local scope. Native PostgreSQL/Supabase, multi-worker concurrency and production gates require their intended tooling and separate results.
+- The owner approved applying the supplied DESIGN.md typography, colours and component styling on 2026-10-28, plus English/Simplified Chinese switching. Keep native semantic controls; no new UI framework is selected. Required native PostgreSQL checks run via `npm run test:postgres` and must not silently skip when Docker is unhealthy.
+- The owner authorized switching the local runtime to persistent Docker PostgreSQL and safely importing legacy PGlite test data. Preserve .local/db/backups, require a stopped source and verified atomic import, and never fall back silently. Read docs/operations/LOCAL_DEVELOPMENT.md and ADR 0007 for commands, inspection permissions and recovery limits. PGlite remains only a clearly scoped test/migration dependency.

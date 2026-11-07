@@ -14,6 +14,12 @@ docs/ENGINEERING_RULES.md
 docs/LAUNCH_LEGAL_MARKETING.md
 ```
 
-In the future, the owner will supply an existing component library and `design.md` for the visual system. **No UI branding, color or library selection is decided in this pack.**
+Root `DESIGN.md` and `assets/` were supplied on 2026-10-27. Final name, component library and exact font/asset handoff remain open. See `adr/0003-design-handoff-status.md`.
+
+M1 decisions: `adr/0001-m1-local-fixture.md`, `adr/0002-evidence-and-confirmation.md`.
+Local operation and deferred release gates: `operations/M1.md`.
+Provider rights and security: `providers/LICENSE_REGISTER.md`, `security/THREAT_MODEL.md`.
 
 This is a versioned project baseline, not a completed legal opinion, live software, or proof of API licensing approval.
+
+Current local implementation: Next Signal, supplied DESIGN.md styling and English/Simplified Chinese UI are owner approved. The runtime now uses persistent Docker PostgreSQL; PGlite remains test/export-only. See [local run and Docker/VS Code inspection](operations/LOCAL_DEVELOPMENT.md), [actual cutover results](operations/2026-10-28-LOCAL-CUTOVER.md), [database fields](database/SCHEMA.md) and [ADR 0007](adr/0007-local-postgresql-cutover.md). Earlier pending-name/design or PGlite statements describe historical stages.

@@ -1,9 +1,9 @@
 # Know Your Business — Architecture Specification
 
 > Version: 0.1.0 (2026-10-26)  
-> Status: Proposed architecture baseline; review before production  
+> Status: Architecture direction and local M1 scope approved by owner on 2026-10-27; production review remains open
 > Product: Australia-first founder market research and business growth intelligence  
-> Design status: **Visual design intentionally undecided**. Await user-provided design libraries and `design.md`.
+> Design status: Next Signal naming confirmed; application of root `DESIGN.md` and bilingual UI approved on 2026-10-28. UI library selection remains deferred; see ADRs 0004–0005.
 
 ## 1. Product mission and bounds
 
@@ -200,10 +200,16 @@ Freeze scope at G6. Defer subscriptions and auto-publishing until confirmed repe
 
 ## 13. Design hand-off protocol
 
-**Do not pick colors, fonts, design systems, component libraries or motion patterns yet.**
+**Do not introduce new colors, fonts, design systems, component libraries or motion patterns.** Root `DESIGN.md` is now the received reference. The functional M1 surface uses native controls and existing tokens only; exact font files, brand naming and library handoff remain pending.
 
 When the owner supplies `design.md` / component library, create an ADR recording choice; translate design tokens to one source of truth; implement UI against business-domain contracts. Visual changes must not bypass privacy notices, permission boundaries, evidence caveats or accessible input validation.
 
+## M1 implementation addendum — 2026-10-27
+
+ADRs 0001–0003 refine this conceptual baseline for the approved local fixture slice. Profile preparation and founder confirmation precede research runs. Claims distinguish authorship from evidence method. M1 uses a dedicated loopback PGlite host and explicit test identities; native PostgreSQL/Supabase Auth, real providers, payments, fetch isolation and production infrastructure are not implemented or approved. See `operations/M1.md` for the implemented subset and remaining release gates.
+
 ## 14. Architecture change management
+
+Current local runtime update — 2026-10-28: ADR 0007 replaces the original PGlite host with persistent Docker PostgreSQL. Web/worker use reduced-privilege native pools, database-backed hashed sessions and a checked migration-readiness marker. PGlite is retained for scoped tests and legacy export only. The owner has also confirmed Next Signal and approved DESIGN.md typography/colours and bilingual UI (ADRs 0004–0005); the earlier pending-design statements describe the original baseline. Production identity, providers and deployment remain separate gates.
 
 Every significant decision requires `docs/adr/NNNN-title.md`: context, options, decision, alternatives, security/privacy impact, cost, rollback and owner. Update contract tests and schema migrations with architecture changes. Record source license approvals and legal sign-off separately from technical completion.

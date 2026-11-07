@@ -1,0 +1,11 @@
+{
+  "name": "@kyb/application",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts", "./projects": "./src/projects.ts", "./runner": "./src/runner.ts" },
+  "dependencies": {
+    "@kyb/contracts": "0.1.0",
+    "@kyb/domain": "0.1.0"
+  }
+}

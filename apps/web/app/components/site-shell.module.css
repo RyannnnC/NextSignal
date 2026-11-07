@@ -1,0 +1,7 @@
+.header { flex-wrap: wrap; }
+.nav { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; flex: 1; justify-content: center; }
+.nav a { color: var(--ns-text); font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; }
+.nav a[aria-current=page] { color: var(--ns-primary); text-decoration-thickness: 2px; }
+.footerNav { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 24px; }
+.footerNav a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 1023px) { .nav { order: 3; flex-basis: 100%; justify-content: flex-start; gap: 8px 24px; } }

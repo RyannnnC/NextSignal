@@ -1,0 +1,30 @@
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
+import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@kyb/adapters';
+import { Projects } from '@kyb/application/projects';
+import { ResearchRunner } from '@kyb/application/runner';
+import { presentReport, reportPath, reportReturnPath } from '../apps/web/lib/report-presentation';
+import { prepared } from './helpers';
+
+let db: FixtureDatabase;
+beforeAll(async () => { db = await openFixtureDatabase(); });
+afterAll(async () => { if (db) await db.close(); });
+it('binds an immutable report overview to its saved profile, preserves missing evidence and rejects mismatched IDs', async () => {
+  const projects = new Projects(db), actor = LOCAL_ACCOUNTS.alice;
+  const {id, profileId} = await prepared(projects, actor);
+  await new ResearchRunner(db,new FixtureProvider()).processOne();
+  const before = await projects.get(actor,id), report = before.reports[0]!;
+  await projects.confirm(actor,id,{profileId,profile:{...before.profiles[1]!.content,customer:'A newer customer statement'},requestKey:randomUUID()});
+  const view = await projects.get(actor,id), original = JSON.stringify(view);
+  expect(presentReport(view,id,report.id)?.profile?.customer).toBe('Australian solo founders');
+  expect(presentReport(view,id,report.id)?.report.evidence[0]?.value).toBeNull();
+  expect(presentReport(view,id,randomUUID())).toBeNull();
+  expect(presentReport(view,randomUUID(),report.id)).toBeNull();
+  expect(presentReport({...view,profiles:[]},id,report.id)?.profile).toBeNull();
+  expect(JSON.stringify(view)).toBe(original);
+});
+it('allows only canonical internal report return paths', () => {
+  const path = reportPath(randomUUID(),randomUUID());
+  expect(reportReturnPath(path)).toBe(path);
+  for (const invalid of ['https://example.com', '//example.com', '/validate', path+'?next=evil', path+'/..', '/projects/not-a-uuid/reports/x', ['x']]) expect(reportReturnPath(invalid)).toBeUndefined();
+});

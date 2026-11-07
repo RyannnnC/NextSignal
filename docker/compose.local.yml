@@ -1,0 +1,19 @@
+name: next-signal-local
+services:
+  postgres:
+    image: postgres:17@sha256:31ba9c94a03ada9988f2bb493a22a75eef3a185884533e5cdbcd498ea835b08f
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: next_signal_local
+      POSTGRES_PASSWORD: ${KYB_LOCAL_PG_PASSWORD:?Run npm run db:up to generate local credentials}
+    ports:
+      - "127.0.0.1:54328:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d next_signal_local"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+volumes:
+  pgdata:

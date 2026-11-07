@@ -1,0 +1,31 @@
+import { randomBytes } from 'node:crypto';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { readRuntimeConfig } from '@kyb/adapters/local-config';
+import { openLocalRuntime } from '@kyb/adapters/local-postgres';
+import { access } from 'node:fs/promises';
+import { createFixtureServer } from './server.js';
+
+if (process.env.KYB_LOCAL_FIXTURE !== '1' || process.env.NODE_ENV === 'production') throw new Error('Local fixture worker only. Production runtime is not implemented.');
+const root = resolve(process.env.KYB_ROOT ?? process.cwd());
+await mkdir(resolve(root, '.local'), { recursive: true });
+try { await access(resolve(root,'.local/migration.lock')); throw new Error('Data migration is running; worker must remain stopped.'); }
+catch(error) { if(!(typeof error==='object'&&error&&'code' in error&&error.code==='ENOENT'))throw error; }
+const local = openLocalRuntime(await readRuntimeConfig(root));
+const ready=await local.db.asUser('00000000-0000-4000-8000-000000000001',tx=>tx.query('select id from public.workspaces limit 1'));
+if(!ready.rows.length){await local.close();throw new Error('Native local database is not initialized/migrated. Run db:migrate or npm run dev first.');}
+const key = randomBytes(32).toString('hex');
+const { server, runner } = createFixtureServer(local.db, local.sessions, key);
+server.listen(4311, '127.0.0.1', async () => {
+  await writeFile(resolve(root, '.local/runtime.json'), JSON.stringify({ url: 'http://127.0.0.1:4311', key }), { mode: 0o600 });
+  console.log('Fixture worker ready at 127.0.0.1:4311 using Docker PostgreSQL. External providers disabled.');
+});
+let active = false;
+const timer = setInterval(() => {
+  if (active) return;
+  active = true;
+  void runner.processOne().catch(() => console.error('Fixture worker iteration failed; inspect database run status.')).finally(() => { active = false; });
+}, 250);
+async function shutdown() { clearInterval(timer); server.close(); while (active) await new Promise(r => setTimeout(r, 25)); await local.close(); process.exit(0); }
+process.on('SIGINT', () => { void shutdown(); });
+process.on('SIGTERM', () => { void shutdown(); });
