@@ -5,30 +5,37 @@ import { DomainError } from '@kyb/domain';
 import type { Actor, Database, Transaction } from './index.js';
 
 const Previous = z.object({ id: z.uuid(), request_hash: z.string() });
+/** 生成幂等请求的内容摘要。 */
 const hash = (data: unknown) => createHash('sha256').update(JSON.stringify(data)).digest('hex');
+/** 检查当前身份能否访问项目，并锁定其写操作。 */
 async function projectExists(tx: Transaction, projectId: string): Promise<void> {
   // Serialize project mutations while allowing the worker's foreign-key KEY SHARE locks.
   const rows = await tx.query('select id from public.projects where id=$1 for no key update', [projectId]);
   if (!rows.rows.length) throw new DomainError('not_found', 404);
 }
+/** 核对重复请求的摘要，安全复用已有结果。 */
 function replay(row: unknown, requestHash: string): string | null {
   if (!row) return null;
   const previous = Previous.parse(row);
   if (previous.request_hash !== requestHash) throw new DomainError('idempotency_conflict', 409);
   return previous.id;
 }
+/** 记录当前工作区内的操作及相关对象标识。 */
 async function audit(tx: Transaction, actor: Actor, action: string, subjectId: string) {
   await tx.query('insert into public.audit_events(workspace_id,action,subject_id) values($1,$2,$3)', [actor.workspaceId, action, subjectId]);
 }
 
 export class Projects {
+  /** 注入负责租户隔离的数据库接口。 */
   constructor(private readonly db: Database) {}
+  /** 按创建时间读取当前用户可见的项目标识。 */
   async list(actor: Actor): Promise<string[]> {
     return this.db.asUser(actor.userId, async tx => {
       const result = await tx.query('select id from public.projects order by created_at desc');
       return z.array(z.object({ id: z.uuid() })).parse(result.rows).map(r => r.id);
     });
   }
+  /** 在同一事务内保存项目、初始假设和处理同意记录。 */
   async create(actor: Actor, input: unknown): Promise<string> {
     const data = CreateProject.parse(input);
     const requestHash = hash(data);
@@ -48,6 +55,7 @@ export class Projects {
       return id;
     });
   }
+  /** 读取私有项目及其资料版本、研究运行和报告快照。 */
   async get(actor: Actor, id: string): Promise<ProjectView> {
     z.uuid().parse(id);
     return this.db.asUser(actor.userId, async tx => {
@@ -60,6 +68,7 @@ export class Projects {
       return ProjectView.parse({ ...project, profiles: profiles.rows.map(dateToISO), runs: runs.rows.map(dateToISO), reports: reports.rows.map(r => r.payload) });
     });
   }
+  /** 校验资料版本后追加一条已确认的历史版本。 */
   async confirm(actor: Actor, id: string, input: unknown): Promise<string> {
     z.uuid().parse(id);
     const data = ConfirmProfile.parse(input);
@@ -77,6 +86,7 @@ export class Projects {
       return profileId;
     });
   }
+  /** 为已确认资料原子创建研究运行和队列任务。 */
   async start(actor: Actor, id: string, input: unknown): Promise<string> {
     z.uuid().parse(id);
     const data = StartRun.parse(input);
@@ -99,6 +109,7 @@ export class Projects {
       return runId;
     });
   }
+  /** 按队列锁顺序停止仍可取消的研究运行。 */
   async cancel(actor: Actor, id: string, runId: string): Promise<void> {
     z.uuid().parse(id); z.uuid().parse(runId);
     await this.db.asUser(actor.userId, async tx => {
@@ -115,6 +126,7 @@ export class Projects {
       await audit(tx, actor, 'run_cancelled', runId);
     });
   }
+  /** 检查归属并与 worker 协调后级联清理项目数据。 */
   async delete(actor: Actor, id: string): Promise<void> {
     z.uuid().parse(id);
     await this.db.asUser(actor.userId, async tx => {
@@ -130,6 +142,7 @@ export class Projects {
     });
   }
 }
+/** 将数据库时间转换为 API 契约使用的 ISO 字符串。 */
 function dateToISO(input: unknown): unknown {
   const row = z.record(z.string(), z.unknown()).parse(input);
   return { ...row, createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt };

@@ -7,6 +7,7 @@ import { services } from '../../lib/services';
 import { useLanguage } from './site-shell';
 import styles from './marketing-home.module.css';
 
+/** 展示产品入口和当前可用范围。 */
 export function MarketingHome() {
   const {t,locale} = useLanguage();
   return <>
@@ -48,6 +49,7 @@ export function MarketingHome() {
   </>;
 }
 
+/** 介绍后续增长研究范围，当前页面不收集网站地址。 */
 export function GrowthScope() {
   const {t} = useLanguage();
   return <div className="workspace"><p className="eyebrow">{t('Planned — not available')}</p><h1>{t('Grow My Business')}</h1><p>{t('Website research will be available in a later milestone.')}</p>

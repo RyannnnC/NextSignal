@@ -14,13 +14,17 @@ const Row=z.record(z.string(),z.json());
 const Tables=z.object(Object.fromEntries(DATA_TABLES.map(name=>[name,z.array(Row)])) as Record<(typeof DATA_TABLES)[number],z.ZodArray<typeof Row>>).strict();
 export const Snapshot=z.object({version:z.literal(1),tables:Tables}).strict();
 export type Snapshot=z.infer<typeof Snapshot>;
+/** 稳定序列化对象和数组，便于迁移前后比较。 */
 export function canonical(value:unknown):string{
   if(Array.isArray(value))return `[${value.map(canonical).join(',')}]`;
   if(value!==null&&typeof value==='object')return `{${Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([k,v])=>`${JSON.stringify(k)}:${canonical(v)}`).join(',')}}`;
   return JSON.stringify(value);
 }
+/** 按行内容计算与顺序无关的表校验值。 */
 export function tableHash(rows:unknown[]):string{return createHash('sha256').update(canonical(rows.map(canonical).sort())).digest('hex');}
+/** 计算完整导入快照的校验值。 */
 export function snapshotHash(snapshot:Snapshot):string{return createHash('sha256').update(canonical(snapshot)).digest('hex');}
+/** 在同一事务中读取旧 PGlite 数据及各表校验值。 */
 export async function exportSnapshot(source:PGlite):Promise<Snapshot>{
   return source.transaction(async tx=>{
     await tx.exec("set local timezone='UTC'; set transaction read only");
@@ -40,6 +44,7 @@ export async function exportSnapshot(source:PGlite):Promise<Snapshot>{
 }
 export const Receipt=z.object({sourceHash:z.string().length(64),tables:z.record(z.string(),z.object({count:z.number().int().nonnegative(),sha256:z.string().length(64)})),sessionsMigrated:z.literal(false)}).strict();
 export type Receipt=z.infer<typeof Receipt>;
+/** 原子导入已校验的快照，并在提交前核对结果。 */
 export async function importSnapshot(pool:Pool,input:unknown,beforeCommit?:()=>Promise<void>):Promise<{alreadyImported:boolean;receipt:Receipt}>{
   const snapshot=Snapshot.parse(input),sourceHash=snapshotHash(snapshot);
   const client=await pool.connect();

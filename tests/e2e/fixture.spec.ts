@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 
 test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3000'}}); });
 
+/** 通过页面控件登录指定 fixture 账号，并等待表单可用。 */
 async function login(page: Page, account = 'alice') {
   await page.goto('/validate');
   await page.getByLabel('Fixture account', { exact: true }).selectOption(account);
@@ -69,12 +70,15 @@ test('idea → correction → private fixture report → new version → deletio
 });
 
 test('HTTP boundaries: anonymous, CSRF, forged tenant, disabled URL input and request cap', async ({ page, browser }) => {
+  const origin = { origin: 'http://127.0.0.1:3000' };
+  expect((await page.request.post('/api/health', { headers: origin, data: {} })).status()).toBe(404);
+  expect((await page.request.get('/api/projects/not-a-uuid')).status()).toBe(404);
+  expect((await page.request.get('/api/projects/00000000-0000-4000-8000-000000000001/runs')).status()).toBe(404);
   const anon = await browser.newContext();
   try { expect((await anon.request.get('http://127.0.0.1:3000/api/projects')).status()).toBe(401); } finally { await anon.close(); }
   expect((await page.request.post('/api/session', { data: { account: 'alice' } })).status()).toBe(403);
   expect((await page.request.post('/api/session', { headers: { origin: 'https://untrusted.example' }, data: { account: 'alice' } })).status()).toBe(403);
   await login(page);
-  const origin = { origin: 'http://127.0.0.1:3000' };
   const input = { idea: 'A private Alice test idea for HTTP tenant isolation', geography: { country: 'AU', granularity: 'national' }, processingConsent: true, noticeVersion: 'local-fixture-v1', scenario: 'normal', requestKey: randomUUID() };
   expect((await page.request.post('/api/projects', { headers: origin, data: { ...input, website: 'http://169.254.169.254/latest/meta-data' } })).status()).toBe(400);
   expect((await page.request.post('/api/projects', { headers: origin, data: { ...input, workspaceId: randomUUID() } })).status()).toBe(400);

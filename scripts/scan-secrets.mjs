@@ -3,7 +3,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const root = process.cwd();
-const paths = execFileSync('git', ['-c', `safe.directory=${root.replaceAll('\\', '/')}`, 'ls-files', '--cached', '--others', '--exclude-standard', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+/** 读取以空字符分隔的 Git 路径，保留含空格和非 ASCII 字符的文件名。 */
+function gitPaths(...flags) {
+  return execFileSync('git', ['-c', `safe.directory=${root.replaceAll('\\', '/')}`, 'ls-files', ...flags, '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+}
+const deleted = new Set(gitPaths('--deleted'));
+const paths = gitPaths('--cached', '--others', '--exclude-standard').filter(path => !deleted.has(path));
 const patterns = [
   /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
   /\b(?:sk_live_|rk_live_)[a-zA-Z0-9]{16,}/,

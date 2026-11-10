@@ -26,4 +26,4 @@ The earlier firmware/engine failure remains historical evidence in the previous 
 
 ## Bilingual M1 preview
 
-The local page remains at http://127.0.0.1:3000. Upper-right English/中文 buttons switch UI and fixed fixture report templates without changing stored data. A locale preference is stored locally; no idea text goes to translation providers. Fontsource packages self-host DM Sans/IBM Plex Mono; complete OFL notices are in docs/licenses. The Chinese system fallback varies by OS. Owner review remains necessary for final Chinese copy and visual polish.
+The local page remains at http://127.0.0.1:3000. Upper-right English/中文 buttons switch UI and fixed fixture report templates without changing stored data. A locale preference is stored locally; no idea text goes to translation providers. Fontsource packages self-host DM Sans/IBM Plex Mono; complete OFL notices are in apps/web/public/licenses. The Chinese system fallback varies by OS. Owner review remains necessary for final Chinese copy and visual polish.

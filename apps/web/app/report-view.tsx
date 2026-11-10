@@ -1,7 +1,9 @@
 import type { Report } from '@kyb/contracts';
 import { translate, type Locale } from '../lib/i18n';
 
+/** 渲染已验证的报告快照、证据来源和局限。 */
 export function ReportView({ report, index, locale }: { report: Report; index: number; locale: Locale }) {
+  /** 按当前报告语言翻译界面标签。 */
   const t=(text:string)=>translate(locale,text);
   return <article className="report" aria-label={`${t('Fixture report')} ${index+1}`}>
     <div className="report-header"><span className="eyebrow">{t('Fixture report')} / {String(index+1).padStart(2,'0')}</span><span className="chip warning">{t('Synthetic fixture')}</span></div>

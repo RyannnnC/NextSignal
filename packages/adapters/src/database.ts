@@ -10,7 +10,9 @@ export const LOCAL_ACCOUNTS = {
 } as const;
 
 export class FixtureDatabase implements Database {
+  /** 保存用于测试的 PGlite 数据库实例。 */
   constructor(readonly engine: PGlite) {}
+  /** 在 PGlite 事务内绑定用户身份并执行查询。 */
   async asUser<T>(userId: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
     z.uuid().parse(userId);
     return this.engine.transaction(async tx => {
@@ -19,6 +21,7 @@ export class FixtureDatabase implements Database {
       return work(tx);
     });
   }
+  /** 使用 worker 角色领取一条 fixture 任务。 */
   async claimJob() {
     return this.engine.transaction(async tx => {
       await tx.exec('set local role kyb_worker');
@@ -28,9 +31,11 @@ export class FixtureDatabase implements Database {
       return { id: row.id, workspaceId: row.workspace_id, userId: row.user_id, runId: row.run_id, leaseToken: row.lease_token, attempts: row.attempts };
     });
   }
+  /** 释放 PGlite 数据库实例。 */
   async close() { await this.engine.close(); }
 }
 
+/** 初始化测试或旧数据导入所需的 PGlite 数据库。 */
 export async function openFixtureDatabase(path?: string): Promise<FixtureDatabase> {
   const engine = path ? new PGlite(path) : new PGlite();
   await engine.waitReady;

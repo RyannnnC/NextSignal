@@ -9,6 +9,7 @@ import { ReportView } from '../report-view';
 import { useLanguage } from './site-shell';
 
 type Presentation = NonNullable<ReturnType<typeof presentReport>>;
+/** 从私有项目接口加载指定报告，并处理会话和读取失败状态。 */
 export function ReportDetail({projectId,reportId}: {projectId: string;reportId: string}) {
   const {locale,t} = useLanguage();
   const [view,setView] = useState<Presentation | null>(null);
@@ -31,6 +32,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
   },[projectId,reportId,valid,retry]);
   // Re-check private data after returning to a tab or changing local sessions elsewhere.
   useEffect(() => {
+    /** 清除当前报告视图并重新请求授权数据。 */
     const refresh = () => { setView(null); setState('loading'); setRetry(value=>value+1); };
     window.addEventListener('focus',refresh);
     return () => window.removeEventListener('focus',refresh);

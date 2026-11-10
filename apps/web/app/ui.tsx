@@ -10,6 +10,7 @@ import { api } from '../lib/client-api';
 import { reportPath } from '../lib/report-presentation';
 
 const IdResponse = z.object({ id: z.uuid() }).strict();
+/** 管理本地 M1 的登录、项目确认和研究状态。 */
 export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: string | undefined; returnTo?: string | undefined}) {
   const {t} = useLanguage();
   const router = useRouter();
@@ -20,9 +21,11 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('Checking local session…');
   const [error, setError] = useState('');
+  /** 从服务端刷新当前用户可见的项目列表。 */
   const refreshList = useCallback(async () => {
     setProjects(z.object({ ids: z.array(z.uuid()) }).parse(await api('projects')).ids);
   }, []);
+  /** 打开指定项目，必要时用最新资料初始化表单。 */
   const open = useCallback(async (id: string, edit = true) => {
     const value = ProjectView.parse(await api(`projects/${id}`));
     setProject(value);
@@ -48,10 +51,12 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
     const timer = setInterval(() => { void open(id, false).catch(() => setError('Could not refresh run status. Use Refresh project.')); }, 750);
     return () => clearInterval(timer);
   }, [project?.id, activeRun?.id, open]);
+  /** 统一处理用户操作的忙碌状态和错误反馈。 */
   async function act(work: () => Promise<void>) {
     setBusy(true); setError('');
     try { await work(); } catch (e) { setError(e instanceof Error ? e.message : 'Request failed'); } finally { setBusy(false); }
   }
+  /** 从表单读取创意和同意项，提交新的 fixture 项目。 */
   function create(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget; const data = new FormData(form);

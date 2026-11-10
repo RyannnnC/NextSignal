@@ -142,4 +142,5 @@ const webZh: Record<string,string> = {
   'Saved founder statements from this report’s profile version.':'以下创始人陈述来自这份报告绑定的历史资料版本。',
   'The saved business profile is unavailable. The report snapshot is preserved below.':'历史业务资料暂不可用，下方仍保留报告快照。', 'Back to project':'返回项目'
 };
+/** 按语言查找译文，缺少翻译时保留原文。 */
 export function translate(locale: Locale, text: string): string { return locale === 'zh-CN' ? zh[text] ?? webZh[text] ?? text : text; }

@@ -30,6 +30,33 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect(tables.rows.length).toBeGreaterThan(10);
     for (const row of tables.rows) expect(row).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
   });
+  it('removes hosted API role grants without revoking the application and worker grants', async () => {
+    const client = await root.connect();
+    try {
+      await client.query('begin');
+      await client.query(`create role anon nologin;
+        create role authenticated nologin;
+        create role service_role nologin bypassrls;
+        grant all on all tables in schema public to anon, authenticated, service_role;
+        grant execute on function public.claim_fixture_job() to public, anon, authenticated, service_role;`);
+      const migration = new URL('../../supabase/hosted/migrations/202611070001_dev_access_controls.sql', import.meta.url);
+      await client.query(await readFile(migration, 'utf8'));
+      const leaked = await client.query(`select rolname, relname from pg_roles cross join pg_class
+        where rolname in ('anon', 'authenticated', 'service_role')
+        and relnamespace = 'public'::regnamespace and relkind = 'r'
+        and has_table_privilege(rolname, pg_class.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')`);
+      expect(leaked.rows).toEqual([]);
+      const claims = await client.query(`select rolname from pg_roles
+        where rolname in ('anon', 'authenticated', 'service_role', 'kyb_app', 'kyb_worker')
+        and has_function_privilege(rolname, 'public.claim_fixture_job()', 'EXECUTE')`);
+      expect(claims.rows).toEqual([{ rolname: 'kyb_worker' }]);
+      const application = await client.query("select has_table_privilege('kyb_app', 'public.projects', 'INSERT') as can_insert");
+      expect(application.rows).toEqual([{ can_insert: true }]);
+    } finally {
+      await client.query('rollback');
+      client.release();
+    }
+  });
   it('denies cross-tenant reads, writes, job access and report mutation using real SQL roles', async () => {
     const { id, runId } = await prepared(projects, alice); await runner.processOne();
     for (const table of ['projects','profile_versions','research_runs','jobs','run_events','evidence_records','report_versions','findings','action_items','consent_events','provider_calls','audit_events']) {
@@ -79,6 +106,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     const barrier=new Promise<void>(r=>{release=r;});
     const sqlErrors:string[]=[];
     let cancelPid:number|undefined;
+    /** 包装数据库调用以协调并发测试中的锁和错误观测。 */
     const instrument=(worker:boolean):Database=>({
       claimJob:()=>db.claimJob(),
       asUser:(userId,work)=>db.asUser(userId,async tx=>{

@@ -6,6 +6,7 @@ import type { ProviderContext, ResearchProvider } from '@kyb/application';
 export class FixtureProvider implements ResearchProvider {
   readonly name = 'fixture';
   readonly version = 'fixture-v1';
+  /** 按指定模拟场景生成或拒绝证据，保持合成来源标识。 */
   async collect(context: ProviderContext): Promise<Evidence[]> {
     context.signal.throwIfAborted();
     if (context.scenario === 'timeout') throw new DomainError('provider_timeout', 503);

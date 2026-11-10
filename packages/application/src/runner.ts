@@ -7,12 +7,14 @@ import type { Database, ResearchProvider, Transaction } from './index.js';
 const RunRow = z.object({ id: z.uuid(), workspace_id: z.uuid(), project_id: z.uuid(), profile_id: z.uuid(), status: RunStatus, max_calls: z.number(), calls_used: z.number(), scenario: Scenario, content: Profile });
 type RunRow = z.infer<typeof RunRow>;
 type Job = NonNullable<Awaited<ReturnType<Database['claimJob']>>>;
+/** 通过已领取的任务查找对应研究运行及上下文。 */
 async function load(tx: Transaction, job: Job): Promise<RunRow | null> {
   const lease = await tx.query('select id from public.jobs where id=$1 and status=$2 and lease_token=$3 for update', [job.id, 'running', job.leaseToken]);
   if (!lease.rows.length) return null;
   const result = await tx.query(`select r.*,p.scenario,v.content from public.research_runs r join public.projects p on p.id=r.project_id join public.profile_versions v on v.id=r.profile_id where r.id=$1 for update of r`, [job.runId]);
   return result.rows.length ? RunRow.parse(result.rows[0]) : null;
 }
+/** 检查研究状态变化是否合法并记录运行事件。 */
 async function transition(tx: Transaction, run: RunRow, to: z.infer<typeof RunStatus>, code: string | null = null) {
   assertTransition(run.status, to);
   await tx.query('update public.research_runs set status=$2,error_code=$3 where id=$1', [run.id, to, code]);
@@ -20,7 +22,9 @@ async function transition(tx: Transaction, run: RunRow, to: z.infer<typeof RunSt
   run.status = to;
 }
 export class ResearchRunner {
+  /** 注入数据库和具有明确能力边界的研究提供器。 */
   constructor(private readonly db: Database, private readonly provider: ResearchProvider) {}
+  /** 处理一条有租约的任务，写入证据和报告或记录失败。 */
   async processOne(): Promise<boolean> {
     const job = await this.db.claimJob();
     if (!job) return false;
@@ -80,6 +84,7 @@ export class ResearchRunner {
   }
 }
 
+/** 使用已归一化的合成证据构造版本化报告。 */
 function makeFixtureReport(run: RunRow, evidence: Evidence[]): Report {
   const findingId = randomUUID();
   const contradictory = run.scenario === 'contradictory';

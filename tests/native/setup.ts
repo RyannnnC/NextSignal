@@ -3,19 +3,24 @@ import { Pool } from 'pg';
 import { LOCAL_ACCOUNTS } from '@kyb/adapters';
 import { PostgresDatabase } from '@kyb/adapters/postgres';
 
+/** 创建指向一次性测试库的连接池。 */
 export function pool(user: string, password: string): Pool {
   return new Pool({ host: '127.0.0.1', port: Number(process.env.KYB_TEST_PG_PORT ?? 54329), user, password, database: 'kyb_native_test', max: 8, connectionTimeoutMillis: 5000 });
 }
+/** 获取一次性测试库的管理连接。 */
 export const admin = () => pool('postgres', process.env.KYB_TEST_PG_PASSWORD ?? '');
+/** 为原生测试构造应用和队列连接。 */
 export function database(): PostgresDatabase {
   const password = process.env.KYB_TEST_ROLE_PASSWORD;
   if (process.env.KYB_NATIVE_TEST !== '1' || !password) throw new Error('Use npm run test:postgres; no fallback is allowed.');
   return new PostgresDatabase(pool('kyb_test_backend', password), pool('kyb_test_queue', password));
 }
+/** 按版本顺序加载并执行基线 SQL。 */
 export async function migrations(db: Pool) {
   const names = (await readdir('supabase/migrations')).filter(n => n.endsWith('.sql')).sort();
   for (const name of names) await db.query(await readFile(`supabase/migrations/${name}`, 'utf8'));
 }
+/** 初始化一次性测试库、角色和两组测试身份。 */
 export async function bootstrap(db: Pool) {
   if (process.env.KYB_NATIVE_TEST !== '1') throw new Error('Disposable native test environment required');
   const result = await db.query('select current_database() as db');

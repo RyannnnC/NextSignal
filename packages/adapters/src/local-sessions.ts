@@ -11,9 +11,12 @@ export interface FixtureSessions {
   resolve(token:string):Promise<{userId:string;workspaceId:string;account:'alice'|'bob'}|null>;
   revoke(token:string):Promise<void>;
 }
+/** 对不透明令牌计算摘要，数据库只保存摘要。 */
 const digest=(token:string)=>createHash('sha256').update(token).digest('hex');
 export class PostgresFixtureSessions implements FixtureSessions {
+  /** 接收仅供本地会话操作使用的连接。 */
   constructor(private readonly pool:Pool){}
+  /** 为指定 fixture 账号签发有时限的本地会话。 */
   async create(input:'alice'|'bob') {
     const account=Account.parse(input);
     const client=await this.pool.connect();
@@ -29,6 +32,7 @@ export class PostgresFixtureSessions implements FixtureSessions {
       return {token,account,workspaceId:LOCAL_ACCOUNTS[account].workspaceId};
     } catch(error){await client.query('rollback');throw error;} finally{client.release();}
   }
+  /** 核对令牌摘要和过期时间，解析可信的本地身份。 */
   async resolve(token:string) {
     if(!/^[a-f0-9]{64}$/.test(token))return null;
     const row=(await this.pool.query('select user_id,account from local_fixture.sessions where token_hash=$1 and expires_at>now()',[digest(token)])).rows[0];
@@ -37,5 +41,6 @@ export class PostgresFixtureSessions implements FixtureSessions {
     if(session.user_id!==actor.userId)return null;
     return {...actor,account:session.account};
   }
+  /** 按令牌摘要移除本地会话。 */
   async revoke(token:string){await this.pool.query('delete from local_fixture.sessions where token_hash=$1',[digest(token)]);}
 }

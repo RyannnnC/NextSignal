@@ -12,6 +12,7 @@ import { admin } from './setup.js';
 import { prepared } from '../helpers.js';
 
 const management=admin();
+/** 为原生导入测试生成临时随机凭据。 */
 const secret=()=>randomBytes(32).toString('hex');
 const config={host:'127.0.0.1' as const,port:54328 as const,database:'next_signal_local' as const,backendPassword:secret(),queuePassword:secret(),identityPassword:secret()};
 const port=Number(process.env.KYB_TEST_PG_PORT??54329);

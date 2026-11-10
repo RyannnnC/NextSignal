@@ -32,6 +32,7 @@ it('persists jobs and reports across database close/reopen and rejects migration
   }
 });
 
+/** 关闭测试资源并清理本用例产生的临时文件。 */
 async function cleanup(directory: string, temporaryRoot: string) {
   if (dirname(resolve(directory)) !== temporaryRoot || !basename(directory).startsWith('persistence-')) throw new Error('Unsafe temporary cleanup path');
   await rm(directory, { recursive: true, force: true });

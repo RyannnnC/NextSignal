@@ -10,6 +10,7 @@ const children = [
   spawn(process.execPath, [resolve(root, 'node_modules/next/dist/bin/next'), 'dev', '--webpack', '--hostname', '127.0.0.1', '--port', '3000'], { cwd: resolve(root, 'apps/web'), env, stdio: 'inherit', windowsHide: true })
 ];
 let stopping = false;
+/** 仅执行一次关闭操作，终止本次启动的子进程。 */
 function stop() { if (stopping) return; stopping = true; for (const child of children) child.kill(); }
 for (const child of children) {
   child.on('error', () => { stop(); process.exitCode = 1; });

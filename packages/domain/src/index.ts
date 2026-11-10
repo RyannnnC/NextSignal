@@ -1,6 +1,7 @@
 import { Report, type Evidence, type RunStatus } from '@kyb/contracts';
 
 export class DomainError extends Error {
+  /** 保存可映射为 API 响应的领域错误码和状态。 */
   constructor(public readonly code: string, public readonly status = 400) { super(code); }
 }
 const transitions: Record<RunStatus, readonly RunStatus[]> = {
@@ -9,17 +10,21 @@ const transitions: Record<RunStatus, readonly RunStatus[]> = {
   validating: ['completed', 'partial', 'cancelled', 'failed'],
   completed: [], partial: [], failed: [], cancelled: []
 };
+/** 拒绝状态机未允许的研究状态变化。 */
 export function assertTransition(from: RunStatus, to: RunStatus): void {
   if (!transitions[from].includes(to)) throw new DomainError('invalid_transition', 409);
 }
+/** 拒绝会超过研究调用额度的预留。 */
 export function assertBudget(used: number, reserved: number, limit: number): void {
   if (![used, reserved, limit].every(n => Number.isSafeInteger(n) && n >= 0) || used + reserved > limit) {
     throw new DomainError('budget_exceeded', 429);
   }
 }
+/** 归一化关键词并保留首次出现的顺序。 */
 export function deduplicateKeywords(keywords: readonly string[]): string[] {
   return [...new Set(keywords.map(k => k.normalize('NFKC').trim().toLocaleLowerCase('en-AU').replace(/\s+/g, ' ')).filter(Boolean))];
 }
+/** 校验报告结构、证据引用和数字声明的一致性。 */
 export function validateReport(input: unknown): Report {
   const report = Report.parse(input);
   const evidence = new Map<string, Evidence>();

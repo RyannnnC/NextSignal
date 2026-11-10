@@ -7,9 +7,12 @@ import { exportSnapshot, importSnapshot } from '@kyb/adapters/local-import';
 import { startLocalPostgres, exists } from './lib/local-postgres.js';
 
 const root=process.cwd(),local=resolve(root,'.local'),source=resolve(local,'db');
+/** 探测本地端口，确认迁移期间相关进程没有运行。 */
 function listening(port:number):Promise<boolean>{return new Promise(done=>{const s=createConnection({host:'127.0.0.1',port});s.once('connect',()=>{s.destroy();done(true);});s.once('error',()=>done(false));s.setTimeout(1000,()=>{s.destroy();done(true);});});}
+/** 遍历源目录并计算可重复的整体校验值。 */
 async function treeHash(directory:string):Promise<string>{
   const hash=createHash('sha256');
+  /** 按稳定顺序递归收集子路径和文件内容。 */
   async function visit(path:string,relative:string){for(const name of (await readdir(path)).sort()){
     const absolute=resolve(path,name),item=await stat(absolute);hash.update(`${relative}/${name}\0`);
     if(item.isDirectory())await visit(absolute,`${relative}/${name}`);else hash.update(await readFile(absolute));

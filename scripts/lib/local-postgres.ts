@@ -5,13 +5,17 @@ import { Pool } from 'pg';
 import { ensureLocalConfig, localDirectory } from '@kyb/adapters/local-config';
 import { initializeLocalPostgres, seedLocalAccounts } from '@kyb/adapters/local-postgres';
 
+/** 判断本地路径当前是否可访问。 */
 export async function exists(path:string){try{await access(path);return true;}catch{return false;}}
+/** 构造固定本地数据库项目的 Docker Compose 参数。 */
 export const composeArguments=(root:string)=>['compose','--env-file',resolve(localDirectory(root),'docker.env'),'-p','next-signal-local','-f',resolve(root,'docker/compose.local.yml')];
+/** 执行带超时的 Docker 命令并返回输出。 */
 export function docker(args:string[],root:string,timeout=30000):Promise<string>{
   return new Promise((done,reject)=>execFile('docker',args,{cwd:root,timeout,windowsHide:true,maxBuffer:1024*1024},(error,stdout,stderr)=>{
     if(error)reject(new Error(`Docker operation failed: ${stderr||error.message}`));else done(stdout);
   }));
 }
+/** 核对 Docker 引擎后启动并初始化本地 PostgreSQL。 */
 export async function startLocalPostgres(root:string){
   const config=await ensureLocalConfig(root);
   const engine=await docker(['info','--format','{{.OSType}} {{.ServerVersion}}'],root,20000);
@@ -22,6 +26,7 @@ export async function startLocalPostgres(root:string){
   catch(error){await admin.end();throw error;}
   return {...config,admin};
 }
+/** 校验迁移状态并为全新本地库准备 fixture 用户。 */
 export async function prepareLocalRuntime(root:string){
   if(await exists(resolve(root,'.local/migration.lock')))throw new Error('Local data migration is in progress. Stop and retry after it finishes.');
   const local=await startLocalPostgres(root);

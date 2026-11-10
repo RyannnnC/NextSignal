@@ -1,5 +1,15 @@
 import { z } from 'zod';
 
+/** 固定本地接口的路径与方法组合，供浏览器网关和 worker 共同拒绝未声明的操作。 */
+export function isFixtureRoute(path: string, method: string): boolean {
+  if (path === 'health') return method === 'GET';
+  if (path === 'session') return method === 'GET' || method === 'POST' || method === 'DELETE';
+  if (path === 'projects') return method === 'GET' || method === 'POST';
+  const match = /^projects\/([a-f0-9-]{36})(?:\/(confirm|runs|cancel))?$/.exec(path);
+  if (!match?.[1] || match[0] !== path || !z.uuid().safeParse(match[1]).success) return false;
+  return match[2] ? method === 'POST' : method === 'GET' || method === 'DELETE';
+}
+
 export const FIXTURE_NOTICE = 'Local fixture mode: your idea and reports stay in this local database. No external AI, search provider or marketing service receives them. Profile preparation is a deterministic placeholder, not AI research. Use test ideas only. Delete a project to remove its input, versions, runs and reports. Local fixture accounts are not production authentication.';
 
 export const Id = z.uuid();

@@ -4,7 +4,9 @@ import type { Database, Transaction } from '@kyb/application';
 
 /** Native PostgreSQL port. Identity must come from trusted server authentication. */
 export class PostgresDatabase implements Database {
+  /** 分别接收应用查询和 worker 领任务所用的连接池。 */
   constructor(private readonly applicationPool: Pool, private readonly queuePool: Pool) {}
+  /** 在事务内设置受限角色与超时，失败时回滚。 */
   private async transaction<T>(pool: Pool, role: 'kyb_app' | 'kyb_worker', work: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await pool.connect();
     try {
@@ -18,6 +20,7 @@ export class PostgresDatabase implements Database {
     } catch (error) { await client.query('rollback'); throw error; }
     finally { client.release(); }
   }
+  /** 将可信服务端身份绑定到单个事务，供 RLS 使用。 */
   async asUser<T>(userId: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
     z.uuid().parse(userId);
     return this.transaction(this.applicationPool, 'kyb_app', async client => {
@@ -28,6 +31,7 @@ export class PostgresDatabase implements Database {
       } });
     });
   }
+  /** 使用受限 worker 角色调用领任务函数并校验返回值。 */
   async claimJob() {
     return this.transaction(this.queuePool, 'kyb_worker', async client => {
       const result = await client.query('select * from public.claim_fixture_job()');
@@ -36,5 +40,6 @@ export class PostgresDatabase implements Database {
       return { id: row.id, workspaceId: row.workspace_id, userId: row.user_id, runId: row.run_id, leaseToken: row.lease_token, attempts: row.attempts };
     });
   }
+  /** 关闭应用与队列的连接池。 */
   async close() { await Promise.all([this.applicationPool.end(), this.queuePool.end()]); }
 }

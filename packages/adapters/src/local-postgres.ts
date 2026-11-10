@@ -6,7 +6,9 @@ import { PostgresFixtureSessions } from './local-sessions.js';
 import { LOCAL_ACCOUNTS } from './database.js';
 import { type RuntimeConfig } from './local-config.js';
 
+/** 移除迁移文件的事务边界，由外层统一提交。 */
 const sqlBody=(sql:string)=>sql.replace(/^(?:begin|commit);\r?$/gim,'');
+/** 校验本地目标与迁移历史，再初始化数据库和角色。 */
 export async function initializeLocalPostgres(admin:Pool,credentials:RuntimeConfig,inspectorPassword:string) {
   const client=await admin.connect();
   try {
@@ -44,12 +46,14 @@ export async function initializeLocalPostgres(admin:Pool,credentials:RuntimeConf
     await client.query('commit');
   } catch(error){await client.query('rollback');throw error;} finally{client.release();}
 }
+/** 幂等创建本地 fixture 用户与工作区。 */
 export async function seedLocalAccounts(client:PoolClient) {
   for(const actor of Object.values(LOCAL_ACCOUNTS)){
     await client.query('insert into auth.users(id) values($1) on conflict do nothing',[actor.userId]);
     await client.query('insert into public.workspaces(id,owner_id) values($1,$2) on conflict do nothing',[actor.workspaceId,actor.userId]);
   }
 }
+/** 为应用、任务队列和会话打开分权连接。 */
 export function openLocalRuntime(config:RuntimeConfig) {
   const common={host:config.host,port:config.port,database:config.database,max:8,connectionTimeoutMillis:5000};
   const backend=new Pool({...common,user:'kyb_local_backend',password:config.backendPassword});

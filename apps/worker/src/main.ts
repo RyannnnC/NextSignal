@@ -26,6 +26,7 @@ const timer = setInterval(() => {
   active = true;
   void runner.processOne().catch(() => console.error('Fixture worker iteration failed; inspect database run status.')).finally(() => { active = false; });
 }, 250);
+/** 停止领取新任务，等待当前任务结束后关闭数据库连接。 */
 async function shutdown() { clearInterval(timer); server.close(); while (active) await new Promise(r => setTimeout(r, 25)); await local.close(); process.exit(0); }
 process.on('SIGINT', () => { void shutdown(); });
 process.on('SIGTERM', () => { void shutdown(); });

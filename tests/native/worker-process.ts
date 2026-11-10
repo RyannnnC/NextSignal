@@ -4,6 +4,7 @@ import { database } from './setup.js';
 import type { ProviderContext } from '@kyb/application';
 
 class ConcurrentFixtureProvider extends FixtureProvider {
+  /** 在独立测试进程中为任务收集合成证据。 */
   override async collect(context: ProviderContext) {
     // A bounded test barrier window makes overlapping worker executions observable.
     await new Promise(resolve => setTimeout(resolve, 100));

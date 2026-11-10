@@ -6,6 +6,7 @@ const project = `kyb-native-test-${randomBytes(6).toString('hex')}`;
 const env = { ...process.env, KYB_TEST_PG_PASSWORD: randomBytes(32).toString('hex'), KYB_TEST_ROLE_PASSWORD: randomBytes(32).toString('hex') };
 const compose = ['compose', '-p', project, '-f', 'docker/compose.native-test.yml'];
 let composeStarted = false;
+/** 执行原生测试所需的 Docker 命令，并限制等待时间。 */
 function docker(args: string[], timeout: number): Promise<string> {
   return new Promise((done, reject) => execFile('docker', args, { env, timeout, windowsHide: true, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
     if (error) reject(new Error(`Docker command failed: docker ${args.join(' ')}\n${stderr || error.message}`)); else done(stdout);

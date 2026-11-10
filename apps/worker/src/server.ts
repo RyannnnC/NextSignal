@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { Login, SessionView } from '@kyb/contracts';
+import { isFixtureRoute, Login, SessionView } from '@kyb/contracts';
 import { DomainError } from '@kyb/domain';
 import { Projects } from '@kyb/application/projects';
 import { ResearchRunner } from '@kyb/application/runner';
@@ -9,17 +9,20 @@ import { FixtureProvider } from '@kyb/adapters';
 import type { FixtureSessions } from '@kyb/adapters/local-sessions';
 import type { Actor, Database } from '@kyb/application';
 
+/** 创建本地 HTTP 服务及复用同一数据库的 fixture 执行器。 */
 export function createFixtureServer(db: Database, sessions: FixtureSessions, key: string) {
   const projects = new Projects(db);
   const runner = new ResearchRunner(db, new FixtureProvider());
   const server = createServer((req, res) => { void handle(req, res).catch(() => send(res, 500, { error: 'Local request failed', code: 'internal_error' })); });
   server.requestTimeout = 5000;
   server.headersTimeout = 5000;
+  /** 验证内部密钥与会话，再分派白名单内的项目请求。 */
   async function handle(req: IncomingMessage, res: ServerResponse) {
     try {
       const supplied = req.headers['x-local-key'];
       if (typeof supplied !== 'string' || supplied.length !== key.length || !timingSafeEqual(Buffer.from(supplied), Buffer.from(key))) throw new DomainError('unauthorized', 401);
       const path = req.url ?? '/';
+      if (!path.startsWith('/') || !isFixtureRoute(path.slice(1), req.method ?? '')) throw new DomainError('not_found', 404);
       if (path === '/health' && req.method === 'GET') return send(res, 200, { mode: 'local-fixture', database: 'postgresql' });
       if (path === '/session' && req.method === 'POST') {
         const { account } = Login.parse(await body(req));
@@ -57,11 +60,13 @@ export function createFixtureServer(db: Database, sessions: FixtureSessions, key
   }
   return { server, runner };
 }
+/** 输出不可缓存的 JSON，并避免重复发送响应。 */
 function send(res: ServerResponse, status: number, value: unknown) {
   if (res.headersSent) return;
   res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
   res.end(JSON.stringify(value));
 }
+/** 限制请求体大小并解析 JSON 数据。 */
 async function body(req: IncomingMessage): Promise<unknown> {
   if (!req.headers['content-type']?.startsWith('application/json')) throw new DomainError('json_required', 415);
   const chunks: Buffer[] = []; let size = 0;

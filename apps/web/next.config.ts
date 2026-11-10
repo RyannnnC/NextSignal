@@ -3,6 +3,7 @@ import type { NextConfig } from 'next';
 const config: NextConfig = {
   transpilePackages: ['@kyb/contracts'],
   poweredByHeader: false,
+  /** 配置 Next.js 路由响应的安全标头。 */
   async headers() {
     return [{ source: '/:path*', headers: [
       { key: 'X-Robots-Tag', value: 'noindex, nofollow' },

@@ -42,7 +42,7 @@ npm audit --audit-level=high
 
 See [M1 operation and limitations](docs/operations/M1.md), [ADRs](docs/adr/0001-m1-local-fixture.md), [threat model](docs/security/THREAT_MODEL.md) and [provider register](docs/providers/LICENSE_REGISTER.md).
 
-The confirmed brand is Next Signal. Root [DESIGN.md](DESIGN.md) now supplies the applied colours, shapes and typography. M1 uses native semantic controls, self-hosted DM Sans/IBM Plex Mono with [OFL notices](docs/licenses/DM-Sans-OFL.txt), and upper-right English/中文 flag buttons. Language switching changes presentation only; idea text and stored reports are preserved. No UI framework or remote font/translation service is used. Existing PNG logo assets remain unchanged.
+The confirmed brand is Next Signal. Root [DESIGN.md](DESIGN.md) now supplies the applied colours, shapes and typography. M1 uses native semantic controls, self-hosted DM Sans/IBM Plex Mono with [OFL notices](apps/web/public/licenses/DM-Sans-OFL.txt), and upper-right English/中文 flag buttons. Language switching changes presentation only; idea text and stored reports are preserved. No UI framework or remote font/translation service is used. Existing PNG logo assets remain unchanged.
 
 Native PostgreSQL migration/RLS/multi-process verification is available through `npm run test:postgres`; `npm run check:all` includes it as a required gate. It fails instead of falling back when Docker is unhealthy. See [native verification status and host prerequisite](docs/operations/NATIVE_POSTGRES.md). The local preview still uses the original fixture data; production Supabase authentication is not implemented.
 

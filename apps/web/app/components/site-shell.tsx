@@ -8,14 +8,17 @@ import { LanguageSwitch } from '../language-switch';
 import styles from './site-shell.module.css';
 
 const Language = createContext<{locale: Locale; t: (text: string) => string} | null>(null);
+/** 从站点上下文获取当前语言和翻译函数。 */
 export function useLanguage() {
   const value = useContext(Language);
   if (!value) throw new Error('SiteShell is required');
   return value;
 }
+/** 提供全站布局及语言偏好。 */
 export function SiteShell({children}: {children: ReactNode}) {
   const [locale, setLocale] = useState<Locale>('en');
   const pathname = usePathname();
+  /** 按当前语言翻译界面文案。 */
   const t = (text: string) => translate(locale, text);
   useEffect(() => {
     try { const saved = Locale.safeParse(localStorage.getItem('next-signal-language')); if (saved.success) setLocale(saved.data); } catch { /* Preference storage is optional. */ }
@@ -24,6 +27,7 @@ export function SiteShell({children}: {children: ReactNode}) {
     document.documentElement.lang = locale;
     document.title = `Next Signal — ${translate(locale, pathname.startsWith('/projects/') ? 'Private fixture report' : pathname === '/validate' ? 'Local fixture workspace' : 'Evidence before confidence.')}`;
   }, [locale, pathname]);
+  /** 更新语言状态，并尽可能保存到本地。 */
   function changeLocale(value: Locale) {
     setLocale(value);
     try { localStorage.setItem('next-signal-language', value); } catch { /* In-memory switching remains available. */ }

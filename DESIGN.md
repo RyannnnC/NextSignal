@@ -1,6 +1,6 @@
 # Next Signal — Design System v1.0
 
-> Implementation update — 2026-10-28: the owner approved applying this visual specification to M1 and adding English / Simplified Chinese switching. DM Sans and IBM Plex Mono are self-hosted from Fontsource packages with OFL notices retained in `docs/licenses/`. Chinese glyphs use local system fallbacks (`Microsoft YaHei`, `PingFang SC`); no external translation or font request is made. The confirmed display name is **Next Signal**, with a space; historic NextSignal wording below describes the original reference. Component-library selection remains deferred.
+> Implementation update — 2026-10-28: the owner approved applying this visual specification to M1 and adding English / Simplified Chinese switching. DM Sans and IBM Plex Mono are self-hosted from Fontsource packages with OFL notices retained in `apps/web/public/licenses/`. Chinese glyphs use local system fallbacks (`Microsoft YaHei`, `PingFang SC`); no external translation or font request is made. The confirmed display name is **Next Signal**, with a space; historic NextSignal wording below describes the original reference. Component-library selection remains deferred.
 
 > **Status:** Approved starting baseline for implementation (subject to visual review).  
 > **Product:** Australia-first AI market intelligence platform.  
