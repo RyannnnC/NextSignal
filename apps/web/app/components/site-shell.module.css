@@ -1,4 +1,7 @@
 .header { flex-wrap: wrap; }
+.wideHeader { max-width: 1440px; }
+.homeMain { max-width: none; padding-inline: 0; }
+.homeMain footer { padding-inline: 16px; }
 .nav { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; flex: 1; justify-content: center; }
 .nav a { color: var(--ns-text); font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; }
 .nav a[aria-current=page] { color: var(--ns-primary); text-decoration-thickness: 2px; }

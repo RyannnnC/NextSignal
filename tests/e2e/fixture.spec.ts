@@ -69,6 +69,40 @@ test('idea → correction → private fixture report → new version → deletio
   }
 });
 
+test('Sydney reference report preserves provenance and stays private after reopen', async ({ page, browser }) => {
+  await login(page);
+  await page.getByRole('button', { name: 'Load Sydney repair example' }).click();
+  await page.getByRole('checkbox', { name: /I understand/ }).check();
+  const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
+  const { id } = await (await created).json() as { id: string };
+  const origin = { origin: 'http://127.0.0.1:3000' };
+  try {
+    await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue(/International students in Sydney/);
+    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
+    await page.getByRole('button', { name: 'Run fixture snapshot' }).click();
+    await page.getByRole('link', { name: 'View report 1', exact: true }).click();
+    await expect(page.getByText('Sydney computer repair reference report')).toBeVisible();
+    await page.getByText('competitor_observation: VERIFIED_SOURCE', { exact: true }).click();
+    await expect(page.getByRole('link', { name: 'Apple Sydney store page' })).toBeVisible();
+    const reportUrl = page.url();
+    const before = await (await page.request.get(`/api/projects/${id}`)).json();
+    await page.reload();
+    await expect(page.getByText('Sydney computer repair reference report')).toBeVisible();
+    await page.request.delete('/api/session', { headers: origin });
+    await login(page);
+    await page.goto(reportUrl);
+    await expect(page.getByText('Sydney computer repair reference report')).toBeVisible();
+    expect(await (await page.request.get(`/api/projects/${id}`)).json()).toEqual(before);
+    const other = await browser.newPage();
+    try {
+      await login(other, 'bob');
+      await other.goto(reportUrl);
+      await expect(other.getByRole('alert').filter({ hasText: 'belong to another account' })).toBeVisible();
+    } finally { await other.close(); }
+  } finally { await page.request.delete(`/api/projects/${id}`, { headers: origin }); }
+});
+
 test('HTTP boundaries: anonymous, CSRF, forged tenant, disabled URL input and request cap', async ({ page, browser }) => {
   const origin = { origin: 'http://127.0.0.1:3000' };
   expect((await page.request.post('/api/health', { headers: origin, data: {} })).status()).toBe(404);

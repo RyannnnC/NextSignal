@@ -7,45 +7,94 @@ import { services } from '../../lib/services';
 import { useLanguage } from './site-shell';
 import styles from './marketing-home.module.css';
 
-/** 展示产品入口和当前可用范围。 */
+const steps = [
+  ['Describe your idea', 'Tell us what you want to offer and who it might help.'],
+  ['Check the details', 'Review the customer and problem before starting the report.'],
+  ['Choose what to test', 'See what you can check next and where more information is needed.'],
+] as const;
+
+const features: Record<string, readonly string[]> = {
+  free: ['Review your business idea', 'See what the example can and cannot tell you', 'Get three practical next steps'],
+  'idea-report': ['Check local demand', 'See what people search for', 'Compare other businesses and plan what to test'],
+  'growth-report': ['Review your website', 'Find topics your customers look for', 'Choose the changes to make first'],
+  expert: ['Discuss your report with a specialist', 'Improve how customers find your website', 'Get help improving key pages'],
+};
+
+/** 展示首页的产品入口、示例和计划报价。 */
 export function MarketingHome() {
   const {t,locale} = useLanguage();
   return <>
-    <div className={`hero ${styles.hero}`}>
-      <div><Image className={styles.logo} src={bigLogo} alt="NextSignal" priority sizes="(max-width: 639px) 80vw, 480px"/>
-        <h1>{t('Know your market.')}<br/><span>{t('Find your next signal.')}</span></h1>
-        <p className="lead">{t('Validate ideas and uncover growth opportunities with evidence grounded in Australian market data.')}</p>
-        <Link className="button bright" href="/validate">{t('Start Free')} <span aria-hidden="true">↗</span></Link>
-        <p className={styles.heroNotice}>{t('Available today: a local idea fixture, not real AI or market research.')}</p>
+    <div className={styles.hero}>
+      <div className={styles.heroInner}>
+        <div>
+          <Image className={styles.logo} src={bigLogo} alt="NextSignal" priority sizes="(max-width: 639px) 240px, 300px"/>
+          <h1>{t('Test your business idea in Australia')}</h1>
+          <p className={styles.lead}>{t('Find out who might buy, what they use today, and what to test before you spend.')}</p>
+          <Link className="button bright" href="/validate">{t('Try the free demo')} <span aria-hidden="true">↗</span></Link>
+          <p className={styles.heroNotice}>{t('Use a test idea in this preview.')}</p>
+        </div>
+        <aside className={styles.heroExample} aria-labelledby="hero-example">
+          <p className="eyebrow">{t('Example report')}</p>
+          <h2 id="hero-example">{t('Laptop repairs for students in Sydney')}</h2>
+          <p>{t('Who needs help? Where do they go now? What would make them book a repair?')}</p>
+          <a href="#research">{t('See what the example covers')} <span aria-hidden="true">↓</span></a>
+        </aside>
       </div>
     </div>
-    <div className="journey-grid">
-      <Link className="journey-card" href="/validate"><span className="chip">{t('Available in M1')}</span><strong>{t('Validate My Idea')}</strong><span>{t('Start with a question, then confirm your assumptions.')}</span><span aria-hidden="true">↗</span></Link>
-      <Link className="journey-card deferred" href="/grow"><span className="chip neutral">{t('Coming later')}</span><strong>{t('Grow My Business')}</strong><span>{t('Website research will be available in a later milestone.')}</span><span>{t('View planned scope')} ↗</span></Link>
-    </div>
-    <section className={styles.section} aria-labelledby="how-it-works"><h2 id="how-it-works">{t('How It Works')}</h2>
-      <p>{t('Evidence before confidence.')}</p>
-      <ol className={styles.steps}>{['Describe','Confirm','Explore'].map((step,index)=><li key={step}><span className="step-number">0{index+1}</span><h3>{t(step)}</h3><p>{t(['Describe a test business idea.','Correct and confirm your business assumptions.','Explore a private fixture report and its limitations.'][index]!)}</p></li>)}</ol>
-      <p>{t('Local fixture — no real market research, AI inference, payments or website crawling.')}</p>
+
+    <section className={styles.band + ' ' + styles.muted} aria-labelledby="products-heading">
+      <div className={styles.inner}>
+        <h2 id="products-heading">{t('Where are you starting?')}</h2>
+        <div className={styles.products}>
+          <div>
+            <h3>{t('Validate My Idea')}</h3>
+            <p>{t('Tell us your idea and see what to check before you launch.')}</p>
+            <Link href="/validate">{t('Try the free demo')} <span aria-hidden="true">↗</span></Link>
+          </div>
+          <div>
+            <h3>{t('Grow My Business')}</h3>
+            <p>{t('Already have a business? Website reviews are planned.')}</p>
+            <Link href="/grow">{t('See what’s planned')} <span aria-hidden="true">↗</span></Link>
+          </div>
+        </div>
+      </div>
     </section>
-    <section id="pricing" className={styles.section} aria-labelledby="pricing-heading"><h2 id="pricing-heading">{t('Pricing & Services')}</h2>
-      <p>{t('Prices are proposals, not offers to purchase. Paid reports and expert services are not available.')}</p>
-      <div className={styles.pricing}>{services.map(service=><article className={styles.serviceCard} key={service.id} aria-labelledby={`service-${service.id}`}>
-        <span className={`chip ${service.status === 'planned' ? 'neutral' : ''}`}>{t(service.status === 'planned' ? 'Planned — not available' : 'Local fixture only')}</span>
-        <h3 id={`service-${service.id}`}>{t(service.name)}</h3>
-        <p className={styles.price}>{service.amount === null ? t('Custom Quote') : <>A${new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN').format(service.amount)}{service.perReport && <small> {t('/ report')}</small>}</>}</p>
-        {service.perReport && <p className="metadata">{t('Placeholder price')}</p>}
-        <ul>{service.features.map(feature=><li key={feature}>{t(feature)}</li>)}</ul>
-        <Link className="button" href={service.href}>{t(service.cta)}</Link>
-      </article>)}</div>
-      <details id="idea-scope"><summary>{t('Planned idea report scope')}</summary><p>{t('Market demand, keyword evidence, competitors and Red Team research require future licensed integrations. They are not delivered by the current fixture.')}</p></details>
-      <details id="expert-status"><summary>{t('Expert service status')}</summary><p>{t('No consultation booking or human review service is offered yet. Custom Quote describes a future service; no payment or contact data is collected here.')}</p></details>
+
+    <section className={styles.band} aria-labelledby="how-it-works">
+      <div className={styles.inner}>
+        <h2 id="how-it-works">{t('How It Works')}</h2>
+        <ol className={styles.steps}>{steps.map(([title, description]) => <li key={title}><h3>{t(title)}</h3><p>{t(description)}</p></li>)}</ol>
+      </div>
     </section>
-    <section className={styles.cta} aria-labelledby="free-heading"><h2 id="free-heading">{t('Try Free Analysis')}</h2><p>{t('Free Business Snapshot is a limited local fixture, not a subscription trial. Website analysis is not yet available.')}</p><Link className="button" href="/validate">{t('Start Free Analysis')}</Link></section>
-    <section id="research" className={styles.section} aria-labelledby="research-heading"><h2 id="research-heading">{t('Research & Case Studies')}</h2><p>{t('Planned editorial space. No verified case studies have been published.')}</p>
-      <div className={styles.research}>{['Australian market research articles','Idea validation examples','Website growth case studies'].map(title=><article className={styles.serviceCard} key={title}><span className="chip neutral">{t('Planned content')}</span><h3>{t(title)}</h3><p>{t('Publication requires human review, source provenance and editorial approval. Private user reports will not appear here.')}</p></article>)}</div>
+
+    <section id="research" className={styles.band + ' ' + styles.mint} aria-labelledby="research-heading">
+      <div className={styles.inner + ' ' + styles.research}>
+        <div>
+          <h2 id="research-heading">{t('See an example report')}</h2>
+          <p>{t('The Sydney laptop repair example shows who the service could help, where customers might go today, and which questions are still open.')}</p>
+        </div>
+        <div>
+          <p>{t('Try it by choosing “Load Sydney repair example” in the demo.')}</p>
+          <Link href="/validate">{t('Open the demo')} <span aria-hidden="true">↗</span></Link>
+        </div>
+      </div>
     </section>
-    <section className={styles.cta} aria-labelledby="final-heading"><h2 id="final-heading">{t('Find your next signal.')}</h2><p>{t('Start with a test idea. Keep the evidence, assumptions and unknowns separate.')}</p><Link className="button" href="/validate">{t('Start Free')}</Link></section>
+
+    <section id="pricing" className={styles.band} aria-labelledby="pricing-heading">
+      <div className={styles.inner}>
+        <h2 id="pricing-heading">{t('Pricing & Services')}</h2>
+        <p>{t('The demo is free. Paid services are planned and prices may change.')}</p>
+        <div className={styles.pricing}>{services.map(service => <article className={styles.service} key={service.id} aria-labelledby={`service-${service.id}`}>
+          <p className={styles.availability}>{t(service.status === 'planned' ? 'Planned — not available' : 'Free demo')}</p>
+          <h3 id={`service-${service.id}`}>{t(service.name)}</h3>
+          <p className={styles.price}>{service.amount === null ? t('Custom Quote') : <>A${new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN').format(service.amount)}{service.perReport && <small> {t('/ report')}</small>}</>}</p>
+          <ul>{(features[service.id] ?? service.features).map(feature => <li key={feature}>{t(feature)}</li>)}</ul>
+          <Link href={service.href}>{t(service.id === 'free' ? 'Try the free demo' : service.id === 'expert' ? 'View service status' : 'See what’s planned')} <span aria-hidden="true">↗</span></Link>
+        </article>)}</div>
+        <details id="idea-scope"><summary>{t('What the idea report would cover')}</summary><p>{t('We plan to add search data and business comparisons. You can try the sample report today.')}</p></details>
+        <details id="expert-status"><summary>{t('Expert service status')}</summary><p>{t('Expert help is planned. Bookings are closed.')}</p></details>
+      </div>
+    </section>
   </>;
 }
 

@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { FIXTURE_NOTICE, ProjectView, SessionView, type Profile, type Scenario } from '@nextsignal/contracts';
+import { FIXTURE_NOTICE, ProjectView, SessionView, SYDNEY_REFERENCE_IDEA, type Profile, type Scenario } from '@nextsignal/contracts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
@@ -21,6 +21,7 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('Checking local session…');
   const [error, setError] = useState('');
+  const ideaInput = useRef<HTMLTextAreaElement>(null);
   /** 从服务端刷新当前用户可见的项目列表。 */
   const refreshList = useCallback(async () => {
     setProjects(z.object({ ids: z.array(z.uuid()) }).parse(await api('projects')).ids);
@@ -79,7 +80,11 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
       <section aria-labelledby="new-project"><p className="eyebrow">01 / {t('Describe')}</p><h2 id="new-project">{t('Validate My Idea')}</h2>
         <details className="processing-notice" open><summary>{t('Processing notice')}</summary><p id="processing-notice">{t(FIXTURE_NOTICE)}</p></details><p className="metadata">{t('Market: Australia. This fixture supplies no state or city demand data.')}</p>
         <form onSubmit={create}>
-          <label htmlFor="idea">{t('Test business idea')}</label><textarea id="idea" name="idea" minLength={10} maxLength={3000} required aria-describedby="processing-notice" />
+          <label htmlFor="idea">{t('Test business idea')}</label><textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required aria-describedby="processing-notice" />
+          <button type="button" className="secondary" disabled={busy} onClick={() => {
+            const input = ideaInput.current;
+            if (input) { input.value = SYDNEY_REFERENCE_IDEA; input.focus(); }
+          }}>{t('Load Sydney repair example')}</button>
           <label className="checkbox-label"><input type="checkbox" name="consent" required /> {t('I understand the local processing notice.')}</label>
           <label className="checkbox-label"><input type="checkbox" name="marketing" /> {t('Record optional marketing interest (no messages are sent).')}</label>
           <label htmlFor="scenario">{t('Development fixture scenario')}</label><select id="scenario" name="scenario">{['normal', 'missing', 'contradictory', 'timeout', 'malformed', 'quota'].map(s => <option key={s} value={s}>{t(s)}</option>)}</select>

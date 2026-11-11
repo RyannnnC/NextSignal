@@ -25,7 +25,11 @@ export function SiteShell({children}: {children: ReactNode}) {
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = `NextSignal — ${translate(locale, pathname.startsWith('/projects/') ? 'Private fixture report' : pathname === '/validate' ? 'Local fixture workspace' : 'Evidence before confidence.')}`;
+    if (pathname === '/') {
+      document.title = `${translate(locale, 'Test your business idea in Australia')} | NextSignal`;
+    } else {
+      document.title = `NextSignal — ${translate(locale, pathname.startsWith('/projects/') ? 'Private fixture report' : pathname === '/validate' ? 'Local fixture workspace' : 'Grow My Business')}`;
+    }
   }, [locale, pathname]);
   /** 更新语言状态，并尽可能保存到本地。 */
   function changeLocale(value: Locale) {
@@ -34,19 +38,19 @@ export function SiteShell({children}: {children: ReactNode}) {
   }
   return <Language.Provider value={{locale,t}}>
     <a className="skip" href="#main">{t('Skip to content')}</a>
-    <header className={`site-header ${styles.header}`}>
+    <header className={`site-header ${styles.header}${pathname === '/' ? ` ${styles.wideHeader}` : ''}`}>
       <Link className="wordmark" href="/" aria-label="NextSignal">Next<span>Signal</span><span className="brand-dot" aria-hidden="true"/></Link>
       <nav aria-label={t('Main navigation')} className={styles.nav}>
         <Link href="/validate" aria-current={pathname === '/validate' ? 'page' : undefined}>{t('Validate My Idea')}</Link>
         <Link href="/grow" aria-current={pathname === '/grow' ? 'page' : undefined}>{t('Grow My Business')}</Link>
-        <Link href="/#pricing">{t('Pricing & Services')}</Link><Link href="/#research">{t('Research & Case Studies')}</Link>
+        <Link href="/#research">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link>
       </nav>
       <LanguageSwitch locale={locale} onChange={changeLocale}/>
     </header>
-    <main id="main">{children}
-      <footer><strong>NextSignal</strong><p>{t('Local development only. Use test ideas, not confidential business information.')}</p>
-        <div className="trust-strip"><span>✓ {t('No external processing')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>
-        <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Start Free')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link><Link href="/#research">{t('Research & Case Studies')}</Link></nav>
+    <main id="main" className={pathname === '/' ? styles.homeMain : undefined}>{children}
+      <footer><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
+        {pathname !== '/' && <div className="trust-strip"><span>✓ {t('No external processing')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
+        <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Start Free')}</Link><Link href="/#research">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
       </footer>
     </main>
   </Language.Provider>;

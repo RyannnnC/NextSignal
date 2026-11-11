@@ -6,6 +6,7 @@ import type { Database, Transaction } from '@nextsignal/application';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider } from '@nextsignal/adapters';
+import { SYDNEY_REFERENCE_IDEA } from '@nextsignal/contracts';
 import { prepared } from '../../tests/helpers.js';
 
 /** 用两个合成身份验证托管库的服务层和租户隔离，最后回滚所有测试数据。 */
@@ -61,10 +62,14 @@ export async function verifyHostedPersistence(client: Client) {
     const owner = await actor(), other = await actor();
     phase = 'running the project, profile and research services';
     const projects = new Projects(db);
-    const { id } = await prepared(projects, owner);
+    const { id } = await prepared(projects, owner, 'normal', SYDNEY_REFERENCE_IDEA);
     await new ResearchRunner(db, new FixtureProvider()).processOne();
     const report = (await new Projects(db).get(owner, id)).reports[0];
     assert.ok(report?.synthetic);
+    assert.equal(report.referenceProfile?.summary, SYDNEY_REFERENCE_IDEA);
+    assert.equal(report.evidence.filter(item => item.classification === 'VERIFIED_SOURCE').length, 2);
+    assert.ok(report.evidence.some(item => item.classification === 'NOT_AVAILABLE' && item.value === null));
+    assert.deepEqual((await new Projects(db).get(owner, id)).reports[0], report);
     await assert.rejects(projects.get(other, id), /not_found/);
     await assert.rejects(projects.create({ userId: other.userId, workspaceId: owner.workspaceId }, {
       idea: 'Synthetic forged workspace smoke test', geography: { country: 'AU', granularity: 'national' },

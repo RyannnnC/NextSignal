@@ -14,9 +14,13 @@ test('marketing navigation, honest availability, original brand assets and respo
   });
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
-  await expect(page.getByRole('heading',{level:1})).toContainText('Know your market.');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Test your business idea in Australia');
+  await expect(page).toHaveTitle('Test your business idea in Australia | NextSignal');
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Australian business idea/);
+  expect((await page.request.get('/')).headers()['x-robots-tag']).toContain('noindex');
+  expect(await page.locator('main').evaluate(main => main.getBoundingClientRect().width)).toBe(1440);
   expect(await page.getByLabel('Test business idea',{exact:true}).count()).toBe(0);
-  const logo=page.locator('.hero img');
+  const logo=page.getByRole('img', { name: 'NextSignal', exact: true });
   await expect(logo).toHaveAttribute('alt','NextSignal');
   expect(await logo.evaluate((image: HTMLImageElement)=>Number(image.getAttribute('width'))/Number(image.getAttribute('height')))).toBe(3);
   expect(await logo.evaluate(image=>image.getBoundingClientRect().width/image.getBoundingClientRect().height)).toBeCloseTo(3,2);
@@ -26,7 +30,8 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.getByText('A$49',{exact:false})).toBeVisible();
   await expect(page.getByText('A$79',{exact:false})).toBeVisible();
   await expect(page.getByText('Planned — not available',{exact:true})).toHaveCount(3);
-  await expect(page.getByRole('heading',{name:'Research & Case Studies',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'See an example report',exact:true})).toBeVisible();
+  await expect(page.locator('main > section').last()).toHaveAttribute('id', 'pricing');
   // Every homepage link is internal and has a real page or anchor target.
   const hrefs=await page.locator('a[href]').evaluateAll(links=>links.map(link=>link.getAttribute('href')!));
   for(const href of new Set(hrefs)){
@@ -49,11 +54,11 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
   await expect(page).toHaveURL('http://127.0.0.1:3000/');
-  await expect(page.getByRole('heading',{level:1})).toContainText('看清你的市场。');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('在澳洲验证你的商业点子');
   await page.reload();
   await page.setViewportSize({width:375,height:812});
-  await expect(page.locator('.hero img')).toBeVisible();
-  await expect(page.getByRole('heading',{level:1})).toContainText('看清你的市场。');
+  await expect(logo).toBeVisible();
+  await expect(page.getByRole('heading',{level:1})).toHaveText('在澳洲验证你的商业点子');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:'artifacts/phase2-home-mobile.png',fullPage:true});
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations).toEqual([]);

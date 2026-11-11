@@ -104,7 +104,7 @@ These geometry decisions are drawn from the **MongoDB reference** as requested.
 | `radius.pill` | 9999px | CTA buttons, filter pills, small status chips |
 
 - Spacing scale: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96px`.
-- Marketing max width: **1200px**; report main content: **960px**; report reading column: **720px**.
+- Home uses full-width background bands with a **1440px** content limit. Report main content is **960px**, with a **720px** reading column.
 - Desktop page gutters: 32px; tablet 24px; mobile 16px.
 - Base card padding 24px; dense table/card 16px; feature card 32px; mobile cards 16–20px.
 - Standard sections 80px vertical; mobile 48px. Dark hero 96–112px top/bottom; mobile 64px.
@@ -195,13 +195,11 @@ Only show completed when the server confirms it. API unavailable/insufficient da
 
 ### 4.1 Home `/`
 
-1. Deep-teal hero band with direct value statement and two equally prominent routes; bright mineral-green primary action.
-2. Brief, **real** product preview with research steps and cited evidence, never fake data disguised as actual results.
-3. Explanation of Australia-first evidence: ABS, DataForSEO, AnswerThePublic (only assert integrations that exist).
-4. Three steps: Describe → Research → Decide.
-5. Editorial public case studies (human reviewed before publication).
-6. Simple and honest free vs paid comparison.
-7. FAQ, privacy/trust explanation, footer.
+1. Full-width deep-teal hero with a plain-language value statement, a bright primary action, and a short example.
+2. Validate My Idea and Grow My Business entry points in a light grey band, with accurate availability.
+3. Three steps in a white band.
+4. A sample report in a pale green band. Public editorial case studies require human review before publication.
+5. Pricing and service availability in four rounded cards within the final white band before the footer.
 
 Avoid stacked enormous gradients or an 8-feature dashboard preview above the fold.
 
@@ -246,7 +244,7 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 |---|---|
 | < 640px | Single-column, 16px gutters, full-width forms/buttons, stacked chart legend and cards |
 | 640–1023px | Two-column where useful, 24px gutters, compact nav |
-| ≥ 1024px | 1200px marketing container, 2-choice hero, report TOC + content |
+| ≥ 1024px | Up to 1440px of home content, two-column hero, report TOC + content |
 
 - WCAG 2.2 AA target. Text ≥4.5:1 contrast; large text ≥3:1; non-text essential controls ≥3:1. Validate actual rendered combinations, not tokens alone.
 - Interactive targets ideally ≥44×44px. Keyboard focus visible and never hidden by sticky headers.

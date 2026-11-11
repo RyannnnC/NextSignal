@@ -21,7 +21,12 @@ export const Geography = z.object({
 }).strict().refine(g => g.granularity === 'state' ? Boolean(g.state) : !g.state, 'Geography must match granularity');
 
 export const Scenario = z.enum(['normal', 'missing', 'contradictory', 'timeout', 'malformed', 'quota']);
-export const ClaimType = z.enum(['observed_fact', 'third_party_estimate', 'founder_statement', 'ai_hypothesis']);
+export const SYDNEY_REFERENCE_IDEA = 'A computer repair service targeting international students in Sydney.';
+/** 匹配固定参考案例，同时容许省略句号和调整大小写。 */
+export function isSydneyReferenceIdea(idea: string): boolean {
+  return idea.trim().replace(/\.$/, '').toLowerCase() === SYDNEY_REFERENCE_IDEA.slice(0, -1).toLowerCase();
+}
+export const ClaimType = z.enum(['observed_fact', 'third_party_estimate', 'founder_statement', 'ai_hypothesis', 'research_hypothesis']);
 export const RunStatus = z.enum(['queued', 'planning', 'collecting', 'analysing', 'validating', 'completed', 'partial', 'failed', 'cancelled']);
 export const Profile = z.object({
   summary: z.string().trim().min(1).max(3000),
@@ -47,10 +52,13 @@ export const Evidence = z.object({
   id: Id, workspaceId: Id, projectId: Id, runId: Id,
   provider: z.literal('fixture'), synthetic: z.literal(true),
   sourceRef: z.string().min(1), licenseId: z.literal('fixture-local-v1'),
+  classification: z.enum(['VERIFIED_SOURCE', 'RECORDED_SAMPLE', 'HYPOTHESIS', 'NOT_AVAILABLE']).optional(),
+  citation: z.object({ name: z.string().min(1), url: z.url({ protocol: /^https$/ }), checkedOn: z.iso.date() }).strict().optional(),
+  scope: z.string().min(1).optional(),
   retrievedAt: Timestamp,
   observedPeriod: z.object({ from: Timestamp, to: Timestamp }).strict().optional(),
   geography: Geography,
-  metric: z.enum(['search_volume', 'customer_question', 'interest_signal']),
+  metric: z.enum(['search_volume', 'customer_question', 'interest_signal', 'market_context', 'competitor_observation', 'keyword_hypothesis', 'customer_validation']),
   value: z.union([z.number().finite(), z.string(), z.null()]),
   unit: z.string().min(1).optional(),
   kind: z.enum(['measured', 'estimated', 'reported', 'inferred']),
@@ -58,6 +66,10 @@ export const Evidence = z.object({
   limitations: z.array(z.string().min(1)).min(1),
   stale: z.boolean()
 }).strict().superRefine((e, ctx) => {
+  if (e.classification === 'NOT_AVAILABLE' && e.value !== null) ctx.addIssue({ code: 'custom', message: 'Unavailable evidence must have a null value' });
+  if ((e.classification === 'VERIFIED_SOURCE' || e.classification === 'RECORDED_SAMPLE') && (!e.citation || e.value === null || !e.scope)) {
+    ctx.addIssue({ code: 'custom', message: 'Sourced evidence requires a citation, scope and value' });
+  }
   if (typeof e.value === 'number' && (!e.unit || !e.observedPeriod)) {
     ctx.addIssue({ code: 'custom', message: 'Numeric evidence requires unit and observed period' });
   }
@@ -87,6 +99,7 @@ export const Report = z.object({
   schemaVersion: z.literal('1'), id: Id, workspaceId: Id, projectId: Id, runId: Id, profileId: Id,
   synthetic: z.literal(true), title: z.literal('Local fixture snapshot — not market research'),
   createdAt: Timestamp, geography: Geography,
+  referenceProfile: Profile.optional(),
   evidence: z.array(Evidence), findings: z.array(Finding).min(1), actions: z.array(Action).length(3),
   limitations: z.array(z.string()).min(1), humanReviewed: z.literal(false)
 }).strict();

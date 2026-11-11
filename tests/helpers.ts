@@ -10,10 +10,12 @@ export const createInput = (scenario: Scenario = 'normal') => ({
   scenario, requestKey: randomUUID()
 });
 /** 创建项目并确认资料，然后提交 fixture 研究任务。 */
-export async function prepared(projects: Projects, actor: Actor, scenario: Scenario = 'normal') {
-  const id = await projects.create(actor, createInput(scenario));
+export async function prepared(projects: Projects, actor: Actor, scenario: Scenario = 'normal', idea?: string) {
+  const input = createInput(scenario);
+  const id = await projects.create(actor, idea === undefined ? input : { ...input, idea });
   const initial = (await projects.get(actor, id)).profiles.at(-1)!;
-  const profileId = await projects.confirm(actor, id, { profileId: initial.id, profile: { ...initial.content, customer: 'Australian solo founders', problem: 'Unclear evidence for a business hypothesis' }, requestKey: randomUUID() });
+  const profile = idea === undefined ? { ...initial.content, customer: 'Australian solo founders', problem: 'Unclear evidence for a business hypothesis' } : initial.content;
+  const profileId = await projects.confirm(actor, id, { profileId: initial.id, profile, requestKey: randomUUID() });
   const runId = await projects.start(actor, id, { profileId, requestKey: randomUUID() });
   return { id, profileId, runId };
 }
