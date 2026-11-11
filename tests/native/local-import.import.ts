@@ -1,13 +1,13 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { Pool } from 'pg';
-import { LOCAL_ACCOUNTS, FixtureProvider, openFixtureDatabase, type FixtureDatabase } from '@kyb/adapters';
-import { initializeLocalPostgres } from '@kyb/adapters/local-postgres';
-import { PostgresDatabase } from '@kyb/adapters/postgres';
-import { PostgresFixtureSessions } from '@kyb/adapters/local-sessions';
-import { exportSnapshot, importSnapshot, snapshotHash } from '@kyb/adapters/local-import';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
+import { LOCAL_ACCOUNTS, FixtureProvider, openFixtureDatabase, type FixtureDatabase } from '@nextsignal/adapters';
+import { initializeLocalPostgres } from '@nextsignal/adapters/local-postgres';
+import { PostgresDatabase } from '@nextsignal/adapters/postgres';
+import { PostgresFixtureSessions } from '@nextsignal/adapters/local-sessions';
+import { exportSnapshot, importSnapshot, snapshotHash } from '@nextsignal/adapters/local-import';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
 import { admin } from './setup.js';
 import { prepared } from '../helpers.js';
 
@@ -15,13 +15,13 @@ const management=admin();
 /** 为原生导入测试生成临时随机凭据。 */
 const secret=()=>randomBytes(32).toString('hex');
 const config={host:'127.0.0.1' as const,port:54328 as const,database:'next_signal_local' as const,backendPassword:secret(),queuePassword:secret(),identityPassword:secret()};
-const port=Number(process.env.KYB_TEST_PG_PORT??54329);
+const port=Number(process.env.NEXTSIGNAL_TEST_PG_PORT??54329);
 let target:Pool;
 let source:FixtureDatabase;
 let inspectorPassword:string;
 beforeAll(async()=>{
   await management.query('create database next_signal_local');
-  target=new Pool({host:'127.0.0.1',port,database:'next_signal_local',user:'postgres',password:process.env.KYB_TEST_PG_PASSWORD,max:4});
+  target=new Pool({host:'127.0.0.1',port,database:'next_signal_local',user:'postgres',password:process.env.NEXTSIGNAL_TEST_PG_PASSWORD,max:4});
   inspectorPassword=secret();
   await initializeLocalPostgres(target,config,inspectorPassword);
   source=await openFixtureDatabase();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Id } from '@kyb/contracts';
+import { Id } from '@nextsignal/contracts';
 import { api, ClientApiError } from '../../lib/client-api';
 import { presentReport, reportPath } from '../../lib/report-presentation';
 import { ReportView } from '../report-view';

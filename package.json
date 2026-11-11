@@ -1,5 +1,5 @@
 {
-  "name": "know-your-business",
+  "name": "nextsignal",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -20,7 +20,7 @@
     "db:shell": "tsx scripts/db.ts shell",
     "db:migrate": "tsx scripts/migrate-local.ts",
     "supabase:preflight": "tsx scripts/supabase-dev.ts",
-    "build": "npm run build --workspace @kyb/web",
+    "build": "npm run build --workspace @nextsignal/web",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

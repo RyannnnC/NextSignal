@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import type { Projects } from '@kyb/application/projects';
-import type { Actor } from '@kyb/application';
-import type { Scenario } from '@kyb/contracts';
+import type { Projects } from '@nextsignal/application/projects';
+import type { Actor } from '@nextsignal/application';
+import type { Scenario } from '@nextsignal/contracts';
 
 /** 创建带独立幂等键的合成项目请求。 */
 export const createInput = (scenario: Scenario = 'normal') => ({

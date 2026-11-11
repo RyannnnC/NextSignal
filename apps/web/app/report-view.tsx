@@ -1,4 +1,4 @@
-import type { Report } from '@kyb/contracts';
+import type { Report } from '@nextsignal/contracts';
 import { translate, type Locale } from '../lib/i18n';
 
 /** 渲染已验证的报告快照、证据来源和局限。 */

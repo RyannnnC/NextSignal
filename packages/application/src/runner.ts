@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { Evidence, Profile, RunStatus, Scenario, type Report } from '@kyb/contracts';
-import { assertBudget, assertTransition, DomainError, validateReport } from '@kyb/domain';
+import { Evidence, Profile, RunStatus, Scenario, type Report } from '@nextsignal/contracts';
+import { assertBudget, assertTransition, DomainError, validateReport } from '@nextsignal/domain';
 import type { Database, ResearchProvider, Transaction } from './index.js';
 
 const RunRow = z.object({ id: z.uuid(), workspace_id: z.uuid(), project_id: z.uuid(), profile_id: z.uuid(), status: RunStatus, max_calls: z.number(), calls_used: z.number(), scenario: Scenario, content: Profile });

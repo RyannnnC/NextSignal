@@ -1,4 +1,4 @@
-# Know Your Business — Project Governance Pack
+# NextSignal — Project Governance Pack
 
 This starter pack defines the non-visual architecture and enforceable engineering conventions for an Australia-first business research/SEO platform.
 

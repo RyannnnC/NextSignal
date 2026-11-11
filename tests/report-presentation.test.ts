@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@kyb/adapters';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
+import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@nextsignal/adapters';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
 import { presentReport, reportPath, reportReturnPath } from '../apps/web/lib/report-presentation';
 import { prepared } from './helpers';
 

@@ -2,10 +2,10 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import type { Client } from 'pg';
 import { z } from 'zod';
-import type { Database, Transaction } from '@kyb/application';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
-import { FixtureProvider } from '@kyb/adapters';
+import type { Database, Transaction } from '@nextsignal/application';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { FixtureProvider } from '@nextsignal/adapters';
 import { prepared } from '../../tests/helpers.js';
 
 /** 用两个合成身份验证托管库的服务层和租户隔离，最后回滚所有测试数据。 */

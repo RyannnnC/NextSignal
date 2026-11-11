@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import type { Database, Transaction } from '@kyb/application';
+import type { Database, Transaction } from '@nextsignal/application';
 
 export const LOCAL_ACCOUNTS = {
   alice: { userId: '00000000-0000-4000-8000-000000000001', workspaceId: '10000000-0000-4000-8000-000000000001' },

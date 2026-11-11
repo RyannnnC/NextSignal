@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
-import { readRuntimeConfig } from '@kyb/adapters/local-config';
-import { openLocalRuntime } from '@kyb/adapters/local-postgres';
-import { canonical } from '@kyb/adapters/local-import';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
-import { FixtureProvider, LOCAL_ACCOUNTS } from '@kyb/adapters';
+import { readRuntimeConfig } from '@nextsignal/adapters/local-config';
+import { openLocalRuntime } from '@nextsignal/adapters/local-postgres';
+import { canonical } from '@nextsignal/adapters/local-import';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { FixtureProvider, LOCAL_ACCOUNTS } from '@nextsignal/adapters';
 import { composeArguments, docker, startLocalPostgres } from './lib/local-postgres.js';
 
 const root=process.cwd(),actor=LOCAL_ACCOUNTS.alice;

@@ -1,7 +1,7 @@
-import { ResearchRunner } from '@kyb/application/runner';
-import { FixtureProvider } from '@kyb/adapters';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { FixtureProvider } from '@nextsignal/adapters';
 import { database } from './setup.js';
-import type { ProviderContext } from '@kyb/application';
+import type { ProviderContext } from '@nextsignal/application';
 
 class ConcurrentFixtureProvider extends FixtureProvider {
   /** 在独立测试进程中为任务收集合成证据。 */

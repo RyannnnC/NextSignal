@@ -42,6 +42,6 @@ export async function ensureLocalConfig(root:string) {
   const admin=await readAdminConfig(root);
   const runtime=await readRuntimeConfig(root);
   const inspector=await readInspectorConfig(root);
-  await writeFile(resolve(directory,'docker.env'),`KYB_LOCAL_PG_PASSWORD=${admin.password}\n`,{mode:0o600});
+  await writeFile(resolve(directory,'docker.env'),`NEXTSIGNAL_LOCAL_PG_PASSWORD=${admin.password}\n`,{mode:0o600});
   return {admin,runtime,inspector};
 }

@@ -1,4 +1,4 @@
-import { Report, type Evidence, type RunStatus } from '@kyb/contracts';
+import { Report, type Evidence, type RunStatus } from '@nextsignal/contracts';
 
 export class DomainError extends Error {
   /** 保存可映射为 API 响应的领域错误码和状态。 */

@@ -12,7 +12,7 @@ export function MarketingHome() {
   const {t,locale} = useLanguage();
   return <>
     <div className={`hero ${styles.hero}`}>
-      <div><Image className={styles.logo} src={bigLogo} alt="Next Signal" priority sizes="(max-width: 639px) 80vw, 480px"/>
+      <div><Image className={styles.logo} src={bigLogo} alt="NextSignal" priority sizes="(max-width: 639px) 80vw, 480px"/>
         <h1>{t('Know your market.')}<br/><span>{t('Find your next signal.')}</span></h1>
         <p className="lead">{t('Validate ideas and uncover growth opportunities with evidence grounded in Australian market data.')}</p>
         <Link className="button bright" href="/validate">{t('Start Free')} <span aria-hidden="true">↗</span></Link>

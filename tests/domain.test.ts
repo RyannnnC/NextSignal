@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { Evidence, Geography, Finding, CreateProject } from '@kyb/contracts';
-import { assertBudget, assertTransition, deduplicateKeywords } from '@kyb/domain';
+import { Evidence, Geography, Finding, CreateProject } from '@nextsignal/contracts';
+import { assertBudget, assertTransition, deduplicateKeywords } from '@nextsignal/domain';
 import { createInput } from './helpers.js';
 
 describe('contracts and domain invariants', () => {

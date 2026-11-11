@@ -10,7 +10,7 @@ docker info
 npm run test:postgres
 ```
 
-The runner generates a unique Compose project and random test credentials, starts `postgres:17`, waits for health, applies existing migrations and executes `vitest.native.config.ts`. Test pools have distinct backend/queue login roles; neither role is superuser or has BYPASSRLS. The database is named kyb_native_test. The auth schema is a local test shim, not a Supabase Auth implementation.
+The runner generates a unique Compose project and random test credentials, starts `postgres:17`, waits for health, applies existing migrations and executes `vitest.native.config.ts`. Test pools have distinct backend/queue login roles; neither role is superuser or has BYPASSRLS. The database is named nextsignal_native_test. The auth schema is a local test shim, not a Supabase Auth implementation.
 
 Four OS processes synchronise readiness and drain a shared native queue; assertions require more than one worker to process work, exactly one report/call per run, and no tenant leaks. Additional cases exercise concurrent idempotency, SKIP LOCKED under a held row lock, expired-lease fencing, non-superuser RLS and reverse rollback/reapply.
 

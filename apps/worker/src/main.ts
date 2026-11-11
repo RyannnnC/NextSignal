@@ -1,13 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { readRuntimeConfig } from '@kyb/adapters/local-config';
-import { openLocalRuntime } from '@kyb/adapters/local-postgres';
+import { readRuntimeConfig } from '@nextsignal/adapters/local-config';
+import { openLocalRuntime } from '@nextsignal/adapters/local-postgres';
 import { access } from 'node:fs/promises';
 import { createFixtureServer } from './server.js';
 
-if (process.env.KYB_LOCAL_FIXTURE !== '1' || process.env.NODE_ENV === 'production') throw new Error('Local fixture worker only. Production runtime is not implemented.');
-const root = resolve(process.env.KYB_ROOT ?? process.cwd());
+if (process.env.NEXTSIGNAL_LOCAL_FIXTURE !== '1' || process.env.NODE_ENV === 'production') throw new Error('Local fixture worker only. Production runtime is not implemented.');
+const root = resolve(process.env.NEXTSIGNAL_ROOT ?? process.cwd());
 await mkdir(resolve(root, '.local'), { recursive: true });
 try { await access(resolve(root,'.local/migration.lock')); throw new Error('Data migration is running; worker must remain stopped.'); }
 catch(error) { if(!(typeof error==='object'&&error&&'code' in error&&error.code==='ENOENT'))throw error; }

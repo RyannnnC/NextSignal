@@ -1,4 +1,4 @@
-import { Id, ProjectView } from '@kyb/contracts';
+import { Id, ProjectView } from '@nextsignal/contracts';
 
 /** 构造项目内指定报告的规范路径。 */
 export function reportPath(projectId: string, reportId: string): string {

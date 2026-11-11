@@ -1,4 +1,4 @@
-# Project Handoff — Know Your Business
+# Project Handoff — NextSignal
 
 Last discussed: 2026-10-26. This document distills product decisions from a long ChatGPT planning conversation. It is context, not a substitute for current provider documentation or legal review.
 

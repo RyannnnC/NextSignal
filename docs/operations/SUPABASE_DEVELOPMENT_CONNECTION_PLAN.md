@@ -4,7 +4,7 @@ Updated 2026-11-10, Australia/Sydney. Scope is the existing M1 database path and
 
 ## First increment — read-only connection probe
 
-Copy the Supabase URL and publishable key entries from [the root environment template](../../.env.example) into the ignored `.env.supabase-dev.local` at the repository root. Use the project's default HTTPS URL from the development dashboard. Run `npm run supabase:preflight` from the root. The command checks the key against the hosted Auth settings endpoint without signing in. The browser and local fixture runtime do not read this file.
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the ignored `.env.supabase-dev.local` at the repository root. Use the project's default HTTPS URL from the development dashboard. Run `npm run supabase:preflight` from the root. The command checks the key against the hosted Auth settings endpoint without signing in. The browser and local fixture runtime do not read this file.
 
 For the optional SQL metadata probe, add the three entries in [the database template](../../config/supabase-dev.env.example) to the same file. Use the dashboard project reference, a direct or Sydney session-mode PostgreSQL URL on port 5432, and the dashboard CA certificate file. Percent-encode reserved characters in the URL password. The probe verifies TLS, compares the API and database target identifiers, and inspects PostgreSQL version and schema markers in a read-only transaction. The direct connection hostname does not establish the region. The mutating commands require the Sydney Session pooler and matching project reference. [Connection modes](https://supabase.com/docs/guides/database/connecting-to-postgres)
 
@@ -13,6 +13,10 @@ For the optional SQL metadata probe, add the three entries in [the database temp
 | `npm run supabase:preflight` | Read-only HTTPS and SQL checks. |
 | `npm run supabase:preflight -- --apply` | Apply pending migrations in one transaction on the configured Sydney development target. An untracked occupied target or mismatched ledger is rejected. The migration credential remains outside the app. |
 | `npm run supabase:preflight -- --verify` | Exercise existing project and fixture runner services with two synthetic SQL identities. The verification refuses an occupied queue and rolls back rows and temporary role grants. It also checks anonymous project access using the publishable key. |
+
+### Recovering from duplicate role error `42710`
+
+On the Sydney development project, `supabase db push` can try to replay the baseline when `supabase_migrations.schema_migrations` is empty. The baseline already exists in `kyb_private.hosted_migrations`, and the CLI only scans `supabase/migrations`. Run `npm run supabase:preflight` to see the CLI versions, then use `npm run supabase:preflight -- --apply` for this project. The runner accepts an empty CLI table, checks the hosted ledger against the source files, and skips recorded migrations. An empty CLI table may remain in place. Keep using the hosted runner for this database. If the CLI ledger contains versions, review the two histories before applying anything. [Supabase migration history](https://supabase.com/docs/guides/deployment/database-migrations)
 
 ### Application integration sequence
 

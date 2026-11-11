@@ -1,12 +1,12 @@
 {
-  "name": "@kyb/adapters",
+  "name": "@nextsignal/adapters",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts", "./postgres": "./src/postgres.ts", "./local-config": "./src/local-config.ts", "./local-postgres": "./src/local-postgres.ts", "./local-sessions": "./src/local-sessions.ts", "./local-import": "./src/local-import.ts" },
   "dependencies": {
-    "@kyb/contracts": "0.1.0",
-    "@kyb/domain": "0.1.0",
-    "@kyb/application": "0.1.0"
+    "@nextsignal/contracts": "0.1.0",
+    "@nextsignal/domain": "0.1.0",
+    "@nextsignal/application": "0.1.0"
   }
 }

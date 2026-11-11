@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FIXTURE_NOTICE } from '@kyb/contracts';
+import { FIXTURE_NOTICE } from '@nextsignal/contracts';
 
 export const Locale = z.enum(['en', 'zh-CN']);
 export type Locale = z.infer<typeof Locale>;

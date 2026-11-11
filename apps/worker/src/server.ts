@@ -1,13 +1,13 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
-import { isFixtureRoute, Login, SessionView } from '@kyb/contracts';
-import { DomainError } from '@kyb/domain';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
-import { FixtureProvider } from '@kyb/adapters';
-import type { FixtureSessions } from '@kyb/adapters/local-sessions';
-import type { Actor, Database } from '@kyb/application';
+import { isFixtureRoute, Login, SessionView } from '@nextsignal/contracts';
+import { DomainError } from '@nextsignal/domain';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { FixtureProvider } from '@nextsignal/adapters';
+import type { FixtureSessions } from '@nextsignal/adapters/local-sessions';
+import type { Actor, Database } from '@nextsignal/application';
 
 /** 创建本地 HTTP 服务及复用同一数据库的 fixture 执行器。 */
 export function createFixtureServer(db: Database, sessions: FixtureSessions, key: string) {

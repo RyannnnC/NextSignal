@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { Pool } from 'pg';
 import { z } from 'zod';
-import { DomainError } from '@kyb/domain';
+import { DomainError } from '@nextsignal/domain';
 import { LOCAL_ACCOUNTS } from './database.js';
 
 const Account=z.enum(['alice','bob']);

@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from 'pg';
 import { z } from 'zod';
-import type { Database, Transaction } from '@kyb/application';
+import type { Database, Transaction } from '@nextsignal/application';
 
 /** Native PostgreSQL port. Identity must come from trusted server authentication. */
 export class PostgresDatabase implements Database {

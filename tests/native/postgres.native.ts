@@ -3,10 +3,10 @@ import { fork } from 'node:child_process';
 import { readFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
-import { FixtureProvider, LOCAL_ACCOUNTS } from '@kyb/adapters';
-import type { Database, ResearchProvider } from '@kyb/application';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { FixtureProvider, LOCAL_ACCOUNTS } from '@nextsignal/adapters';
+import type { Database, ResearchProvider } from '@nextsignal/application';
 import { admin, bootstrap, database, migrations, pool } from './setup.js';
 import { createInput, prepared } from '../helpers.js';
 
@@ -68,7 +68,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     await expect(db.asUser(alice.userId, tx => tx.query('select * from public.claim_fixture_job()'))).rejects.toThrow('permission denied');
     await expect(db.asUser(alice.userId, tx => tx.query("update public.report_versions set payload='{}' where project_id=$1",[id]))).rejects.toThrow('immutable');
     await expect(db.asUser(alice.userId, tx => tx.query("set role postgres"))).rejects.toThrow('permission denied');
-    const queue=pool('kyb_test_queue',process.env.KYB_TEST_ROLE_PASSWORD!);
+    const queue=pool('nextsignal_test_queue',process.env.NEXTSIGNAL_TEST_ROLE_PASSWORD!);
     try { await expect(queue.query('select * from public.projects')).rejects.toThrow('permission denied'); }
     finally { await queue.end(); }
     await projects.delete(bob,id);
@@ -183,7 +183,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect((await root.query("select to_regclass('public.projects') as table_name")).rows[0]?.table_name).toBeNull();
     await migrations(root);
     // Recreate harness-only memberships/seed rows lost when the application schema/roles were dropped.
-    await root.query('grant kyb_app to kyb_test_backend; grant kyb_worker to kyb_test_queue');
+    await root.query('grant kyb_app to nextsignal_test_backend; grant kyb_worker to nextsignal_test_queue');
     for(const actor of [alice,bob]) await root.query('insert into public.workspaces(id,owner_id) values($1,$2)',[actor.workspaceId,actor.userId]);
     const {id}=await prepared(projects,alice);
     await runner.processOne();

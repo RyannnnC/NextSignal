@@ -3,7 +3,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { createConnection } from 'node:net';
 import { resolve } from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
-import { exportSnapshot, importSnapshot } from '@kyb/adapters/local-import';
+import { exportSnapshot, importSnapshot } from '@nextsignal/adapters/local-import';
 import { startLocalPostgres, exists } from './lib/local-postgres.js';
 
 const root=process.cwd(),local=resolve(root,'.local'),source=resolve(local,'db');

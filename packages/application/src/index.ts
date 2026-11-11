@@ -1,4 +1,4 @@
-import type { Evidence, Profile, Scenario } from '@kyb/contracts';
+import type { Evidence, Profile, Scenario } from '@nextsignal/contracts';
 
 export interface ProviderContext {
   workspaceId: string; projectId: string; runId: string;

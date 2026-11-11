@@ -1,4 +1,4 @@
-import { Id } from '@kyb/contracts';
+import { Id } from '@nextsignal/contracts';
 import { FixtureApp } from '../ui';
 import { reportReturnPath } from '../../lib/report-presentation';
 

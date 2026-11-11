@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { expect, it } from 'vitest';
-import { openFixtureDatabase, LOCAL_ACCOUNTS, FixtureProvider } from '@kyb/adapters';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
+import { openFixtureDatabase, LOCAL_ACCOUNTS, FixtureProvider } from '@nextsignal/adapters';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
 import { prepared } from './helpers.js';
 
 it('persists jobs and reports across database close/reopen and rejects migration drift', async () => {

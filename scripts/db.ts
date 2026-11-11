@@ -2,7 +2,7 @@ import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { Pool } from 'pg';
-import { readAdminConfig, readInspectorConfig } from '@kyb/adapters/local-config';
+import { readAdminConfig, readInspectorConfig } from '@nextsignal/adapters/local-config';
 import { composeArguments, docker, startLocalPostgres } from './lib/local-postgres.js';
 
 const root=process.cwd(),command=process.argv[2];

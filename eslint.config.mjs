@@ -6,5 +6,5 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { files: ['**/*.mjs'], languageOptions: { globals: { process: 'readonly', console: 'readonly', Buffer: 'readonly', URL: 'readonly' } } },
-  { files: ['packages/domain/**/*.ts'], rules: { 'no-restricted-imports': ['error', { patterns: ['next*', '@electric-sql/*', '@kyb/adapters*', '@kyb/application*'] }] } }
+  { files: ['packages/domain/**/*.ts'], rules: { 'no-restricted-imports': ['error', { patterns: ['next*', '@electric-sql/*', '@nextsignal/adapters*', '@nextsignal/application*'] }] } }
 );

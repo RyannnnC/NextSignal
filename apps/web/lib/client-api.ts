@@ -1,4 +1,4 @@
-import { ApiError } from '@kyb/contracts';
+import { ApiError } from '@nextsignal/contracts';
 
 export class ClientApiError extends Error {
   /** 保存 HTTP 状态与业务错误码，供界面区分失败原因。 */

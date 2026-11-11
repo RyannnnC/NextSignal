@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_DB: next_signal_local
-      POSTGRES_PASSWORD: ${KYB_LOCAL_PG_PASSWORD:?Run npm run db:up to generate local credentials}
+      POSTGRES_PASSWORD: ${NEXTSIGNAL_LOCAL_PG_PASSWORD:?Run npm run db:up to generate local credentials}
     ports:
       - "127.0.0.1:54328:5432"
     volumes:

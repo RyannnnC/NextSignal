@@ -38,8 +38,8 @@ test('idea → correction → private fixture report → new version → deletio
     await expect(page.getByText('partial', { exact: true })).toBeVisible();
     await page.getByRole('link', { name: 'View report 1', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Local fixture snapshot — not market research', exact: true })).toBeVisible();
-    expect((await context.cookies()).find(c => c.name === 'kyb_session')).toMatchObject({ httpOnly: true, sameSite: 'Strict' });
-    expect(await page.evaluate(() => document.cookie)).not.toContain('kyb_session');
+    expect((await context.cookies()).find(c => c.name === 'next_signal_session')).toMatchObject({ httpOnly: true, sameSite: 'Strict' });
+    expect(await page.evaluate(() => document.cookie)).not.toContain('next_signal_session');
     const before = await (await page.request.get(`/api/projects/${id}`)).json() as { reports: unknown[] };
     await page.getByRole('link', { name: 'Back to project', exact: true }).click();
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Australian independent software founders');

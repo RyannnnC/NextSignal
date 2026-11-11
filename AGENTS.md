@@ -1,4 +1,4 @@
-# Codex Instructions — Know Your Business
+# Codex Instructions — NextSignal
 
 ## Mandatory onboarding
 Before proposing or changing code, read these repository files in order:
@@ -11,7 +11,7 @@ Before proposing or changing code, read these repository files in order:
 For any conflict, protect legal/security/privacy/provider requirements first; flag irreconcilable issues and propose an ADR.
 
 ## Product objective
-Build **Know Your Business**, an Australia-first AI business research platform with two user journeys sharing an evidence engine:
+Build **NextSignal**, an Australia-first AI business research platform with two user journeys sharing an evidence engine:
 - **Validate My Idea**: text idea -> inferred hypotheses -> user confirmation -> evidence research -> demand/competitors/counter-evidence -> practical experiment plan.
 - **Grow My Business**: public business URL -> safely extracted facts -> user confirmation -> foundational SEO findings + research evidence -> prioritized actionable improvements.
 Users retain one project as an idea advances into a launched business. Public, human-reviewed case studies are a separately approved publishing workflow; user reports and founder ideas are private by default.
@@ -66,7 +66,7 @@ take precedence over visual styling.
 
 ## Owner decisions — 2026-10-28
 
-- The confirmed public product name is **Next Signal** (with a space). Existing repository paths and `@kyb` identifiers need not be renamed.
+- The project and public product name is **NextSignal**. Use `@nextsignal` for workspace packages and preserve checksums for applied SQL migrations.
 - Docker Desktop is installed. Verify that its engine is running before any Docker-dependent task; installation alone is not evidence of readiness.
 - If a required development or verification tool is missing or unavailable, tell the owner what is needed and why. Do not bypass that tool or substitute a less representative test and report the required check as passed.
 - Existing PGlite fixture checks cover only their documented local scope. Native PostgreSQL/Supabase, multi-worker concurrency and production gates require their intended tooling and separate results.

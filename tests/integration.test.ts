@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@kyb/adapters';
-import { Projects } from '@kyb/application/projects';
-import { ResearchRunner } from '@kyb/application/runner';
-import { validateReport } from '@kyb/domain';
-import type { ResearchProvider } from '@kyb/application';
+import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@nextsignal/adapters';
+import { Projects } from '@nextsignal/application/projects';
+import { ResearchRunner } from '@nextsignal/application/runner';
+import { validateReport } from '@nextsignal/domain';
+import type { ResearchProvider } from '@nextsignal/application';
 import { createInput, prepared } from './helpers.js';
 
 const alice = LOCAL_ACCOUNTS.alice;

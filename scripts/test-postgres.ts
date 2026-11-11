@@ -2,8 +2,8 @@ import { execFile, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { resolve } from 'node:path';
 
-const project = `kyb-native-test-${randomBytes(6).toString('hex')}`;
-const env = { ...process.env, KYB_TEST_PG_PASSWORD: randomBytes(32).toString('hex'), KYB_TEST_ROLE_PASSWORD: randomBytes(32).toString('hex') };
+const project = `nextsignal-native-test-${randomBytes(6).toString('hex')}`;
+const env = { ...process.env, NEXTSIGNAL_TEST_PG_PASSWORD: randomBytes(32).toString('hex'), NEXTSIGNAL_TEST_ROLE_PASSWORD: randomBytes(32).toString('hex') };
 const compose = ['compose', '-p', project, '-f', 'docker/compose.native-test.yml'];
 let composeStarted = false;
 /** 执行原生测试所需的 Docker 命令，并限制等待时间。 */
@@ -20,7 +20,7 @@ try {
   console.log(await docker([...compose, 'up', '-d', '--wait', '--wait-timeout', '45'], 180000));
   const result = await new Promise<number>((done, reject) => {
     const config=process.argv[2]==='import'?'vitest.import.config.ts':'vitest.native.config.ts';
-    const child = spawn(process.execPath, [resolve('node_modules/vitest/vitest.mjs'), 'run', '--config', config], { env: { ...env, KYB_NATIVE_TEST: '1' }, stdio: 'inherit', windowsHide: true });
+    const child = spawn(process.execPath, [resolve('node_modules/vitest/vitest.mjs'), 'run', '--config', config], { env: { ...env, NEXTSIGNAL_NATIVE_TEST: '1' }, stdio: 'inherit', windowsHide: true });
     child.on('error', reject); child.on('exit', code => done(code ?? 1));
   });
   process.exitCode = result;

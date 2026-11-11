@@ -1,4 +1,4 @@
-# Know Your Business — Australia Launch: Legal and Marketing Readiness
+# NextSignal — Australia Launch: Legal and Marketing Readiness
 
 > Planning checklist only, not legal/tax/migration advice. Updated 2026-10-26. Check current rules and obtain suitably qualified advice before accepting public payments.
 

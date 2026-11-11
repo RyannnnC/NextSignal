@@ -4,7 +4,7 @@ import { prepareLocalRuntime } from './lib/local-postgres.js';
 
 const root = process.cwd();
 await prepareLocalRuntime(root);
-const env = { ...process.env, KYB_LOCAL_FIXTURE: '1', KYB_ROOT: root, NEXT_TELEMETRY_DISABLED: '1' };
+const env = { ...process.env, NEXTSIGNAL_LOCAL_FIXTURE: '1', NEXTSIGNAL_ROOT: root, NEXT_TELEMETRY_DISABLED: '1' };
 const children = [
   spawn(process.execPath, ['--import', 'tsx', 'apps/worker/src/main.ts'], { cwd: root, env, stdio: 'inherit', windowsHide: true }),
   spawn(process.execPath, [resolve(root, 'node_modules/next/dist/bin/next'), 'dev', '--webpack', '--hostname', '127.0.0.1', '--port', '3000'], { cwd: resolve(root, 'apps/web'), env, stdio: 'inherit', windowsHide: true })

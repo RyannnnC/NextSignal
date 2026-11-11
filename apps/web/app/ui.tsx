@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { FIXTURE_NOTICE, ProjectView, SessionView, type Profile, type Scenario } from '@kyb/contracts';
+import { FIXTURE_NOTICE, ProjectView, SessionView, type Profile, type Scenario } from '@nextsignal/contracts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';

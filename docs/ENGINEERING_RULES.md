@@ -1,4 +1,4 @@
-# Know Your Business — Mandatory Engineering Rules
+# NextSignal — Mandatory Engineering Rules
 
 > Version 0.1.0 — 2026-10-26  
 > **MUST / MUST NOT** are merge-blocking. **SHOULD** is default unless documented in an ADR.  

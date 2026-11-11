@@ -1,8 +1,8 @@
 {
-  "name": "@kyb/web",
+  "name": "@nextsignal/web",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "scripts": { "build": "next build", "dev": "next dev --hostname 127.0.0.1" },
-  "dependencies": { "@kyb/contracts": "0.1.0" }
+  "dependencies": { "@nextsignal/contracts": "0.1.0" }
 }

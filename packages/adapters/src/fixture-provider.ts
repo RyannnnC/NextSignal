@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { Evidence } from '@kyb/contracts';
-import { DomainError } from '@kyb/domain';
-import type { ProviderContext, ResearchProvider } from '@kyb/application';
+import { Evidence } from '@nextsignal/contracts';
+import { DomainError } from '@nextsignal/domain';
+import type { ProviderContext, ResearchProvider } from '@nextsignal/application';
 
 export class FixtureProvider implements ResearchProvider {
   readonly name = 'fixture';

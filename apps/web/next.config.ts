@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
-  transpilePackages: ['@kyb/contracts'],
+  transpilePackages: ['@nextsignal/contracts'],
   poweredByHeader: false,
   /** 配置 Next.js 路由响应的安全标头。 */
   async headers() {

@@ -2,8 +2,8 @@ import { execFile } from 'node:child_process';
 import { access } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { Pool } from 'pg';
-import { ensureLocalConfig, localDirectory } from '@kyb/adapters/local-config';
-import { initializeLocalPostgres, seedLocalAccounts } from '@kyb/adapters/local-postgres';
+import { ensureLocalConfig, localDirectory } from '@nextsignal/adapters/local-config';
+import { initializeLocalPostgres, seedLocalAccounts } from '@nextsignal/adapters/local-postgres';
 
 /** 判断本地路径当前是否可访问。 */
 export async function exists(path:string){try{await access(path);return true;}catch{return false;}}

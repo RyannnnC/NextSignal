@@ -9,9 +9,9 @@ import { verifyHostedPersistence } from './lib/supabase-dev-verify.js';
 const Environment = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().regex(/^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/),
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().regex(/^sb_publishable_[\w-]+$/),
-  KYB_SUPABASE_DEV_PROJECT_REF: z.union([z.literal(''), z.string().regex(/^[a-z0-9]{20}$/)]).optional(),
-  KYB_SUPABASE_DEV_MIGRATION_URL: z.string().optional(),
-  KYB_SUPABASE_DEV_CA_FILE: z.string().optional(),
+  NEXTSIGNAL_SUPABASE_DEV_PROJECT_REF: z.union([z.literal(''), z.string().regex(/^[a-z0-9]{20}$/)]).optional(),
+  NEXTSIGNAL_SUPABASE_DEV_MIGRATION_URL: z.string().optional(),
+  NEXTSIGNAL_SUPABASE_DEV_CA_FILE: z.string().optional(),
 });
 class PreflightError extends Error {}
 const migrations = [
@@ -40,11 +40,11 @@ async function preflight() {
   const env = parsed.data;
   const api = new URL(env.NEXT_PUBLIC_SUPABASE_URL);
   const project = api.hostname.split('.')[0];
-  const ref = env.KYB_SUPABASE_DEV_PROJECT_REF;
+  const ref = env.NEXTSIGNAL_SUPABASE_DEV_PROJECT_REF;
   if (ref && ref !== project) throw new PreflightError('The API URL and configured development project reference disagree.');
 
-  const databaseUrl = env.KYB_SUPABASE_DEV_MIGRATION_URL;
-  const caFile = env.KYB_SUPABASE_DEV_CA_FILE;
+  const databaseUrl = env.NEXTSIGNAL_SUPABASE_DEV_MIGRATION_URL;
+  const caFile = env.NEXTSIGNAL_SUPABASE_DEV_CA_FILE;
   const database = databaseUrl ? databaseConfig(databaseUrl, ref) : null;
   if (database && !caFile) throw new PreflightError('The SQL probe requires the database CA file from the Supabase dashboard.');
   const mode = process.argv[2];
@@ -108,8 +108,12 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
       to_regclass('public.projects') is not null as projects,
       to_regclass('storage.buckets') is not null as storage_schema,
       (select count(*)::integer from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as public_relations,
-      (select count(*)::integer from pg_roles where rolname in ('kyb_app','kyb_worker')) as kyb_roles`);
-    const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), kyb_roles: z.number().int() }).strict().parse(result.rows[0]);
+      (select count(*)::integer from pg_roles where rolname in ('kyb_app','kyb_worker')) as application_roles`);
+    const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), application_roles: z.number().int() }).strict().parse(result.rows[0]);
+    if (metadata.migration_table) {
+      const history = await client.query('select version from supabase_migrations.schema_migrations order by version');
+      console.log('Supabase CLI migration versions:', z.array(z.object({ version: z.string().regex(/^\d+$/) })).parse(history.rows).map(row => row.version));
+    }
     await client.query('rollback');
     console.log('PostgreSQL metadata over verified TLS:', metadata);
     if (!metadata.auth_schema || !metadata.storage_schema) throw new PreflightError('The expected Supabase Auth or Storage schema is missing.');
@@ -137,7 +141,13 @@ async function applyMigrations(client: Client) {
       exists(select from pg_roles where rolname in ('kyb_app','kyb_worker')) as existing_roles,
       exists(select from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as existing_relations`);
     const { private_schema, existing_ledger, hosted_ledger, existing_roles, existing_relations } = z.object({ private_schema: z.boolean(), existing_ledger: z.boolean(), hosted_ledger: z.boolean(), existing_roles: z.boolean(), existing_relations: z.boolean() }).parse(state.rows[0]);
-    if (existing_ledger || (!hosted_ledger && (private_schema || existing_roles || existing_relations))) throw new PreflightError('Refusing to initialize an occupied or externally migrated project. Review its migration history first.');
+    if (existing_ledger) {
+      // 防止其他连接在本次迁移检查后写入另一套迁移历史。
+      await client.query('lock table supabase_migrations.schema_migrations in share mode');
+      const history = await client.query('select 1 from supabase_migrations.schema_migrations limit 1');
+      if (history.rows.length) throw new PreflightError('The Supabase CLI ledger contains migration entries. Reconcile the two histories before applying.');
+    }
+    if (!hosted_ledger && (private_schema || existing_roles || existing_relations)) throw new PreflightError('Refusing to initialize an occupied project without a hosted migration ledger.');
     const applied = hosted_ledger ? z.array(z.object({ path: z.string(), checksum: z.string() })).parse((await client.query('select path,checksum from kyb_private.hosted_migrations')).rows) : [];
     const files = await Promise.all(migrations.map(async path => {
       const sql = await readFile(new URL(`../supabase/${path}`, import.meta.url), 'utf8');

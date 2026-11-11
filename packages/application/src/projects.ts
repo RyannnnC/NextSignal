@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import { ConfirmProfile, CreateProject, Profile, ProjectView, Run, StartRun, type Profile as ProfileType } from '@kyb/contracts';
-import { DomainError } from '@kyb/domain';
+import { ConfirmProfile, CreateProject, Profile, ProjectView, Run, StartRun, type Profile as ProfileType } from '@nextsignal/contracts';
+import { DomainError } from '@nextsignal/domain';
 import type { Actor, Database, Transaction } from './index.js';
 
 const Previous = z.object({ id: z.uuid(), request_hash: z.string() });

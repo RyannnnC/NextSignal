@@ -1,4 +1,4 @@
-# Know Your Business — Architecture Specification
+# NextSignal — Architecture Specification
 
 > Version: 0.1.0 (2026-10-26)  
 > Status: Architecture direction and local M1 scope approved by owner on 2026-10-27; production review remains open

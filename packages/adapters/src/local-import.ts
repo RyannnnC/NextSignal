@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { Pool } from 'pg';
 import type { PGlite } from '@electric-sql/pglite';
-import { Profile, Evidence, Report } from '@kyb/contracts';
+import { Profile, Evidence, Report } from '@nextsignal/contracts';
 
 export const DATA_TABLES=[
   'auth.users','public.workspaces','public.projects','public.profile_versions','public.consent_events',

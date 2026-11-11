@@ -17,7 +17,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.getByRole('heading',{level:1})).toContainText('Know your market.');
   expect(await page.getByLabel('Test business idea',{exact:true}).count()).toBe(0);
   const logo=page.locator('.hero img');
-  await expect(logo).toHaveAttribute('alt','Next Signal');
+  await expect(logo).toHaveAttribute('alt','NextSignal');
   expect(await logo.evaluate((image: HTMLImageElement)=>Number(image.getAttribute('width'))/Number(image.getAttribute('height')))).toBe(3);
   expect(await logo.evaluate(image=>image.getBoundingClientRect().width/image.getBoundingClientRect().height)).toBeCloseTo(3,2);
   const icon=await page.locator('link[rel="icon"]').getAttribute('href');
@@ -47,7 +47,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.getByRole('button',{name:'登录本地账号',exact:true})).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
-  await page.getByRole('link',{name:'Next Signal',exact:true}).click();
+  await page.getByRole('link',{name:'NextSignal',exact:true}).click();
   await expect(page).toHaveURL('http://127.0.0.1:3000/');
   await expect(page.getByRole('heading',{level:1})).toContainText('看清你的市场。');
   await page.reload();
