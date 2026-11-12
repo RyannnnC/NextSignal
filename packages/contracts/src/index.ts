@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { LocalGeography, LocalOpportunityComparison, LocalOpportunityInput, SydneyAreaId } from './local-opportunity';
+export * from './local-opportunity';
 
 /** 固定本地接口的路径与方法组合，供浏览器网关和 worker 共同拒绝未声明的操作。 */
 export function isFixtureRoute(path: string, method: string): boolean {
@@ -33,8 +35,9 @@ export const Profile = z.object({
   customer: z.string().trim().min(1).max(500),
   problem: z.string().trim().min(1).max(1000),
   geography: Geography,
-  assumptions: z.array(z.string().min(1).max(500)).max(8)
-}).strict();
+  assumptions: z.array(z.string().min(1).max(500)).max(8),
+  localOpportunity: LocalOpportunityInput.optional(),
+}).strict().refine(profile => !profile.localOpportunity || profile.geography.state === 'NSW', 'The Sydney comparison requires NSW geography');
 export const CreateProject = z.object({
   idea: z.string().trim().min(10).max(3000),
   geography: Geography,
@@ -42,19 +45,27 @@ export const CreateProject = z.object({
   noticeVersion: z.literal('local-fixture-v1'),
   marketingOptIn: z.boolean().default(false),
   scenario: Scenario.default('normal'),
-  requestKey: Id
-}).strict();
+  requestKey: Id,
+  localOpportunity: LocalOpportunityInput.extend({ targetCustomer: z.string().trim().min(1).max(500) }).optional(),
+}).strict().refine(project => !project.localOpportunity || project.scenario === 'normal', 'The Sydney comparison uses the normal fixture scenario');
 export const ConfirmProfile = z.object({ profileId: Id, profile: Profile, requestKey: Id }).strict();
 export const StartRun = z.object({ profileId: Id, requestKey: Id }).strict();
 export const Login = z.object({ account: z.enum(['alice', 'bob']) }).strict();
 
 export const Evidence = z.object({
   id: Id, workspaceId: Id, projectId: Id, runId: Id,
-  provider: z.literal('fixture'), synthetic: z.literal(true),
-  sourceRef: z.string().min(1), licenseId: z.literal('fixture-local-v1'),
+  provider: z.enum(['fixture', 'abs']), synthetic: z.boolean(),
+  sourceRef: z.string().min(1), licenseId: z.enum(['fixture-local-v1', 'abs-census-cc-by-4']),
+  abs: z.object({
+    dataflowId: z.literal('C21_G01_SAL'), dataflowVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+    structureVersion: z.string().regex(/^\d+\.\d+\.\d+$/), region: z.string().regex(/^\d{5}$/),
+    period: z.literal('2021'), observationStatus: z.string().optional(),
+  }).strict().optional(),
   classification: z.enum(['VERIFIED_SOURCE', 'RECORDED_SAMPLE', 'HYPOTHESIS', 'NOT_AVAILABLE']).optional(),
   citation: z.object({ name: z.string().min(1), url: z.url({ protocol: /^https$/ }), checkedOn: z.iso.date() }).strict().optional(),
   scope: z.string().min(1).optional(),
+  localArea: z.object({ id: SydneyAreaId, location: LocalGeography }).strict().optional(),
+  attribution: z.object({ license: z.string().min(1), url: z.url({ protocol: /^https$/ }) }).strict().optional(),
   retrievedAt: Timestamp,
   observedPeriod: z.object({ from: Timestamp, to: Timestamp }).strict().optional(),
   geography: Geography,
@@ -66,6 +77,15 @@ export const Evidence = z.object({
   limitations: z.array(z.string().min(1)).min(1),
   stale: z.boolean()
 }).strict().superRefine((e, ctx) => {
+  const mapping = e.localArea?.location.mapping;
+  const validProvider = e.provider === 'fixture'
+    ? e.synthetic && e.licenseId === 'fixture-local-v1' && !e.abs
+    : !e.synthetic && e.licenseId === 'abs-census-cc-by-4' && e.abs && mapping?.status === 'verified' &&
+      mapping.sourceId === `SAL${e.abs.region}` && e.metric === 'market_context' && e.unit === 'people' &&
+      e.citation && new URL(e.citation.url).hostname === 'data.api.abs.gov.au' && e.attribution &&
+      (e.classification === 'NOT_AVAILABLE' || (e.classification === 'VERIFIED_SOURCE' &&
+        typeof e.value === 'number' && Number.isSafeInteger(e.value) && e.value >= 0));
+  if (!validProvider) ctx.addIssue({ code: 'custom', message: 'Invalid evidence provider provenance' });
   if (e.classification === 'NOT_AVAILABLE' && e.value !== null) ctx.addIssue({ code: 'custom', message: 'Unavailable evidence must have a null value' });
   if ((e.classification === 'VERIFIED_SOURCE' || e.classification === 'RECORDED_SAMPLE') && (!e.citation || e.value === null || !e.scope)) {
     ctx.addIssue({ code: 'custom', message: 'Sourced evidence requires a citation, scope and value' });
@@ -97,9 +117,10 @@ export const Action = z.object({
 }).strict();
 export const Report = z.object({
   schemaVersion: z.literal('1'), id: Id, workspaceId: Id, projectId: Id, runId: Id, profileId: Id,
-  synthetic: z.literal(true), title: z.literal('Local fixture snapshot — not market research'),
+  synthetic: z.literal(true), title: z.enum(['Local fixture snapshot — not market research', 'Local Opportunity Brief']),
   createdAt: Timestamp, geography: Geography,
   referenceProfile: Profile.optional(),
+  localOpportunity: LocalOpportunityComparison.optional(),
   evidence: z.array(Evidence), findings: z.array(Finding).min(1), actions: z.array(Action).length(3),
   limitations: z.array(z.string()).min(1), humanReviewed: z.literal(false)
 }).strict();

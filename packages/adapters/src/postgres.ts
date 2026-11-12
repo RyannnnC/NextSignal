@@ -31,6 +31,13 @@ export class PostgresDatabase implements Database {
       } });
     });
   }
+  /** 公共统计缓存使用受限 worker 角色及相同的事务时限。 */
+  async asWorker<T>(work: (tx: Transaction) => Promise<T>): Promise<T> {
+    return this.transaction(this.queuePool, 'kyb_worker', async client => work({ query: async <R>(sql: string, parameters?: unknown[]) => {
+      const result = await client.query<Record<string, unknown>>(sql, parameters);
+      return { rows: result.rows as R[] };
+    } }));
+  }
   /** 使用受限 worker 角色调用领任务函数并校验返回值。 */
   async claimJob() {
     return this.transaction(this.queuePool, 'kyb_worker', async client => {

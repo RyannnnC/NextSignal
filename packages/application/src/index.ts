@@ -1,4 +1,15 @@
-import type { Evidence, Profile, Scenario } from '@nextsignal/contracts';
+import type { Evidence, LocalOpportunityInput, Profile, Scenario } from '@nextsignal/contracts';
+
+export interface AbsPopulationResult {
+  dataflowVersion: string;
+  structureVersion: string;
+  sourceUrl: string;
+  collectedAt: string;
+  observations: { region: string; value: number | null; status?: string | undefined }[];
+}
+export interface AbsPopulationProvider {
+  population(ids: LocalOpportunityInput['areaIds'], signal: AbortSignal): Promise<AbsPopulationResult>;
+}
 
 export interface ProviderContext {
   workspaceId: string; projectId: string; runId: string;

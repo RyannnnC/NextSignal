@@ -103,6 +103,46 @@ test('Sydney reference report preserves provenance and stays private after reope
   } finally { await page.request.delete(`/api/projects/${id}`, { headers: origin }); }
 });
 
+test('local opportunity brief saves three locations and survives refresh with owner isolation', async ({ page, browser }) => {
+  await login(page);
+  await page.getByRole('button', { name: 'Load three-area comparison example' }).click();
+  await page.getByLabel('Startup budget (AUD, optional)', { exact: true }).fill('1200');
+  await page.getByRole('checkbox', { name: /I understand/ }).check();
+  const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
+  const { id } = await (await created).json() as { id: string };
+  const origin = { origin: 'http://127.0.0.1:3000' };
+  try {
+    await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Students and young professionals');
+    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
+    await page.getByRole('button', { name: 'Run fixture snapshot' }).click();
+    await page.getByRole('link', { name: 'View report 1', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Local Opportunity Brief' })).toBeVisible();
+    const url = page.url();
+    const before = await (await page.request.get(`/api/projects/${id}`)).json();
+    await page.reload();
+    for (const name of ['Haymarket', 'Burwood (NSW)', 'Chatswood']) await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await expect(page.getByText('8,305 people · 2021 Census', { exact: true })).toBeVisible();
+    if (process.env.NEXTSIGNAL_ABS_ENABLED === '1') {
+      await expect(page.getByText('Development report with ABS data', { exact: true })).toBeVisible();
+      await expect(page.getByText('18,224 people · 2021 Census', { exact: true })).toBeVisible();
+      await expect(page.getByText('25,553 people · 2021 Census', { exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: /ABS Data API/ }).first()).toHaveAttribute('href', /^https:\/\/data\.api\.abs\.gov\.au\/rest\/data\//);
+    }
+    await expect(page.getByText('NOT_AVAILABLE', { exact: true })).toHaveCount(6);
+    await expect(page.getByText(/A\$1,200/)).toBeVisible();
+    await page.setViewportSize({ width: 375, height: 812 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    expect(await (await page.request.get(`/api/projects/${id}`)).json()).toEqual(before);
+    const other = await browser.newPage();
+    try {
+      await login(other, 'bob');
+      await other.goto(url);
+      await expect(other.getByRole('alert').filter({ hasText: 'belong to another account' })).toBeVisible();
+    } finally { await other.close(); }
+  } finally { await page.request.delete(`/api/projects/${id}`, { headers: origin }); }
+});
+
 test('HTTP boundaries: anonymous, CSRF, forged tenant, disabled URL input and request cap', async ({ page, browser }) => {
   const origin = { origin: 'http://127.0.0.1:3000' };
   expect((await page.request.post('/api/health', { headers: origin, data: {} })).status()).toBe(404);

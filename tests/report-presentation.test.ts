@@ -3,8 +3,9 @@ import { randomUUID } from 'node:crypto';
 import { FixtureProvider, LOCAL_ACCOUNTS, openFixtureDatabase, type FixtureDatabase } from '@nextsignal/adapters';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
+import { LOCAL_OPPORTUNITY_EXAMPLE, SydneyAreaId } from '@nextsignal/contracts';
 import { presentReport, reportPath, reportReturnPath } from '../apps/web/lib/report-presentation';
-import { prepared } from './helpers';
+import { createInput, prepared } from './helpers';
 
 let db: FixtureDatabase;
 beforeAll(async () => { db = await openFixtureDatabase(); });
@@ -27,4 +28,21 @@ it('allows only canonical internal report return paths', () => {
   const path = reportPath(randomUUID(),randomUUID());
   expect(reportReturnPath(path)).toBe(path);
   for (const invalid of ['https://example.com', '//example.com', '/validate', path+'?next=evil', path+'/..', '/projects/not-a-uuid/reports/x', ['x']]) expect(reportReturnPath(invalid)).toBeUndefined();
+});
+
+it('persists unavailable population with no recorded fallback when ABS fails', async () => {
+  const projects = new Projects(db), actor = LOCAL_ACCOUNTS.alice;
+  const id = await projects.create(actor, {
+    ...createInput(), idea: LOCAL_OPPORTUNITY_EXAMPLE,
+    localOpportunity: { category: 'computer_repair', primaryMarket: 'sydney-nsw', areaIds: SydneyAreaId.options, targetCustomer: 'Students' },
+  });
+  const draft = (await projects.get(actor, id)).profiles[0]!;
+  const profileId = await projects.confirm(actor, id, { profileId: draft.id, profile: draft.content, requestKey: randomUUID() });
+  await projects.start(actor, id, { profileId, requestKey: randomUUID() });
+  await new ResearchRunner(db, new FixtureProvider(), { async population() { throw new Error('ABS offline'); } }).processOne();
+  const report = (await projects.get(actor, id)).reports[0]!;
+  expect(report.localOpportunity?.areas).toHaveLength(3);
+  const population = report.evidence.filter(item => item.metric === 'market_context');
+  expect(population).toHaveLength(3);
+  expect(population.every(item => item.classification === 'NOT_AVAILABLE' && item.value === null && !item.citation)).toBe(true);
 });

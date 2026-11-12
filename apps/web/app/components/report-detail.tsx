@@ -38,7 +38,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
     return () => window.removeEventListener('focus',refresh);
   },[]);
   return <div className="workspace"><h1>{t('Private fixture report')}</h1>
-    <p>{t('Private by default')} · {t('Synthetic fixture')} · {t('Not human reviewed')}</p>
+    <p>{t('Private by default')} · {t('Not human reviewed')}</p>
     {state === 'loading' && <p role="status">{t('Loading report…')}</p>}
     {state === 'signin' && <section><h2>{t('Sign in to view this report')}</h2><p>{t('Reports are only available to their local account.')}</p><Link className="button" href={`/validate?next=${encodeURIComponent(reportPath(projectId,reportId))}`}>{t('Sign in locally')}</Link></section>}
     {state === 'missing' && <p role="alert" className="empty">{t('Report unavailable. It may have been deleted or belong to another account.')}</p>}

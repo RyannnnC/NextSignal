@@ -32,6 +32,20 @@ export function validateReport(input: unknown): Report {
     if (evidence.has(item.id) || item.workspaceId !== report.workspaceId || item.projectId !== report.projectId || item.runId !== report.runId) throw new DomainError('invalid_evidence_scope');
     evidence.set(item.id, item);
   }
+  if (report.localOpportunity) {
+    const { input, areas } = report.localOpportunity;
+    if (report.title !== 'Local Opportunity Brief' || areas.length !== input.areaIds.length || areas.some((area, index) => area.id !== input.areaIds[index])) throw new DomainError('invalid_local_comparison');
+    for (const area of areas) {
+      for (const id of area.evidenceIds) {
+        const source = evidence.get(id)?.localArea;
+        if (source?.id !== area.id || source.location.type !== area.location.type || source.location.state !== area.location.state ||
+          source.location.mapping.status !== 'verified' || area.location.mapping.status !== 'verified' ||
+          source.location.mapping.sourceId !== area.location.mapping.sourceId || source.location.mapping.datasetVersion !== area.location.mapping.datasetVersion) {
+          throw new DomainError('invalid_local_evidence_scope');
+        }
+      }
+    }
+  } else if (report.title === 'Local Opportunity Brief') throw new DomainError('missing_local_comparison');
   const findingIds = new Set<string>();
   for (const finding of report.findings) {
     if (findingIds.has(finding.id)) throw new DomainError('duplicate_finding');

@@ -2,14 +2,16 @@
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { FIXTURE_NOTICE, ProjectView, SessionView, SYDNEY_REFERENCE_IDEA, type Profile, type Scenario } from '@nextsignal/contracts';
+import { FIXTURE_NOTICE, LOCAL_OPPORTUNITY_EXAMPLE, LocalOpportunityInput, ProjectView, SessionView, SYDNEY_REFERENCE_IDEA, SydneyAreaId, type Profile, type Scenario } from '@nextsignal/contracts';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
 import { api } from '../lib/client-api';
 import { reportPath } from '../lib/report-presentation';
+import { LocalOpportunityFields } from './components/local-opportunity-fields';
 
 const IdResponse = z.object({ id: z.uuid() }).strict();
+const defaultOpportunity: LocalOpportunityInput = { category: 'computer_repair', primaryMarket: 'sydney-nsw', areaIds: ['haymarket'] };
 /** 管理本地 M1 的登录、项目确认和研究状态。 */
 export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: string | undefined; returnTo?: string | undefined}) {
   const {t} = useLanguage();
@@ -22,6 +24,8 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
   const [message, setMessage] = useState('Checking local session…');
   const [error, setError] = useState('');
   const ideaInput = useRef<HTMLTextAreaElement>(null);
+  const [opportunity, setOpportunity] = useState<LocalOpportunityInput | null>(null);
+  const [targetCustomer, setTargetCustomer] = useState('');
   /** 从服务端刷新当前用户可见的项目列表。 */
   const refreshList = useCallback(async () => {
     setProjects(z.object({ ids: z.array(z.uuid()) }).parse(await api('projects')).ids);
@@ -62,8 +66,9 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
     event.preventDefault();
     const form = event.currentTarget; const data = new FormData(form);
     void act(async () => {
-      const result = IdResponse.parse(await api('projects', 'POST', { idea: data.get('idea'), geography: { country: 'AU', granularity: 'national' }, processingConsent: data.get('consent') === 'on', noticeVersion: 'local-fixture-v1', marketingOptIn: data.get('marketing') === 'on', scenario: data.get('scenario') as Scenario, requestKey: crypto.randomUUID() }));
+      const result = IdResponse.parse(await api('projects', 'POST', { idea: data.get('idea'), geography: { country: 'AU', granularity: 'national' }, processingConsent: data.get('consent') === 'on', noticeVersion: 'local-fixture-v1', marketingOptIn: data.get('marketing') === 'on', scenario: opportunity ? 'normal' : data.get('scenario') as Scenario, requestKey: crypto.randomUUID(), ...(opportunity ? { localOpportunity: { ...LocalOpportunityInput.parse(opportunity), targetCustomer } } : {}) }));
       await refreshList(); await open(result.id); setMessage('Profile placeholder prepared. Correct and confirm before research.'); form.reset();
+      setOpportunity(null); setTargetCustomer('');
     });
   }
   const latest = project?.profiles.at(-1);
@@ -84,11 +89,23 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
           <button type="button" className="secondary" disabled={busy} onClick={() => {
             const input = ideaInput.current;
             if (input) { input.value = SYDNEY_REFERENCE_IDEA; input.focus(); }
+            setOpportunity(null);
           }}>{t('Load Sydney repair example')}</button>
+          <button type="button" className="secondary" disabled={busy} onClick={() => {
+            if (ideaInput.current) ideaInput.current.value = LOCAL_OPPORTUNITY_EXAMPLE;
+            setOpportunity({ ...defaultOpportunity, areaIds: [...SydneyAreaId.options] });
+            setTargetCustomer('Students and young professionals');
+          }}>{t('Load three-area comparison example')}</button>
+          <label className="checkbox-label"><input type="checkbox" checked={opportunity !== null} onChange={event => setOpportunity(event.target.checked ? defaultOpportunity : null)} /> {t('Compare Sydney repair locations')}</label>
+          {opportunity && <>
+            <label htmlFor="comparison-customer">{t('Target customer hypothesis')}</label>
+            <input id="comparison-customer" value={targetCustomer} onChange={event => setTargetCustomer(event.target.value)} required maxLength={500} />
+            <LocalOpportunityFields value={opportunity} onChange={setOpportunity} prefix="draft" />
+          </>}
           <label className="checkbox-label"><input type="checkbox" name="consent" required /> {t('I understand the local processing notice.')}</label>
           <label className="checkbox-label"><input type="checkbox" name="marketing" /> {t('Record optional marketing interest (no messages are sent).')}</label>
-          <label htmlFor="scenario">{t('Development fixture scenario')}</label><select id="scenario" name="scenario">{['normal', 'missing', 'contradictory', 'timeout', 'malformed', 'quota'].map(s => <option key={s} value={s}>{t(s)}</option>)}</select>
-          <button disabled={busy}>{t('Prepare fixture profile')}</button>
+          {!opportunity && <><label htmlFor="scenario">{t('Development fixture scenario')}</label><select id="scenario" name="scenario">{['normal', 'missing', 'contradictory', 'timeout', 'malformed', 'quota'].map(s => <option key={s} value={s}>{t(s)}</option>)}</select></>}
+          <button disabled={busy || opportunity?.areaIds.length === 0}>{t('Prepare fixture profile')}</button>
         </form>
       </section>
       <section aria-labelledby="projects"><h2 id="projects">{t('Private local projects')}</h2>{projects.length === 0 && <p className="empty">{t('No projects yet.')}</p>}{projects.map((id, i) => <button className="secondary" key={id} disabled={busy} onClick={() => { void act(async () => { await open(id); setMessage('Project loaded.'); }); }}>{t('Open project')} {i + 1}</button>)}</section>
@@ -98,7 +115,8 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
           <label htmlFor="summary">{t('Idea summary — founder statement')}</label><textarea id="summary" value={profile.summary} onChange={e => setProfile({ ...profile, summary: e.target.value })} required maxLength={3000} />
           <label htmlFor="customer">{t('Intended customer — founder statement')}</label><input id="customer" value={profile.customer==='Unknown — please describe the intended customer'?t(profile.customer):profile.customer} onChange={e => setProfile({ ...profile, customer: e.target.value })} required maxLength={500} />
           <label htmlFor="problem">{t('Problem to solve — founder statement')}</label><input id="problem" value={profile.problem==='Unknown — please describe the problem to solve'?t(profile.problem):profile.problem} onChange={e => setProfile({ ...profile, problem: e.target.value })} required maxLength={1000} />
-          <p className="hypothesis"><strong>{t('Hypothesis')}:</strong> {profile.assumptions.map(a=>a==='The intended customer experiences this problem. This has not been researched.'?t(a):a).join(' ')}</p><button disabled={busy}>{t('Confirm corrected profile')}</button>
+          {profile.localOpportunity && <LocalOpportunityFields value={profile.localOpportunity} onChange={localOpportunity => setProfile({ ...profile, localOpportunity })} prefix="confirm" />}
+          <p className="hypothesis"><strong>{t('Hypothesis')}:</strong> {profile.assumptions.map(a=>a==='The intended customer experiences this problem. This has not been researched.'?t(a):a).join(' ')}</p><button disabled={busy || profile.localOpportunity?.areaIds.length === 0}>{t('Confirm corrected profile')}</button>
         </form>
         <div className="button-row"><button disabled={busy || latest.status !== 'confirmed'} onClick={() => { void act(async () => { await api(`projects/${project.id}/runs`, 'POST', { profileId: latest.id, requestKey: crypto.randomUUID() }); await open(project.id, false); setMessage('Fixture run queued.'); }); }}>{t('Run fixture snapshot')}</button>
         <button className="secondary" disabled={busy} onClick={() => { void act(async () => { await open(project.id); setMessage('Project refreshed.'); }); }}>{t('Refresh project')}</button></div>
@@ -106,7 +124,7 @@ export function FixtureApp({initialProjectId, returnTo}: {initialProjectId?: str
         <div className="project-controls"><button className="danger secondary" disabled={busy} onClick={() => { void act(async () => { await api(`projects/${project.id}`, 'DELETE'); setProject(null); setProfile(null); await refreshList(); setMessage('Project input, versions, runs and reports deleted from the local database.'); }); }}>{t('Delete project and reports')}</button></div>
         <h3>{t('Research runs')}</h3>{project.runs.length === 0 && <p>{t('No run has started.')}</p>}{project.runs.map(run => <p className="run-status" key={run.id}>{t('Status')}: <strong>{t(run.status)}</strong>{run.errorCode && ` — ${t(run.errorCode)}`}{!['completed', 'partial', 'failed', 'cancelled'].includes(run.status) && <button className="secondary" disabled={busy} onClick={() => { void act(async () => { await api(`projects/${project.id}/cancel`, 'POST', { runId: run.id }); await open(project.id, false); setMessage('Run cancelled.'); }); }}>{t('Cancel run')}</button>}</p>)}
         <h3>{t('Report versions')}</h3>{project.reports.length === 0 && <p className="empty">{t('No report yet. Failed runs do not fabricate a report.')}</p>}
-        {project.reports.map((report,index)=><article key={report.id} aria-label={`${t('Fixture report')} ${index+1}`}><h4>{t('Fixture report')} {index+1}</h4><p>{t('Synthetic fixture')} · {t('Not human reviewed')}</p><Link className="button" href={reportPath(project.id,report.id)}>{t('View report')} {index+1}</Link></article>)}
+        {project.reports.map((report,index)=><article key={report.id} aria-label={`${t('Fixture report')} ${index+1}`}><h4>{t('Fixture report')} {index+1}</h4><p>{t(report.evidence.some(item => item.provider === 'abs') ? 'Development report with ABS data' : 'Synthetic fixture')} · {t('Not human reviewed')}</p><Link className="button" href={reportPath(project.id,report.id)}>{t('View report')} {index+1}</Link></article>)}
       </section>}
     </>}
     </div>;

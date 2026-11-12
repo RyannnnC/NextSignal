@@ -6,8 +6,9 @@ import type { Database, Transaction } from '@nextsignal/application';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider } from '@nextsignal/adapters';
-import { SYDNEY_REFERENCE_IDEA } from '@nextsignal/contracts';
-import { prepared } from '../../tests/helpers.js';
+import { AbsProvider, PostgresAbsCache } from '@nextsignal/adapters/abs-provider';
+import { LOCAL_OPPORTUNITY_EXAMPLE, SydneyAreaId } from '@nextsignal/contracts';
+import { createInput } from '../../tests/helpers.js';
 
 /** 用两个合成身份验证托管库的服务层和租户隔离，最后回滚所有测试数据。 */
 export async function verifyHostedPersistence(client: Client) {
@@ -39,6 +40,12 @@ export async function verifyHostedPersistence(client: Client) {
     }
 
     const tx: Transaction = { query: async <T>(sql: string, values?: unknown[]) => ({ rows: (await client.query(sql, values)).rows as T[] }) };
+    const cache = new PostgresAbsCache(work => asRole('kyb_worker', () => work(tx)));
+    let absRequests = 0;
+    const abs = process.env.NEXTSIGNAL_ABS_VERIFY === '1' ? new AbsProvider(cache, (url, options) => {
+      absRequests++;
+      return fetch(url, options);
+    }) : undefined;
     const db: Database = {
       asUser: (userId, work) => asRole('kyb_app', async () => {
         await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
@@ -62,13 +69,37 @@ export async function verifyHostedPersistence(client: Client) {
     const owner = await actor(), other = await actor();
     phase = 'running the project, profile and research services';
     const projects = new Projects(db);
-    const { id } = await prepared(projects, owner, 'normal', SYDNEY_REFERENCE_IDEA);
-    await new ResearchRunner(db, new FixtureProvider()).processOne();
+    const id = await projects.create(owner, {
+      ...createInput(), idea: LOCAL_OPPORTUNITY_EXAMPLE,
+      localOpportunity: { category: 'computer_repair', primaryMarket: 'sydney-nsw', areaIds: SydneyAreaId.options, targetCustomer: 'Students and young professionals' },
+    });
+    const draft = (await projects.get(owner, id)).profiles[0]!;
+    const profileId = await projects.confirm(owner, id, { profileId: draft.id, profile: draft.content, requestKey: randomUUID() });
+    await projects.start(owner, id, { profileId, requestKey: randomUUID() });
+    await new ResearchRunner(db, new FixtureProvider(), abs).processOne();
     const report = (await new Projects(db).get(owner, id)).reports[0];
     assert.ok(report?.synthetic);
-    assert.equal(report.referenceProfile?.summary, SYDNEY_REFERENCE_IDEA);
-    assert.equal(report.evidence.filter(item => item.classification === 'VERIFIED_SOURCE').length, 2);
-    assert.ok(report.evidence.some(item => item.classification === 'NOT_AVAILABLE' && item.value === null));
+    assert.equal(report.referenceProfile?.summary, LOCAL_OPPORTUNITY_EXAMPLE);
+    assert.deepEqual(report.localOpportunity?.areas.map(area => area.id), SydneyAreaId.options);
+    assert.equal(report.evidence.filter(item => item.classification === (abs ? 'VERIFIED_SOURCE' : 'RECORDED_SAMPLE')).length, 3);
+    if (abs) {
+      phase = 'checking live ABS values, provenance and shared cache';
+      assert.deepEqual(report.evidence.filter(item => item.provider === 'abs').map(item => item.value), [8305, 18224, 25553]);
+      assert.ok(report.evidence.filter(item => item.provider === 'abs').every(item => item.abs && item.citation && item.attribution));
+      const before = absRequests;
+      const cached = await abs.population([...SydneyAreaId.options].reverse(), AbortSignal.timeout(16_000));
+      assert.equal(absRequests, before, 'Cache hit must not call ABS again');
+      const cacheKey = await asRole('kyb_worker', async () => (await tx.query<{ cache_key: string }>(
+        "select cache_key from kyb_private.abs_observation_cache where payload->>'sourceUrl'=$1 and collected_at=$2::timestamptz", [cached.sourceUrl, cached.collectedAt]
+      )).rows[0]?.cache_key);
+      assert.ok(cacheKey, 'The verified snapshot must exist in the shared cache');
+      await asRole('kyb_worker', async () => {
+        await tx.query("update kyb_private.abs_observation_cache set collected_at=now()-interval '8 days', expires_at=now()-interval '1 day' where cache_key=$1", [cacheKey]);
+      });
+      assert.equal(await cache.read(cacheKey), undefined, 'Expired entries must be skipped');
+      console.log(`ABS hosted smoke used ${before} live HTTP requests before cache hit.`);
+    }
+    assert.equal(report.evidence.filter(item => item.classification === 'NOT_AVAILABLE' && item.value === null).length, 6);
     assert.deepEqual((await new Projects(db).get(owner, id)).reports[0], report);
     await assert.rejects(projects.get(other, id), /not_found/);
     await assert.rejects(projects.create({ userId: other.userId, workspaceId: owner.workspaceId }, {
@@ -79,6 +110,10 @@ export async function verifyHostedPersistence(client: Client) {
     const anonymous = await client.query(`select has_table_privilege('anon', 'public.projects', 'SELECT') as projects,
       has_function_privilege('anon', 'public.claim_fixture_job()', 'EXECUTE') as claim`);
     assert.deepEqual(anonymous.rows[0], { projects: false, claim: false });
+    const cachePrivileges = await client.query(`select has_table_privilege('anon', 'kyb_private.abs_observation_cache', 'SELECT') as anon,
+      has_table_privilege('authenticated', 'kyb_private.abs_observation_cache', 'SELECT') as authenticated,
+      has_table_privilege('kyb_app', 'kyb_private.abs_observation_cache', 'SELECT') as app`);
+    assert.deepEqual(cachePrivileges.rows[0], { anon: false, authenticated: false, app: false });
     await asRole('kyb_app', async () => {
       assert.equal((await client.query('select kyb_private.current_actor() as actor')).rows[0]?.actor, null);
       assert.equal((await client.query('select id from public.projects')).rowCount, 0);

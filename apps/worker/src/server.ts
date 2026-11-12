@@ -7,12 +7,12 @@ import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider } from '@nextsignal/adapters';
 import type { FixtureSessions } from '@nextsignal/adapters/local-sessions';
-import type { Actor, Database } from '@nextsignal/application';
+import type { AbsPopulationProvider, Actor, Database } from '@nextsignal/application';
 
 /** 创建本地 HTTP 服务及复用同一数据库的 fixture 执行器。 */
-export function createFixtureServer(db: Database, sessions: FixtureSessions, key: string) {
+export function createFixtureServer(db: Database, sessions: FixtureSessions, key: string, abs?: AbsPopulationProvider) {
   const projects = new Projects(db);
-  const runner = new ResearchRunner(db, new FixtureProvider());
+  const runner = new ResearchRunner(db, new FixtureProvider(), abs);
   const server = createServer((req, res) => { void handle(req, res).catch(() => send(res, 500, { error: 'Local request failed', code: 'internal_error' })); });
   server.requestTimeout = 5000;
   server.headersTimeout = 5000;

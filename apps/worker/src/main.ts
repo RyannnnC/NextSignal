@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { readRuntimeConfig } from '@nextsignal/adapters/local-config';
 import { openLocalRuntime } from '@nextsignal/adapters/local-postgres';
+import { AbsProvider, PostgresAbsCache } from '@nextsignal/adapters/abs-provider';
 import { access } from 'node:fs/promises';
 import { createFixtureServer } from './server.js';
 
@@ -15,10 +16,12 @@ const local = openLocalRuntime(await readRuntimeConfig(root));
 const ready=await local.db.asUser('00000000-0000-4000-8000-000000000001',tx=>tx.query('select id from public.workspaces limit 1'));
 if(!ready.rows.length){await local.close();throw new Error('Native local database is not initialized/migrated. Run db:migrate or npm run dev first.');}
 const key = randomBytes(32).toString('hex');
-const { server, runner } = createFixtureServer(local.db, local.sessions, key);
+const abs = process.env.NEXTSIGNAL_ABS_ENABLED === '1'
+  ? new AbsProvider(new PostgresAbsCache(work => local.db.asWorker(work))) : undefined;
+const { server, runner } = createFixtureServer(local.db, local.sessions, key, abs);
 server.listen(4311, '127.0.0.1', async () => {
   await writeFile(resolve(root, '.local/runtime.json'), JSON.stringify({ url: 'http://127.0.0.1:4311', key }), { mode: 0o600 });
-  console.log('Fixture worker ready at 127.0.0.1:4311 using Docker PostgreSQL. External providers disabled.');
+  console.log(`Worker ready at 127.0.0.1:4311 using Docker PostgreSQL. ABS ${abs ? 'enabled' : 'disabled'}.`);
 });
 let active = false;
 const timer = setInterval(() => {

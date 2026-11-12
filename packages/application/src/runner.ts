@@ -2,8 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { Evidence, isSydneyReferenceIdea, Profile, RunStatus, Scenario, type Report } from '@nextsignal/contracts';
 import { assertBudget, assertTransition, DomainError, validateReport } from '@nextsignal/domain';
-import type { Database, ResearchProvider, Transaction } from './index.js';
+import type { AbsPopulationProvider, Database, ResearchProvider, Transaction } from './index.js';
 import { createSydneyReferenceReport } from './sydney-reference.js';
+import { createLocalOpportunityReport } from './local-opportunity.js';
 
 const RunRow = z.object({ id: z.uuid(), workspace_id: z.uuid(), project_id: z.uuid(), profile_id: z.uuid(), status: RunStatus, max_calls: z.number(), calls_used: z.number(), scenario: Scenario, idea: z.string(), content: Profile });
 type RunRow = z.infer<typeof RunRow>;
@@ -24,7 +25,7 @@ async function transition(tx: Transaction, run: RunRow, to: z.infer<typeof RunSt
 }
 export class ResearchRunner {
   /** 注入数据库和具有明确能力边界的研究提供器。 */
-  constructor(private readonly db: Database, private readonly provider: ResearchProvider) {}
+  constructor(private readonly db: Database, private readonly provider: ResearchProvider, private readonly abs?: AbsPopulationProvider) {}
   /** 处理一条有租约的任务，写入证据和报告或记录失败。 */
   async processOne(): Promise<boolean> {
     const job = await this.db.claimJob();
@@ -42,10 +43,14 @@ export class ResearchRunner {
         return run;
       });
       if (!run) return true;
-      const signal = AbortSignal.timeout(1000);
       const reference = run.scenario === 'normal' && isSydneyReferenceIdea(run.idea) && isSydneyReferenceIdea(run.content.summary) && run.content.geography.state === 'NSW';
-      const report = reference
-        ? createSydneyReferenceReport({ workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, profileId: run.profile_id }, run.content)
+      const ids = { workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, profileId: run.profile_id };
+      const local = run.scenario === 'normal' ? run.content.localOpportunity : undefined;
+      const abs = local && this.abs ? await this.abs.population(local.areaIds, AbortSignal.timeout(16_000)).catch(() => null) : undefined;
+      const signal = AbortSignal.timeout(1000);
+      const report = local
+        ? createLocalOpportunityReport(ids, run.content, local, abs)
+        : reference ? createSydneyReferenceReport(ids, run.content)
         : makeFixtureReport(run, z.array(Evidence).parse(await this.provider.collect({ workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, scenario: run.scenario, profile: run.content, signal })));
       signal.throwIfAborted();
       await this.db.asUser(job.userId, async tx => {

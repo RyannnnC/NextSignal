@@ -49,12 +49,14 @@ export class Projects {
       const id = randomUUID();
       await tx.query('insert into public.projects(id,workspace_id,idea,scenario,request_key,request_hash) values($1,$2,$3,$4,$5,$6)', [id, actor.workspaceId, data.idea, data.scenario, data.requestKey, requestHash]);
       const reference = data.scenario === 'normal' && isSydneyReferenceIdea(data.idea);
+      const { targetCustomer, ...comparison } = data.localOpportunity ?? {};
       const profile: ProfileType = Profile.parse({
         summary: data.idea,
-        customer: reference ? 'International students in Sydney who depend on a laptop for coursework' : 'Unknown — please describe the intended customer',
+        customer: targetCustomer ?? (reference ? 'International students in Sydney who depend on a laptop for coursework' : 'Unknown — please describe the intended customer'),
         problem: reference ? 'A laptop fault can interrupt coursework when a reliable repair is hard to arrange.' : 'Unknown — please describe the problem to solve',
-        geography: reference ? { country: 'AU', state: 'NSW', granularity: 'state' } : data.geography,
-        assumptions: reference ? ['A clear diagnostic quote and a campus-area drop-off may make independent repair easier to book.'] : ['The intended customer experiences this problem. This has not been researched.']
+        geography: reference || data.localOpportunity ? { country: 'AU', state: 'NSW', granularity: 'state' } : data.geography,
+        assumptions: reference ? ['A clear diagnostic quote and a campus-area drop-off may make independent repair easier to book.'] : ['The intended customer experiences this problem. This has not been researched.'],
+        ...(data.localOpportunity ? { localOpportunity: comparison } : {}),
       });
       await tx.query('insert into public.profile_versions(workspace_id,project_id,version,content,status,request_key,request_hash) values($1,$2,1,$3,$4,$5,$6)', [actor.workspaceId, id, profile, 'awaiting_confirmation', data.requestKey, requestHash]);
       await tx.query('insert into public.consent_events(workspace_id,project_id,notice_version,processing_consent,marketing_opt_in) values($1,$2,$3,true,$4)', [actor.workspaceId, id, data.noticeVersion, data.marketingOptIn]);
