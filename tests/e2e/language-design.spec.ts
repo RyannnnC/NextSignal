@@ -13,7 +13,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   });
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Test your business idea in Australia');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Find your next business opportunity.');
   await page.evaluate(()=>document.fonts.ready);
   expect(await page.evaluate(()=>document.fonts.check('16px "DM Sans Variable"'))).toBe(true);
   expect(await page.evaluate(()=>Array.from(document.fonts).some(f=>f.family.includes('DM Sans Variable')&&f.status==='loaded'))).toBe(true);
@@ -21,7 +21,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   await page.screenshot({path:'artifacts/design-en-desktop.png',fullPage:false});
   await page.getByRole('button',{name:'简体中文',exact:true}).click();
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('在澳洲验证你的商业点子');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
   await expect(page.getByRole('button',{name:'简体中文',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.reload();
   await page.getByRole('navigation',{name:'主要导航'}).getByRole('link',{name:'验证我的创意',exact:true}).click();

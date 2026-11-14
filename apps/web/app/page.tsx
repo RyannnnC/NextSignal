@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { MarketingHome } from './components/marketing-home';
 
 export const metadata: Metadata = {
-  title: 'Test your business idea in Australia | NextSignal',
+  title: 'Find your next business opportunity. | NextSignal',
   description: 'Explore an Australian business idea, see what to check before launch, and try a free example report with practical next steps.',
 };
 

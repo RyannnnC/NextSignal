@@ -26,7 +26,7 @@ export function SiteShell({children}: {children: ReactNode}) {
   useEffect(() => {
     document.documentElement.lang = locale;
     if (pathname === '/') {
-      document.title = `${translate(locale, 'Test your business idea in Australia')} | NextSignal`;
+      document.title = `${translate(locale, 'Find your next business opportunity.')} | NextSignal`;
     } else {
       document.title = `NextSignal — ${translate(locale, pathname.startsWith('/projects/') ? 'Private fixture report' : pathname === '/validate' ? 'Local fixture workspace' : 'Grow My Business')}`;
     }
@@ -38,7 +38,7 @@ export function SiteShell({children}: {children: ReactNode}) {
   }
   return <Language.Provider value={{locale,t}}>
     <a className="skip" href="#main">{t('Skip to content')}</a>
-    <header className={`site-header ${styles.header}${pathname === '/' ? ` ${styles.wideHeader}` : ''}`}>
+    <header className={`site-header ${styles.header}`}>
       <Link className="wordmark" href="/" aria-label="NextSignal">Next<span>Signal</span><span className="brand-dot" aria-hidden="true"/></Link>
       <nav aria-label={t('Main navigation')} className={styles.nav}>
         <Link href="/validate" aria-current={pathname === '/validate' ? 'page' : undefined}>{t('Validate My Idea')}</Link>

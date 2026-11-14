@@ -1,5 +1,6 @@
 import type { Report } from '@nextsignal/contracts';
 import { translate, type Locale } from '../lib/i18n';
+import { PopulationChart } from './components/population-chart';
 
 /** 渲染已验证的报告快照、证据来源和局限。 */
 export function ReportView({ report, index, locale }: { report: Report; index: number; locale: Locale }) {
@@ -20,6 +21,7 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
       <p>{t('Business category')}: {t('Computer repair')} · {t('Startup budget (AUD, optional)')}: {comparison.input.budgetAud === undefined ? t('Not supplied') : `A$${numbers.format(comparison.input.budgetAud)}`}</p>
       <p>{t('Setup costs and repair economics still need quotes.')}</p>
       <h3>{t('Compared locations')}</h3>
+      <PopulationChart report={report} numbers={numbers} t={t} />
       {comparison.areas.map(area => {
         const items = report.evidence.filter(item => area.evidenceIds.includes(item.id));
         const population = items.find(item => item.metric === 'market_context' && item.unit === 'people');

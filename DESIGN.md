@@ -104,7 +104,7 @@ These geometry decisions are drawn from the **MongoDB reference** as requested.
 | `radius.pill` | 9999px | CTA buttons, filter pills, small status chips |
 
 - Spacing scale: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96px`.
-- Home uses full-width background bands with a **1440px** content limit. Report main content is **960px**, with a **720px** reading column.
+- The shared page shell and homepage content use a **1400px** maximum width. Home background bands span the viewport. Report main content is **960px**, with a **720px** reading column.
 - Desktop page gutters: 32px; tablet 24px; mobile 16px.
 - Base card padding 24px; dense table/card 16px; feature card 32px; mobile cards 16–20px.
 - Standard sections 80px vertical; mobile 48px. Dark hero 96–112px top/bottom; mobile 64px.
@@ -244,7 +244,7 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 |---|---|
 | < 640px | Single-column, 16px gutters, full-width forms/buttons, stacked chart legend and cards |
 | 640–1023px | Two-column where useful, 24px gutters, compact nav |
-| ≥ 1024px | Up to 1440px of home content, two-column hero, report TOC + content |
+| ≥ 1024px | Up to 1400px of page content, two-column hero, report TOC + content |
 
 - WCAG 2.2 AA target. Text ≥4.5:1 contrast; large text ≥3:1; non-text essential controls ≥3:1. Validate actual rendered combinations, not tokens alone.
 - Interactive targets ideally ≥44×44px. Keyboard focus visible and never hidden by sticky headers.
@@ -260,6 +260,7 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 
 ```css
 :root {
+  --ns-page-max-width: 1400px;
   --ns-brand-ink: #092e2a;
   --ns-brand-ink-raised: #124239;
   --ns-primary: #087f5b;
@@ -282,6 +283,9 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 ```
 
 **Component library:** the implementation can use a headless/accessibility-first library and theme it to these tokens. Any future user-supplied UI component library must obey these visual and accessibility contracts. Do not copy trademarked MongoDB graphics, typography assets or site copy.
+
+- **Icons.** Use Ant Design Icons (`@ant-design/icons`) for new UI icons. Import the individual icons used by each feature. Hide decorative icons from assistive technology and provide accessible names for icon-only controls.
+- **Charts.** Use Recharts (`recharts`) for data visualisations. Apply NextSignal design tokens and provide readable values, units, source information and an accessible text or table alternative.
 
 **Mandatory UI PR checks**:
 - [ ] Correct semantic token, no arbitrary palette/radius values.

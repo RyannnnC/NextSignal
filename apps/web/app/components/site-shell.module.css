@@ -1,10 +1,10 @@
-.header { flex-wrap: wrap; }
-.wideHeader { max-width: 1440px; }
+.header { flex-wrap: wrap; position: sticky; top: 0; z-index: 2; background: var(--ns-canvas); box-shadow: 0 1px var(--ns-border); }
 .homeMain { max-width: none; padding-inline: 0; }
 .homeMain footer { padding-inline: 16px; }
 .nav { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; flex: 1; justify-content: center; }
-.nav a { color: var(--ns-text); font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; }
-.nav a[aria-current=page] { color: var(--ns-primary); text-decoration-thickness: 2px; }
+.nav a { color: var(--ns-text); font-size: 14px; min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
+.nav a:hover { color: var(--ns-primary-hover); }
+.nav a[aria-current=page] { color: var(--ns-primary); font-weight: 700; }
 .footerNav { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; margin-top: 24px; }
 .footerNav a { min-height: 44px; display: inline-flex; align-items: center; }
 @media (max-width: 1023px) { .nav { order: 3; flex-basis: 100%; justify-content: flex-start; gap: 8px 24px; } }

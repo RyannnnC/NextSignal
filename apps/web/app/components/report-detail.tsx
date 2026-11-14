@@ -6,6 +6,7 @@ import { Id } from '@nextsignal/contracts';
 import { api, ClientApiError } from '../../lib/client-api';
 import { presentReport, reportPath } from '../../lib/report-presentation';
 import { ReportView } from '../report-view';
+import { ReportSummary } from './report-summary';
 import { useLanguage } from './site-shell';
 
 type Presentation = NonNullable<ReturnType<typeof presentReport>>;
@@ -44,6 +45,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
     {state === 'missing' && <p role="alert" className="empty">{t('Report unavailable. It may have been deleted or belong to another account.')}</p>}
     {state === 'error' && <div role="alert"><p>{t('Could not load the report. Check the local worker and try again.')}</p><button onClick={()=>setRetry(value=>value+1)}>{t('Try again')}</button></div>}
     {state === 'ready' && view && view.report.projectId === projectId && view.report.id === reportId && <>
+      <ReportSummary t={t} localRepair={Boolean(view.report.referenceProfile)} />
       <section aria-labelledby="overview"><h2 id="overview">{t('Business Overview')}</h2>
         <p>{t('Saved founder statements from this report’s profile version.')}</p>
         {view.profile ? <><dl>

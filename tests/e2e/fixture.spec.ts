@@ -122,6 +122,11 @@ test('local opportunity brief saves three locations and survives refresh with ow
     const before = await (await page.request.get(`/api/projects/${id}`)).json();
     await page.reload();
     for (const name of ['Haymarket', 'Burwood (NSW)', 'Chatswood']) await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await expect(page.getByText('Overall score: insufficient evidence', { exact: true })).toBeVisible();
+    await expect(page.locator('.decision-dimensions dt .anticon[aria-hidden="true"]')).toHaveCount(4);
+    const chart = page.locator('figure').filter({ hasText: 'Census population by locality' });
+    await expect(chart.getByText('8,305 people', { exact: true })).toBeVisible();
+    await expect(chart.locator('svg.recharts-surface')).toBeVisible();
     await expect(page.getByText('8,305 people · 2021 Census', { exact: true })).toBeVisible();
     if (process.env.NEXTSIGNAL_ABS_ENABLED === '1') {
       await expect(page.getByText('Development report with ABS data', { exact: true })).toBeVisible();
@@ -133,6 +138,10 @@ test('local opportunity brief saves three locations and survives refresh with ow
     await expect(page.getByText(/A\$1,200/)).toBeVisible();
     await page.setViewportSize({ width: 375, height: 812 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.evaluate(() => window.scrollTo(0, 700));
+    const header = page.getByRole('banner');
+    await expect.poll(async () => (await header.boundingBox())?.y).toBe(0);
+    await expect(header.getByRole('link', { name: 'Validate My Idea' })).toHaveCSS('text-decoration-line', 'none');
     expect(await (await page.request.get(`/api/projects/${id}`)).json()).toEqual(before);
     const other = await browser.newPage();
     try {

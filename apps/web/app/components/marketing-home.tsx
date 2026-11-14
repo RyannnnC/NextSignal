@@ -28,9 +28,10 @@ export function MarketingHome() {
       <div className={styles.heroInner}>
         <div>
           <Image className={styles.logo} src={bigLogo} alt="NextSignal" priority sizes="(max-width: 639px) 240px, 300px"/>
-          <h1>{t('Test your business idea in Australia')}</h1>
-          <p className={styles.lead}>{t('Find out who might buy, what they use today, and what to test before you spend.')}</p>
-          <Link className="button bright" href="/validate">{t('Try the free demo')} <span aria-hidden="true">↗</span></Link>
+          <h1>{t('Find your next business opportunity.')}</h1>
+          <p className={styles.heroTagline}><strong>{t('Backed by real data.')}</strong></p>
+          <p className={styles.lead}>{t('Explore local demand, competition, and market opportunities across Australia — before you invest.')}</p>
+          <Link className="button bright" href="/validate">{t('Explore opportunities')} <span aria-hidden="true">↗</span></Link>
           <p className={styles.heroNotice}>{t('Use a test idea in this preview.')}</p>
         </div>
         <aside className={styles.heroExample} aria-labelledby="hero-example">
@@ -89,7 +90,7 @@ export function MarketingHome() {
           <h3 id={`service-${service.id}`}>{t(service.name)}</h3>
           <p className={styles.price}>{service.amount === null ? t('Custom Quote') : <>A${new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN').format(service.amount)}{service.perReport && <small> {t('/ report')}</small>}</>}</p>
           <ul>{(features[service.id] ?? service.features).map(feature => <li key={feature}>{t(feature)}</li>)}</ul>
-          <Link href={service.href}>{t(service.id === 'free' ? 'Try the free demo' : service.id === 'expert' ? 'View service status' : 'See what’s planned')} <span aria-hidden="true">↗</span></Link>
+          <Link href={service.href}>{t(service.id === 'free' ? 'Try the free demo' : service.id === 'expert' ? 'View service status' : 'See what’s planned')}</Link>
         </article>)}</div>
         <details id="idea-scope"><summary>{t('What the idea report would cover')}</summary><p>{t('We plan to add search data and business comparisons. You can try the sample report today.')}</p></details>
         <details id="expert-status"><summary>{t('Expert service status')}</summary><p>{t('Expert help is planned. Bookings are closed.')}</p></details>

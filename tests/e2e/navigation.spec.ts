@@ -14,11 +14,13 @@ test('marketing navigation, honest availability, original brand assets and respo
   });
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Test your business idea in Australia');
-  await expect(page).toHaveTitle('Test your business idea in Australia | NextSignal');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Find your next business opportunity.');
+  await expect(page).toHaveTitle('Find your next business opportunity. | NextSignal');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Australian business idea/);
   expect((await page.request.get('/')).headers()['x-robots-tag']).toContain('noindex');
   expect(await page.locator('main').evaluate(main => main.getBoundingClientRect().width)).toBe(1440);
+  await expect(page.getByRole('banner')).toHaveCSS('width', '1400px');
+  await expect(page.locator('#pricing > div')).toHaveCSS('width', '1400px');
   expect(await page.getByLabel('Test business idea',{exact:true}).count()).toBe(0);
   const logo=page.getByRole('img', { name: 'NextSignal', exact: true });
   await expect(logo).toHaveAttribute('alt','NextSignal');
@@ -27,6 +29,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   const icon=await page.locator('link[rel="icon"]').getAttribute('href');
   expect(icon).toBeTruthy(); expect((await page.request.get(icon!)).status()).toBe(200);
   await expect(page.locator('#pricing article')).toHaveCount(4);
+  await expect(page.locator('#pricing article a').filter({ hasText: '↗' })).toHaveCount(0);
   await expect(page.getByText('A$49',{exact:false})).toBeVisible();
   await expect(page.getByText('A$79',{exact:false})).toBeVisible();
   await expect(page.getByText('Planned — not available',{exact:true})).toHaveCount(3);
@@ -46,6 +49,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   await page.screenshot({path:'artifacts/phase2-home-desktop.png',fullPage:true});
   await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Grow My Business',exact:true}).click();
   await expect(page.getByText('There is no website crawler, SEO/GEO analysis or live growth report in this version. No URL is collected or fetched.')).toBeVisible();
+  await expect(page.locator('main')).toHaveCSS('width', '1400px');
   expect(await page.locator('input[type=url]').count()).toBe(0);
   await page.getByRole('button',{name:'简体中文',exact:true}).click();
   await page.getByRole('link',{name:'体验本地创意模拟流程',exact:true}).click();
@@ -54,11 +58,11 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
   await expect(page).toHaveURL('http://127.0.0.1:3000/');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('在澳洲验证你的商业点子');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
   await page.reload();
   await page.setViewportSize({width:375,height:812});
   await expect(logo).toBeVisible();
-  await expect(page.getByRole('heading',{level:1})).toHaveText('在澳洲验证你的商业点子');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.screenshot({path:'artifacts/phase2-home-mobile.png',fullPage:true});
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations).toEqual([]);
