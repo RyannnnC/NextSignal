@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AbsProvider, parsePopulationCsv } from '@nextsignal/adapters/abs-provider';
+import { AbsProvider, parseCensusCsv, parsePopulationCsv } from '@nextsignal/adapters/abs-provider';
 
 // ABS 记录样本采集于 2026-11-12。查询及 CC BY 4.0 归属见 docs/ABS_DATA_INTEGRATION_PLAN.md。
 const columns = 'DATAFLOW,SEXP,PCHAR,REGION,REGION_TYPE,STATE,TIME_PERIOD,OBS_VALUE';
@@ -7,6 +7,22 @@ const prefix = 'ABS:C21_G01_SAL(1.0.0),3,P_1';
 const regions = ['11884', '10716', '10891'];
 
 describe('ABS Census observations', () => {
+  it('parses the recorded household median and nonoverlapping age groups by coded region', () => {
+    expect(parseCensusCsv('DATAFLOW,MEDAVG,REGION,REGION_TYPE,STATE,TIME_PERIOD,OBS_VALUE\nABS:C21_G02_SAL(1.0.0),4,11884,SAL,1,2021,1931', 'C21_G02_SAL', '1.0.0', regions))
+      .toEqual([{ region: '11884', value: 1931 }]);
+    const header = 'DATAFLOW,AGEINGP,SEXP,REGION,REGION_TYPE,STATE,TIME_PERIOD,OBS_VALUE';
+    expect(parseCensusCsv(`${header},OBS_STATUS\nABS:C21_G04_SAL(1.0.0),20_24,3,11884,SAL,1,2021,1449,A\nABS:C21_G04_SAL(1.0.0),25_29,3,11884,SAL,1,2021,,S`, 'C21_G04_SAL', '1.0.0', regions))
+      .toEqual([{ region: '11884', measure: '20_24', value: 1449, status: 'A' }, { region: '11884', measure: '25_29', value: null, status: 'S' }]);
+  });
+
+  it('classifies bounded requests rejected by the upstream provider', async () => {
+    const transport = vi.fn<typeof fetch>().mockImplementation(async () => new Response(null, { status: 403 }));
+    const provider = new AbsProvider({ read: vi.fn(), write: vi.fn() }, transport);
+    await expect(provider.regional(['haymarket'], AbortSignal.timeout(1000))).resolves.toEqual({
+      C21_G01_SAL: 'provider_http', C21_G02_SAL: 'provider_http', C21_G04_SAL: 'provider_http',
+    });
+    expect(transport).toHaveBeenCalledTimes(3);
+  });
   it('matches the coded observations independently of the requested ordering', () => {
     const csv = `${columns}\r\n${prefix},10716,SAL,1,2021,18224\r\n${prefix},11884,SAL,1,2021,8305\r\n`;
     expect(parsePopulationCsv(csv, '1.0.0', regions)).toEqual([{ region: '10716', value: 18224 }, { region: '11884', value: 8305 }]);

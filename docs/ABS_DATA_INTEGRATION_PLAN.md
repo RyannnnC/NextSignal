@@ -1,5 +1,13 @@
 # ABS Data API integration plan
 
+## Regional comparison v2
+
+The development worker now fetches three allowlisted 2021 Census flows. G01 retains its original cache key. G02 uses `MEDAVG=4` for median total household income in AUD per week. G04 selects `AGEINGP=20_24+25_29` with `SEXP=3` for two disjoint usual-resident age bands. All queries use NSW SAL codes and the same Census period. The linked DSD and codelists are validated before querying observations.
+
+The worker allows up to three concurrent flow requests per provider instance and keeps each flow's outcome independent. Each HTTP operation has a five-second timeout and at most one bounded retry. The research runner imposes a 16-second ABS deadline. Shared PostgreSQL snapshots keep the existing seven-day freshness window and segregate observations by flow, versions, filters and region codes.
+
+See [Regional comparison v2 verification](LOCAL_COMPARISON_V2_VERIFICATION.md) for observed results, release limits and the competitor pilot recommendation. The original catalogue below records the v1 discovery state.
+
 ## Repository audit
 
 | Capability | Status | Location |

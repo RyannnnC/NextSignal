@@ -5,10 +5,14 @@ export interface AbsPopulationResult {
   structureVersion: string;
   sourceUrl: string;
   collectedAt: string;
-  observations: { region: string; value: number | null; status?: string | undefined }[];
+  observations: { region: string; value: number | null; status?: string | undefined; measure?: string | undefined }[];
 }
+export type AbsFlow = 'C21_G01_SAL' | 'C21_G02_SAL' | 'C21_G04_SAL';
+export type AbsFailure = 'unsupported_geography' | 'provider_timeout' | 'provider_http' | 'provider_network' | 'invalid_response' | 'cache_error';
+export type AbsResults = Partial<Record<AbsFlow, AbsPopulationResult | AbsFailure>>;
 export interface AbsPopulationProvider {
   population(ids: LocalOpportunityInput['areaIds'], signal: AbortSignal): Promise<AbsPopulationResult>;
+  regional?(ids: LocalOpportunityInput['areaIds'], signal: AbortSignal): Promise<AbsResults>;
 }
 
 export interface ProviderContext {

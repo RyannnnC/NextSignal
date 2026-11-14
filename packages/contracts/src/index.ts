@@ -57,10 +57,11 @@ export const Evidence = z.object({
   provider: z.enum(['fixture', 'abs']), synthetic: z.boolean(),
   sourceRef: z.string().min(1), licenseId: z.enum(['fixture-local-v1', 'abs-census-cc-by-4']),
   abs: z.object({
-    dataflowId: z.literal('C21_G01_SAL'), dataflowVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
+    dataflowId: z.enum(['C21_G01_SAL', 'C21_G02_SAL', 'C21_G04_SAL']), dataflowVersion: z.string().regex(/^\d+\.\d+\.\d+$/),
     structureVersion: z.string().regex(/^\d+\.\d+\.\d+$/), region: z.string().regex(/^\d{5}$/),
-    period: z.literal('2021'), observationStatus: z.string().optional(),
+    period: z.literal('2021'), observationStatus: z.string().optional(), measure: z.enum(['20_24', '25_29']).optional(),
   }).strict().optional(),
+  absUnavailable: z.enum(['missing_observation', 'suppressed_observation', 'unsupported_geography', 'provider_timeout', 'provider_http', 'provider_network', 'invalid_response', 'cache_error']).optional(),
   classification: z.enum(['VERIFIED_SOURCE', 'RECORDED_SAMPLE', 'HYPOTHESIS', 'NOT_AVAILABLE']).optional(),
   citation: z.object({ name: z.string().min(1), url: z.url({ protocol: /^https$/ }), checkedOn: z.iso.date() }).strict().optional(),
   scope: z.string().min(1).optional(),
@@ -69,7 +70,7 @@ export const Evidence = z.object({
   retrievedAt: Timestamp,
   observedPeriod: z.object({ from: Timestamp, to: Timestamp }).strict().optional(),
   geography: Geography,
-  metric: z.enum(['search_volume', 'customer_question', 'interest_signal', 'market_context', 'competitor_observation', 'keyword_hypothesis', 'customer_validation']),
+  metric: z.enum(['search_volume', 'customer_question', 'interest_signal', 'market_context', 'competitor_observation', 'keyword_hypothesis', 'customer_validation', 'household_income', 'resident_age_group']),
   value: z.union([z.number().finite(), z.string(), z.null()]),
   unit: z.string().min(1).optional(),
   kind: z.enum(['measured', 'estimated', 'reported', 'inferred']),
@@ -78,14 +79,18 @@ export const Evidence = z.object({
   stale: z.boolean()
 }).strict().superRefine((e, ctx) => {
   const mapping = e.localArea?.location.mapping;
+  const matchingMeasure = e.abs?.dataflowId === 'C21_G01_SAL' ? e.metric === 'market_context' && e.unit === 'people' && !e.abs.measure
+    : e.abs?.dataflowId === 'C21_G02_SAL' ? e.metric === 'household_income' && e.unit === 'AUD/week' && !e.abs.measure
+    : e.metric === 'resident_age_group' && e.unit === 'people' && Boolean(e.abs?.measure);
   const validProvider = e.provider === 'fixture'
     ? e.synthetic && e.licenseId === 'fixture-local-v1' && !e.abs
     : !e.synthetic && e.licenseId === 'abs-census-cc-by-4' && e.abs && mapping?.status === 'verified' &&
-      mapping.sourceId === `SAL${e.abs.region}` && e.metric === 'market_context' && e.unit === 'people' &&
+      mapping.sourceId === `SAL${e.abs.region}` && matchingMeasure && e.localArea?.location.type === 'locality' &&
       e.citation && new URL(e.citation.url).hostname === 'data.api.abs.gov.au' && e.attribution &&
       (e.classification === 'NOT_AVAILABLE' || (e.classification === 'VERIFIED_SOURCE' &&
         typeof e.value === 'number' && Number.isSafeInteger(e.value) && e.value >= 0));
   if (!validProvider) ctx.addIssue({ code: 'custom', message: 'Invalid evidence provider provenance' });
+  if (e.absUnavailable && e.classification !== 'NOT_AVAILABLE') ctx.addIssue({ code: 'custom', message: 'ABS failure requires unavailable evidence' });
   if (e.classification === 'NOT_AVAILABLE' && e.value !== null) ctx.addIssue({ code: 'custom', message: 'Unavailable evidence must have a null value' });
   if ((e.classification === 'VERIFIED_SOURCE' || e.classification === 'RECORDED_SAMPLE') && (!e.citation || e.value === null || !e.scope)) {
     ctx.addIssue({ code: 'custom', message: 'Sourced evidence requires a citation, scope and value' });

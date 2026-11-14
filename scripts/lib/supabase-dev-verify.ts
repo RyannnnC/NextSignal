@@ -40,7 +40,12 @@ export async function verifyHostedPersistence(client: Client) {
     }
 
     const tx: Transaction = { query: async <T>(sql: string, values?: unknown[]) => ({ rows: (await client.query(sql, values)).rows as T[] }) };
-    const cache = new PostgresAbsCache(work => asRole('kyb_worker', () => work(tx)));
+    let cacheQueue = Promise.resolve();
+    const cache = new PostgresAbsCache(work => {
+      const result = cacheQueue.then(() => asRole('kyb_worker', () => work(tx)));
+      cacheQueue = result.then(() => undefined, () => undefined);
+      return result;
+    });
     let absRequests = 0;
     const abs = process.env.NEXTSIGNAL_ABS_VERIFY === '1' ? new AbsProvider(cache, (url, options) => {
       absRequests++;
@@ -81,14 +86,17 @@ export async function verifyHostedPersistence(client: Client) {
     assert.ok(report?.synthetic);
     assert.equal(report.referenceProfile?.summary, LOCAL_OPPORTUNITY_EXAMPLE);
     assert.deepEqual(report.localOpportunity?.areas.map(area => area.id), SydneyAreaId.options);
-    assert.equal(report.evidence.filter(item => item.classification === (abs ? 'VERIFIED_SOURCE' : 'RECORDED_SAMPLE')).length, 3);
+    assert.equal(report.evidence.filter(item => item.classification === (abs ? 'VERIFIED_SOURCE' : 'RECORDED_SAMPLE')).length, abs ? 12 : 3);
     if (abs) {
       phase = 'checking live ABS values, provenance and shared cache';
-      assert.deepEqual(report.evidence.filter(item => item.provider === 'abs').map(item => item.value), [8305, 18224, 25553]);
+      assert.deepEqual(report.evidence.filter(item => item.provider === 'abs').map(item => item.value),
+        [8305, 1931, 1449, 1918, 18224, 1671, 2711, 2863, 25553, 2158, 1588, 2046]);
       assert.ok(report.evidence.filter(item => item.provider === 'abs').every(item => item.abs && item.citation && item.attribution));
       const before = absRequests;
-      const cached = await abs.population([...SydneyAreaId.options].reverse(), AbortSignal.timeout(16_000));
+      const snapshots = await abs.regional([...SydneyAreaId.options].reverse(), AbortSignal.timeout(16_000));
       assert.equal(absRequests, before, 'Cache hit must not call ABS again');
+      for (const cached of Object.values(snapshots)) {
+      assert.ok(typeof cached === 'object');
       const cacheKey = await asRole('kyb_worker', async () => (await tx.query<{ cache_key: string }>(
         "select cache_key from kyb_private.abs_observation_cache where payload->>'sourceUrl'=$1 and collected_at=$2::timestamptz", [cached.sourceUrl, cached.collectedAt]
       )).rows[0]?.cache_key);
@@ -97,6 +105,7 @@ export async function verifyHostedPersistence(client: Client) {
         await tx.query("update kyb_private.abs_observation_cache set collected_at=now()-interval '8 days', expires_at=now()-interval '1 day' where cache_key=$1", [cacheKey]);
       });
       assert.equal(await cache.read(cacheKey), undefined, 'Expired entries must be skipped');
+      }
       console.log(`ABS hosted smoke used ${before} live HTTP requests before cache hit.`);
     }
     assert.equal(report.evidence.filter(item => item.classification === 'NOT_AVAILABLE' && item.value === null).length, 6);

@@ -46,7 +46,9 @@ export class ResearchRunner {
       const reference = run.scenario === 'normal' && isSydneyReferenceIdea(run.idea) && isSydneyReferenceIdea(run.content.summary) && run.content.geography.state === 'NSW';
       const ids = { workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, profileId: run.profile_id };
       const local = run.scenario === 'normal' ? run.content.localOpportunity : undefined;
-      const abs = local && this.abs ? await this.abs.population(local.areaIds, AbortSignal.timeout(16_000)).catch(() => null) : undefined;
+      const abs = local && this.abs ? await (this.abs.regional?.(local.areaIds, AbortSignal.timeout(16_000)) ??
+        this.abs.population(local.areaIds, AbortSignal.timeout(16_000)).then(result => ({ C21_G01_SAL: result })))
+        .catch(() => ({ C21_G01_SAL: 'invalid_response' } as const)) : undefined;
       const signal = AbortSignal.timeout(1000);
       const report = local
         ? createLocalOpportunityReport(ids, run.content, local, abs)

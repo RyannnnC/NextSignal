@@ -99,6 +99,11 @@ summary { cursor: pointer; min-height: 44px; padding-block: 8px; font-weight: 50
 .decision-dimensions dt .anticon { color: var(--ns-primary); font-size: 18px; }
 .decision-dimensions dd { margin: 8px 0 0; }
 .population-chart { margin: 16px 0; padding: 16px; border: 1px solid var(--ns-border); border-radius: var(--ns-radius-card); }
+.regional-comparison { overflow-x: auto; margin-block: 16px; }
+.regional-comparison table { width: 100%; min-width: 520px; border-collapse: collapse; text-align: start; }
+.regional-comparison caption { text-align: start; font-weight: 600; }
+.regional-comparison th, .regional-comparison td { text-align: start; vertical-align: top; padding: 12px; border-bottom: 1px solid var(--ns-border); }
+.regional-comparison small { display: block; }
 .population-chart ul { padding: 0; list-style: none; }
 .population-chart li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; margin-bottom: 12px; }
 .population-chart a { grid-column: 1 / -1; }

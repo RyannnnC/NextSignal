@@ -2,6 +2,17 @@ import type { Report } from '@nextsignal/contracts';
 import { translate, type Locale } from '../lib/i18n';
 import { PopulationChart } from './components/population-chart';
 
+const failureText = {
+  missing_observation: 'ABS did not return an observation for this area.',
+  suppressed_observation: 'ABS withheld or flagged this observation.',
+  unsupported_geography: 'This statistical area is unsupported.',
+  provider_timeout: 'The ABS request timed out.',
+  provider_http: 'ABS returned an HTTP error.',
+  provider_network: 'The worker could not reach ABS.',
+  invalid_response: 'The ABS response failed validation.',
+  cache_error: 'The statistics cache was unavailable.',
+} as const;
+
 /** 渲染已验证的报告快照、证据来源和局限。 */
 export function ReportView({ report, index, locale }: { report: Report; index: number; locale: Locale }) {
   /** 按当前报告语言翻译界面标签。 */
@@ -22,6 +33,31 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
       <p>{t('Setup costs and repair economics still need quotes.')}</p>
       <h3>{t('Compared locations')}</h3>
       <PopulationChart report={report} numbers={numbers} t={t} />
+      {report.evidence.some(item => item.metric === 'household_income' || item.metric === 'resident_age_group') && <>
+        <div className="regional-comparison" role="region" aria-label={t('Regional Census comparison')} tabIndex={0}>
+          <table>
+            <caption>{t('Regional Census comparison')} · {t('2021 Census')}</caption>
+            <thead><tr><th scope="col">{t('Region')}</th>{comparison.areas.map(area => <th scope="col" key={area.id}>{area.location.name} · SAL</th>)}</tr></thead>
+            <tbody>{[
+              ['Census population', 'market_context', undefined],
+              ['Median weekly household income', 'household_income', undefined],
+              ['Residents aged 20–24', 'resident_age_group', '20_24'],
+              ['Residents aged 25–29', 'resident_age_group', '25_29'],
+            ].map(([label, metric, measure]) => <tr key={label}>
+              <th scope="row">{t(label!)}</th>
+              {comparison.areas.map(area => {
+                const item = report.evidence.find(e => area.evidenceIds.includes(e.id) && e.metric === metric &&
+                  (e.abs?.measure === measure || (measure && e.sourceRef.endsWith(`:${measure}:unavailable`))));
+                return <td key={area.id}><span>{typeof item?.value === 'number' ? `${numbers.format(item.value)} ${t(item.unit ?? '')}` : t('Not enough data')}</span>
+                  {item?.citation && <small><a href={item.citation.url} rel="noreferrer">{item.abs?.dataflowId} {item.abs?.dataflowVersion}</a></small>}
+                  {item?.absUnavailable && <small>{t(failureText[item.absUnavailable])}</small>}
+                </td>;
+              })}
+            </tr>)}</tbody>
+          </table>
+        </div>
+        <p>{t('These differences can help you choose whom to interview and which prices to test. Resident ages and household income do not establish student demand or willingness to pay for repairs.')}</p>
+      </>}
       {comparison.areas.map(area => {
         const items = report.evidence.filter(item => area.evidenceIds.includes(item.id));
         const population = items.find(item => item.metric === 'market_context' && item.unit === 'people');
@@ -47,6 +83,7 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
     <h3>{t('Evidence')}</h3>{report.evidence.length===0&&<p className="empty">{t('Not enough data. No provider evidence returned.')}</p>}
     {report.evidence.map(e=><details className="evidence" key={e.id}><summary>{t(e.metric)}: {e.classification ?? (e.value===null?t('Not enough data'):`${typeof e.value==='string'?t(e.value):e.value} (${t('Synthetic fixture')})`)}</summary>
       {e.classification && <p>{e.value === null ? t('Not enough data') : typeof e.value === 'string' ? t(e.value) : numbers.format(e.value)}</p>}
+      {e.absUnavailable && <p>{t(failureText[e.absUnavailable])}</p>}
       <dl><div><dt>{t('Source')}</dt><dd className="technical">{e.citation ? <a href={e.citation.url} rel="noreferrer">{e.citation.name}</a> : e.sourceRef}</dd></div><div><dt>{t('Region')}</dt><dd>{e.scope ?? `${t(e.geography.country)}, ${t(e.geography.granularity)}`}</dd></div>
       <div><dt>{t(e.citation ? 'Source checked' : e.classification ? 'Recorded' : 'Retrieved')}</dt><dd>{e.citation?.checkedOn ?? e.retrievedAt}</dd></div><div><dt>{t('Reference period')}</dt><dd>{e.observedPeriod?`${e.observedPeriod.from} – ${e.observedPeriod.to}`:t('Unavailable')}</dd></div>
       {e.unit && <div><dt>{t('Unit')}</dt><dd>{t(e.unit)}</dd></div>}

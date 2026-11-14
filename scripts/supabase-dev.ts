@@ -22,6 +22,7 @@ const migrations = [
   'hosted/migrations/202611100002_report_exports.sql',
   'hosted/migrations/202611100003_hosted_actor.sql',
   'migrations/202611120001_abs_cache.sql',
+  'migrations/202611140001_abs_regional_indicators.sql',
 ] as const;
 
 /** 校验开发项目的配置，再按指定模式连接托管服务。 */

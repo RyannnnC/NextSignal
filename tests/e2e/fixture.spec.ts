@@ -132,6 +132,9 @@ test('local opportunity brief saves three locations and survives refresh with ow
       await expect(page.getByText('Development report with ABS data', { exact: true })).toBeVisible();
       await expect(page.getByText('18,224 people · 2021 Census', { exact: true })).toBeVisible();
       await expect(page.getByText('25,553 people · 2021 Census', { exact: true })).toBeVisible();
+      const regional = page.getByRole('region', { name: 'Regional Census comparison' });
+      await expect(regional.getByText('1,931 AUD/week', { exact: true })).toBeVisible();
+      await expect(regional.getByText('2,863 people', { exact: true })).toBeVisible();
       await expect(page.getByRole('link', { name: /ABS Data API/ }).first()).toHaveAttribute('href', /^https:\/\/data\.api\.abs\.gov\.au\/rest\/data\//);
     }
     await expect(page.getByText('NOT_AVAILABLE', { exact: true })).toHaveCount(6);
