@@ -9,7 +9,7 @@
 2. `ENGINEERING_RULES.md` (this file).
 3. `ARCHITECTURE.md` and approved ADRs.
 4. Repository conventions, tests, code-style tooling.
-5. `design.md` (visual standards only, supplied later).
+5. `DESIGN.md` (approved visual standards).
 6. Individual issue / feature requests.
 
 Where conflicts occur, STOP and flag them; never silently override a higher-priority rule. UI style does not override user safety or access control.
@@ -40,6 +40,7 @@ Where conflicts occur, STOP and flag them; never silently override a higher-prio
 - **MUST** show where AI made hypotheses and what would falsify them.
 - **MUST NOT** claim legal, financial or investment certainty or guarantee SEO/GEO results.
 - **MUST** allow quality review, correction and regeneration without silently overwriting prior report versions.
+- **MUST** claim human review only when it occurred. Public case studies require editorial approval, provenance and a correction/takedown process.
 - **SHOULD** benchmark AI report quality against baseline LLM research using a fixed test set and human assessors.
 
 ## Security and tenant boundaries
@@ -86,7 +87,7 @@ Where conflicts occur, STOP and flag them; never silently override a higher-prio
 - Human report QA: no ungrounded statistics; provenance and limitations visible.
 
 ## Coding workflow
-1. Read `ENGINEERING_RULES.md`, `ARCHITECTURE.md`, related ADRs and later the approved `design.md`.
+1. Read these engineering rules and follow the root `AGENTS.md` reading table for the task.
 2. Restate feature purpose, in/out of scope, data sources, legal/security impact and acceptance criteria.
 3. Define contracts/schemas and relevant tests first.
 4. Implement the smallest vertical slice; favor feature flags over unreleased complexity.
@@ -97,6 +98,11 @@ Where conflicts occur, STOP and flag them; never silently override a higher-prio
 ## Definition of done
 A feature is **not done** until: it works; tests pass; owner/tenant access is checked; secrets safe; provider rights documented; monetary cost bounded; source/evidence integrity validated; privacy impact assessed; failures and empty states work; accessible UX confirmed; docs and telemetry updated.
 
-## AI coding-assistant instruction (copy into repository instructions)
+## Database operations and verification integrity
 
-> Before writing or modifying code, read `docs/ENGINEERING_RULES.md` and `docs/ARCHITECTURE.md`. Respect their precedence and all MUST/MUST NOT statements. Do not fabricate tests, source data, API access, permissions or legal clearance. Ask for an ADR when a design conflicts with the architecture. Implement typed domain contracts, reliable tests, secure access, source-grounded business analysis, and cost caps. UI visuals remain undecided until an approved `design.md` is provided. Summarize changed files, tests run, unresolved risks and any blocked compliance requirements.
+- **MUST** preserve checksums of applied SQL migrations. Use the documented migration path and verify the target environment before applying changes.
+- **MUST** verify Docker Engine health before Docker-dependent work. Run required native checks with `npm run test:postgres`. Native PostgreSQL, Supabase, multi-worker and production gates require their intended tooling and separately reported results.
+- **MUST** report missing required tools and checks that could not run. Never silently skip a required check, substitute a less representative check, or report a substitute as passing the original gate.
+- **MUST** keep local runtime on persistent Docker PostgreSQL. PGlite is limited to documented tests and legacy migration. No silent runtime fallback.
+- **MUST** stop the legacy source and web/worker before import, retain private backups under `.local/backups/`, and require verified atomic import. See [Local development](operations/LOCAL_DEVELOPMENT.md) and the [cutover ADR](adr/0007-local-postgresql-cutover.md).
+- **MUST NOT** fabricate results, source data, API access, permissions or legal clearance.

@@ -28,7 +28,7 @@ npm ci
 npm run dev
 ```
 
-The command starts/verifies the Docker database, checks schema history and cutover readiness, then starts web and worker. Existing PGlite data requires explicit `npm run db:migrate` while both web/worker are stopped. Fresh checkouts without legacy data initialize a fresh local database. Real APIs, LLM processing, crawling, payments and public deployment remain disabled.
+The command starts/verifies the Docker database, checks schema history and cutover readiness, then starts web and worker. Existing PGlite data requires explicit `npm run db:migrate` while both web/worker are stopped. Fresh checkouts without legacy data initialize a fresh local database. The default runtime uses fixtures. Set `NEXTSIGNAL_ABS_ENABLED=1` in the shell running `npm run dev` only for the documented [ABS development workflow](../ABS_DATA_INTEGRATION_PLAN.md). Paid providers, LLM processing, crawling, payments and public deployment are disabled in this runtime.
 
 Ctrl+C stops web/worker. PostgreSQL stays available for inspection. To stop PostgreSQL without deleting its data:
 
