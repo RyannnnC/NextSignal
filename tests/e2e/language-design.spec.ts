@@ -25,10 +25,11 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   await expect(page.getByRole('button',{name:'简体中文',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.reload();
   await page.getByRole('navigation',{name:'主要导航'}).getByRole('link',{name:'验证我的创意',exact:true}).click();
-  await expect(page.getByRole('button',{name:'登录本地账号',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'生成模拟资料',exact:true})).toBeVisible();
   const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
   expect(audit.violations).toEqual([]);
   await page.screenshot({path:'artifacts/design-zh-desktop.png',fullPage:false});
+  await page.goto('/auth/sign-in?next=%2Fvalidate');
   await page.getByRole('button',{name:'登录本地账号',exact:true}).click();
   await page.getByLabel('测试业务创意',{exact:true}).fill('一个帮助澳大利亚创始人核对业务假设的测试服务');
   await page.getByRole('checkbox',{name:'我已了解本地数据处理说明。',exact:true}).check();
@@ -42,8 +43,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
     await page.getByLabel('目标客户 — 创始人陈述',{exact:true}).fill('澳大利亚的独立创业者');
     await page.getByRole('button',{name:'确认修正后的资料',exact:true}).click();
     await page.getByRole('button',{name:'生成模拟快照',exact:true}).click();
-    await expect(page.getByRole('article',{name:'模拟报告 1',exact:true})).toBeVisible();
-    await page.getByRole('link',{name:'查看报告 1',exact:true}).click();
+    await page.getByRole('link',{name:'打开本次报告',exact:true}).click();
     await expect(page.getByRole('heading',{name:'客户需求和付费意愿仍然未知。',exact:true})).toBeVisible();
     const before=await (await page.request.get(`/api/projects/${id}`)).json() as {reports:unknown[]};
     await page.getByRole('button',{name:'English (Australia)',exact:true}).click();

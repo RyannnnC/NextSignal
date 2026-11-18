@@ -104,7 +104,7 @@ These geometry decisions are drawn from the **MongoDB reference** as requested.
 | `radius.pill` | 9999px | CTA buttons, filter pills, small status chips |
 
 - Spacing scale: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96px`.
-- The shared page shell and homepage content use a **1400px** maximum width. Home background bands span the viewport. Report main content is **960px**, with a **720px** reading column.
+- The shared page shell and homepage content use a **1440px** border-box maximum width, including gutters. Home background bands span the viewport. Reports use a sidebar and a wider evidence column; form panels stay readable at up to 760px.
 - Desktop page gutters: 32px; tablet 24px; mobile 16px.
 - Base card padding 24px; dense table/card 16px; feature card 32px; mobile cards 16–20px.
 - Standard sections 80px vertical; mobile 48px. Dark hero 96–112px top/bottom; mobile 64px.
@@ -203,12 +203,16 @@ Only show completed when the server confirms it. API unavailable/insufficient da
 
 Avoid stacked enormous gradients or an 8-feature dashboard preview above the fold.
 
+On desktop keep brand, navigation and account controls on one line. Use a sticky header and a labelled mobile menu. Use primary, secondary, text and destructive actions consistently.
+
 ### 4.2 Validate My Idea `/validate`
 
 - Short prompt + optional market and customer fields; example idea input.
 - AI displays inferred business model/target customer and **asks user to correct it** before paid API research where possible.
 - Snapshot: idea structure, 3–5 keyword seeds, limited evidence preview, first red-team question, next validation experiment.
 - Paid: deeper queries, verified Australia-relevant competitors, risk/contradictory evidence, full validation roadmap.
+
+The idea form, review, research progress, sign-in, and account history use dedicated routes. The report detail shows one immutable case.
 
 ### 4.3 Grow My Business `/grow`
 
@@ -244,7 +248,7 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 |---|---|
 | < 640px | Single-column, 16px gutters, full-width forms/buttons, stacked chart legend and cards |
 | 640–1023px | Two-column where useful, 24px gutters, compact nav |
-| ≥ 1024px | Up to 1400px of page content, two-column hero, report TOC + content |
+| ≥ 1024px | Up to 1440px of page content, two-column hero, report TOC + content |
 
 - WCAG 2.2 AA target. Text ≥4.5:1 contrast; large text ≥3:1; non-text essential controls ≥3:1. Validate actual rendered combinations, not tokens alone.
 - Interactive targets ideally ≥44×44px. Keyboard focus visible and never hidden by sticky headers.
@@ -260,7 +264,7 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 
 ```css
 :root {
-  --ns-page-max-width: 1400px;
+  --ns-page-max-width: 1440px;
   --ns-brand-ink: #092e2a;
   --ns-brand-ink-raised: #124239;
   --ns-primary: #087f5b;

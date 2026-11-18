@@ -19,8 +19,8 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Australian business idea/);
   expect((await page.request.get('/')).headers()['x-robots-tag']).toContain('noindex');
   expect(await page.locator('main').evaluate(main => main.getBoundingClientRect().width)).toBe(1440);
-  await expect(page.getByRole('banner')).toHaveCSS('width', '1400px');
-  await expect(page.locator('#pricing > div')).toHaveCSS('width', '1400px');
+  await expect(page.locator('.site-header')).toHaveCSS('width', '1440px');
+  await expect(page.locator('#pricing > div')).toHaveCSS('width', '1440px');
   expect(await page.getByLabel('Test business idea',{exact:true}).count()).toBe(0);
   const logo=page.getByRole('img', { name: 'NextSignal', exact: true });
   await expect(logo).toHaveAttribute('alt','NextSignal');
@@ -49,11 +49,11 @@ test('marketing navigation, honest availability, original brand assets and respo
   await page.screenshot({path:'artifacts/phase2-home-desktop.png',fullPage:true});
   await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Grow My Business',exact:true}).click();
   await expect(page.getByText('There is no website crawler, SEO/GEO analysis or live growth report in this version. No URL is collected or fetched.')).toBeVisible();
-  await expect(page.locator('main')).toHaveCSS('width', '1400px');
+  await expect(page.locator('main')).toHaveCSS('width', '1440px');
   expect(await page.locator('input[type=url]').count()).toBe(0);
   await page.getByRole('button',{name:'简体中文',exact:true}).click();
   await page.getByRole('link',{name:'体验本地创意模拟流程',exact:true}).click();
-  await expect(page.getByRole('button',{name:'登录本地账号',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'生成模拟资料',exact:true})).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
@@ -71,7 +71,7 @@ test('marketing navigation, honest availability, original brand assets and respo
 
 test('private report deep links preserve authorization, login return, historical profile and deletion behavior',async ({page,browser})=>{
   const origin={origin:'http://127.0.0.1:3000'};
-  await page.goto('/validate');
+  await page.goto('/auth/sign-in?next=%2Fvalidate');
   await page.getByRole('button',{name:'Sign in locally',exact:true}).click();
   await expect(page.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();
   const created=await page.request.post('/api/projects',{headers:origin,data:{idea:'Navigation test only: a synthetic reminder service for local tutors',geography:{country:'AU',granularity:'national'},processingConsent:true,noticeVersion:'local-fixture-v1',requestKey:randomUUID()}});
@@ -110,7 +110,7 @@ test('private report deep links preserve authorization, login return, historical
     await expect(anonPage.getByText('Original private fixture customer',{exact:true})).toBeVisible();
     ownerRequest=anon.request;
     const bob=await browser.newContext();contexts.push(bob);
-    const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3000/validate');
+    const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3000/auth/sign-in?next=%2Fvalidate');
     await bobPage.getByLabel('Fixture account',{exact:true}).selectOption('bob');
     await bobPage.getByRole('button',{name:'Sign in locally',exact:true}).click();
     await expect(bobPage.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();

@@ -80,7 +80,7 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
     {report.findings.map(f=><div className="reality-check" key={f.id}><span className="eyebrow">{t('Reality Check')}</span><h3>{t(f.text)}</h3><p><span className="chip warning">{t(f.status)}</span> <small>{t(f.claimType === 'research_hypothesis' ? 'Research hypothesis' : f.claimType)}</small></p><p>{t('Test')}: {t(f.validationMethod)}</p>
       <details><summary>{t('Supporting evidence')} / {t('Counter-evidence')}</summary><p className="technical">{t('Supporting evidence')}: {f.evidenceIds.join(', ')||t('None')}. {t('Counter-evidence')}: {f.counterEvidenceIds.join(', ')||t('None')}.</p></details>
     </div>)}
-    <h3>{t('Evidence')}</h3>{report.evidence.length===0&&<p className="empty">{t('Not enough data. No provider evidence returned.')}</p>}
+    <h3 id="report-evidence">{t('Evidence')}</h3>{report.evidence.length===0&&<p className="empty">{t('Not enough data. No provider evidence returned.')}</p>}
     {report.evidence.map(e=><details className="evidence" key={e.id}><summary>{t(e.metric)}: {e.classification ?? (e.value===null?t('Not enough data'):`${typeof e.value==='string'?t(e.value):e.value} (${t('Synthetic fixture')})`)}</summary>
       {e.classification && <p>{e.value === null ? t('Not enough data') : typeof e.value === 'string' ? t(e.value) : numbers.format(e.value)}</p>}
       {e.absUnavailable && <p>{t(failureText[e.absUnavailable])}</p>}
@@ -91,7 +91,7 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
       {e.attribution && <div><dt>{t('Attribution')}</dt><dd><a href={e.attribution.url} rel="noreferrer">{e.attribution.license}</a></dd></div>}
       <div><dt>{t('Method')}</dt><dd>{t(e.kind)} · {t('confidence')}: {t(e.confidence)} · {t('stale')}: {t(String(e.stale))}</dd></div>
       <div><dt>{t('Evidence ID')}</dt><dd className="technical">{e.id}</dd></div></dl><ul>{e.limitations.map(l=><li key={l}>{t(l)}</li>)}</ul></details>)}
-    <h3>{t(report.referenceProfile ? 'Prioritised validation actions' : 'Template experiments — not personalised advice')}</h3><ol className="actions">{report.actions.map(a=><li key={a.id}><h4>{t(a.title)}</h4><p>{t(a.steps)}</p><p className="metadata">{t('Reason')}: {t(a.rationale)} {t('Effort')}: {t(a.effort)}.</p><p><strong>{t('What would disprove it')}:</strong> {t(a.falsification)}</p></li>)}</ol>
+    <h3 id="report-actions">{t(report.referenceProfile ? 'Prioritised validation actions' : 'Template experiments — not personalised advice')}</h3><ol className="actions">{report.actions.map(a=><li key={a.id}><h4>{t(a.title)}</h4><p>{t(a.steps)}</p><p className="metadata">{t('Reason')}: {t(a.rationale)} {t('Effort')}: {t(a.effort)}.</p><p><strong>{t('What would disprove it')}:</strong> {t(a.falsification)}</p></li>)}</ol>
     <details><summary>{t('Profile version ID')}</summary><p className="technical">{report.profileId}</p></details>
     <p className="metadata">{t('For a correction, edit and confirm the profile, then start a new fixture run.')}</p>
   </article>;

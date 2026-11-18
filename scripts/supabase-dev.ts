@@ -110,11 +110,21 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
       to_regclass('public.projects') is not null as projects,
       to_regclass('storage.buckets') is not null as storage_schema,
       (select count(*)::integer from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as public_relations,
-      (select count(*)::integer from pg_roles where rolname in ('kyb_app','kyb_worker')) as application_roles`);
-    const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), application_roles: z.number().int() }).strict().parse(result.rows[0]);
+      (select count(*)::integer from pg_roles where rolname in ('kyb_app','kyb_worker')) as application_roles,
+      to_regclass('kyb_private.hosted_migrations') is not null as hosted_ledger`);
+    const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), application_roles: z.number().int(), hosted_ledger: z.boolean() }).strict().parse(result.rows[0]);
+    let cliVersions = 0;
     if (metadata.migration_table) {
       const history = await client.query('select version from supabase_migrations.schema_migrations order by version');
       console.log('Supabase CLI migration versions:', z.array(z.object({ version: z.string().regex(/^\d+$/) })).parse(history.rows).map(row => row.version));
+      cliVersions = history.rows.length;
+    }
+    if (metadata.hosted_ledger) {
+      const ledger = await client.query('select count(*)::integer as applied from kyb_private.hosted_migrations');
+      console.log('NextSignal hosted migrations recorded:', z.object({ applied: z.number().int() }).parse(ledger.rows[0]).applied);
+      console.log(cliVersions
+        ? 'Both migration ledgers contain state. Review both histories before applying changes.'
+        : 'This target uses the NextSignal hosted ledger. Use npm run supabase:preflight -- --apply for reviewed Sydney development migrations. Supabase CLI db push will not read this ledger.');
     }
     await client.query('rollback');
     console.log('PostgreSQL metadata over verified TLS:', metadata);
