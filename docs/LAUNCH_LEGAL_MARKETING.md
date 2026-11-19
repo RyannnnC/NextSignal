@@ -59,7 +59,7 @@ Do not launch a provider's feature publicly until its permitted uses are resolve
 
 ## 4. Positioning and launch marketing
 
-**Primary promise:** `Know your business. Know your market. Know your next move.`  
+**Primary promise:** `Know your market. Find your next signal.`
 **Secondary differentiator:** `Australian market evidence, not generic AI optimism.`
 
 **Target initial cohorts:** (a) Australia-based pre-launch founders seeking competitor and demand validation, (b) operating Australian small-business owners with a public website and identifiable commercial search demand. Track the two cohorts separately.

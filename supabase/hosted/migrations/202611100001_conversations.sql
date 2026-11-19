@@ -26,9 +26,9 @@ alter table public.conversations enable row level security;
 alter table public.conversations force row level security;
 alter table public.messages enable row level security;
 alter table public.messages force row level security;
-create policy conversation_owner on public.conversations for select to kyb_app
+create policy conversation_owner on public.conversations for select to nextsignal_app
   using (workspace_id in (select id from public.workspaces where owner_id = auth.uid()));
-create policy message_owner on public.messages for select to kyb_app
+create policy message_owner on public.messages for select to nextsignal_app
   using (workspace_id in (select id from public.workspaces where owner_id = auth.uid()));
 revoke all privileges on public.conversations, public.messages from public, anon, authenticated, service_role;
-grant select on public.conversations, public.messages to kyb_app;
+grant select on public.conversations, public.messages to nextsignal_app;

@@ -11,8 +11,8 @@ export { readLocalAuth } from './auth-config.js';
 export function openAuthRuntime(config: z.infer<typeof LocalAuthConfig>) {
   const common = { host: config.host, port: config.port, database: config.database, connectionTimeoutMillis: 5000 };
   const db = new PostgresDatabase(
-    new Pool({ ...common, user: 'ns_auth_backend', password: config.backendPassword }),
-    new Pool({ ...common, user: 'ns_auth_queue', password: config.queuePassword }),
+    new Pool({ ...common, user: 'nextsignal_auth_backend', password: config.backendPassword }),
+    new Pool({ ...common, user: 'nextsignal_auth_queue', password: config.queuePassword }),
   );
   const auth = createClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false } });
   const sessions = {
@@ -24,7 +24,7 @@ export function openAuthRuntime(config: z.infer<typeof LocalAuthConfig>) {
       try { sessionId = z.uuid().parse(JSON.parse(Buffer.from(token.split('.')[1]!, 'base64url').toString()).session_id); }
       catch { return null; }
       const userId = z.uuid().parse(data.user.id);
-      const active = await db.asWorker(tx => tx.query<{ active: boolean }>('select kyb_private.active_auth_session($1,$2) as active', [userId, sessionId]));
+      const active = await db.asWorker(tx => tx.query<{ active: boolean }>('select nextsignal_private.active_auth_session($1,$2) as active', [userId, sessionId]));
       if (!active.rows[0]?.active) return null;
       const workspaceId = await db.asUser(userId, async tx => {
         await tx.query('select pg_advisory_xact_lock(hashtextextended($1,0))', [userId]);

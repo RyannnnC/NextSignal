@@ -12,7 +12,8 @@
     "./local-import": "./src/local-import.ts",
     "./abs-provider": "./src/abs-provider.ts",
     "./auth-local": "./src/auth-local.ts",
-    "./auth-config": "./src/auth-config.ts"
+    "./auth-config": "./src/auth-config.ts",
+    "./migration-history": "./src/migration-history.ts"
   },
   "dependencies": {
     "@nextsignal/contracts": "0.1.0",

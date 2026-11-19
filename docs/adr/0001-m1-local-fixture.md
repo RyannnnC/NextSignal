@@ -14,7 +14,7 @@ Use npm workspaces, Next.js as web/BFF, strict TypeScript and Zod. Keep contract
 
 Local Alice/Bob accounts are explicit development identities. Sessions use random tokens stored hashed in a private local schema, with HttpOnly SameSite cookies at the BFF. There is no production login implementation. Both the worker and BFF reject production mode. Bind to 127.0.0.1 only. Do not expose the development port through a tunnel. Other local processes/users with access to the fixture files can impersonate test users; use synthetic test ideas only.
 
-The initial migration expects Supabase-compatible auth.users/auth.uid. The local adapter supplies a separate compatibility shim. Runtime owner requests SET LOCAL ROLE kyb_app and bind identity inside a transaction. The queue role can execute a narrowly scoped claim function but cannot read customer tables. The local host is a trusted development process; a production worker still requires a separately reviewed scoped credential/RPC model.
+The initial migration expects Supabase-compatible auth.users/auth.uid. The local adapter supplies a separate compatibility shim. Runtime owner requests SET LOCAL ROLE nextsignal_app and bind identity inside a transaction. The queue role can execute a narrowly scoped claim function but cannot read customer tables. The local host is a trusted development process; a production worker still requires a separately reviewed scoped credential/RPC model.
 
 ## Alternatives
 

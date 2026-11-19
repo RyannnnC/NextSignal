@@ -26,6 +26,7 @@ async function engine(path: string, method: string, body?: unknown) {
   });
 }
 
+let databaseReplaced = false;
 for (const service of ['kong', 'db', 'studio', 'inbucket']) {
   const name = `supabase_${service}_nextsignal-auth-local`;
   const data = JSON.parse(await engine(`/containers/${name}/json`, 'GET'));
@@ -69,5 +70,11 @@ for (const service of ['kong', 'db', 'studio', 'inbucket']) {
   }
   // The original container is stopped. Named database volumes remain attached to the replacement.
   await engine(`/containers/${original}`, 'DELETE');
+  if (service === 'db') databaseReplaced = true;
+}
+if (databaseReplaced) {
+  for (const service of ['auth', 'rest', 'pg_meta']) {
+    await engine(`/containers/supabase_${service}_nextsignal-auth-local/restart?t=5`, 'POST');
+  }
 }
 console.log('Local Auth published ports restricted to 127.0.0.1; named volumes preserved.');

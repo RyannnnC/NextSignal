@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Client } from 'pg';
+import { hasNamingCutover, matchesMigration, migrationChecksum } from '@nextsignal/adapters/migration-history';
 
 const raw = execFileSync(process.execPath, ['node_modules/supabase/dist/supabase.js', 'status', '--workdir', 'supabase/auth-local', '-o', 'json'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 const status = JSON.parse(raw) as Record<string, string>;
@@ -22,17 +23,20 @@ await client.connect();
 try {
   await client.query('begin');
   await client.query("select pg_advisory_xact_lock(hashtextextended('nextsignal-auth-local',0))");
-  const existing = (await client.query("select to_regclass('kyb_private.auth_local_migrations') as name")).rows[0]?.name;
+  const cutover = await hasNamingCutover(client, 'auth');
+  const existing = (await client.query("select to_regclass('nextsignal_private.auth_local_migrations') as name")).rows[0]?.name;
   if (!existing && (await client.query("select to_regclass('public.projects') as name")).rows[0]?.name) throw new Error('Occupied untracked local database');
-  await client.query('create schema if not exists kyb_private; revoke all on schema kyb_private from public');
-  await client.query('create table if not exists kyb_private.auth_local_migrations(path text primary key, checksum text not null)');
+  await client.query('create schema if not exists nextsignal_private; revoke all on schema nextsignal_private from public');
+  await client.query('create table if not exists nextsignal_private.auth_local_migrations(path text primary key, checksum text not null)');
+  const history = (await client.query('select path,checksum from nextsignal_private.auth_local_migrations')).rows;
+  const prefix = files.slice(0, history.length);
+  if (prefix.length !== history.length || history.some(row => !prefix.includes(row.path))) throw new Error('Local Auth migration order differs from its ledger.');
   for (const file of files) {
     const sql = await readFile(`supabase/${file}`, 'utf8');
-    const hash = createHash('sha256').update(sql).digest('hex');
-    const prior = (await client.query('select checksum from kyb_private.auth_local_migrations where path=$1', [file])).rows[0];
-    if (prior) { if (prior.checksum !== hash) throw new Error('Local Auth migration checksum mismatch'); continue; }
+    const prior = history.find(row => row.path === file);
+    if (prior) { if (!matchesMigration(file, sql, prior.checksum, cutover)) throw new Error('Local Auth migration checksum mismatch'); continue; }
     await client.query(sql.replace(/^(?:begin|commit);\r?$/gim, ''));
-    await client.query('insert into kyb_private.auth_local_migrations values($1,$2)', [file, hash]);
+    await client.query('insert into nextsignal_private.auth_local_migrations values($1,$2)', [file, migrationChecksum(sql)]);
   }
   let runtime: { backendPassword: string; queuePassword: string };
   try { runtime = JSON.parse(await readFile('.local/auth-local.json', 'utf8')); }
@@ -40,7 +44,7 @@ try {
     if (!(error && typeof error === 'object' && 'code' in error && error.code === 'ENOENT')) throw error;
     runtime = { backendPassword: randomBytes(32).toString('hex'), queuePassword: randomBytes(32).toString('hex') };
   }
-  for (const [role, password, parent] of [['ns_auth_backend', runtime.backendPassword, 'kyb_app'], ['ns_auth_queue', runtime.queuePassword, 'kyb_worker']]) {
+  for (const [role, password, parent] of [['nextsignal_auth_backend', runtime.backendPassword, 'nextsignal_app'], ['nextsignal_auth_queue', runtime.queuePassword, 'nextsignal_worker']]) {
     if (!/^[a-f0-9]{64}$/.test(password!)) throw new Error('Invalid local credential');
     if (!(await client.query('select from pg_roles where rolname=$1', [role])).rows.length) await client.query(`create role ${role} login noinherit nosuperuser nobypassrls`);
     await client.query(`alter role ${role} password '${password}'`);

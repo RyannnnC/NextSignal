@@ -12,7 +12,7 @@ Use Docker Compose project next-signal-local, database next_signal_local, a pers
 
 ## Credentials and permissions
 
-Generate local-only credentials under ignored .local/postgres. Keep admin credentials/docker.env, runtime credentials and inspection credentials in separate files. The worker opens application, queue and identity pools only; bootstrap/import CLI tools open the management pool. Business transactions SET LOCAL ROLE kyb_app and bind the trusted fixture session's user identity. The queue role can claim jobs; identity has access only to private session records. Session tokens are random, hashed in PostgreSQL and expire; old PGlite sessions are not imported. The read-only inspector can view schema metadata but has no customer-row RLS policy. It cannot change data.
+Generate local-only credentials under ignored .local/postgres. Keep admin credentials/docker.env, runtime credentials and inspection credentials in separate files. The worker opens application, queue and identity pools only; bootstrap/import CLI tools open the management pool. Business transactions SET LOCAL ROLE nextsignal_app and bind the trusted fixture session's user identity. The queue role can claim jobs; identity has access only to private session records. Session tokens are random, hashed in PostgreSQL and expire; old PGlite sessions are not imported. The read-only inspector can view schema metadata but has no customer-row RLS policy. It cannot change data.
 
 These are still local passwordless fixture identities behind the loopback-only BFF, not Supabase JWT validation. Local credentials and database files depend on the owner's OS access control; do not use this mode for confidential real customer data.
 

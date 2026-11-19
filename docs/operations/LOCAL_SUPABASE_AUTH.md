@@ -47,7 +47,7 @@ Stop the application before changing modes. `npm run dev` selects local Supabase
 - The worker separately verifies the access token, confirmed email and continued existence of its Auth session before entering an owner-scoped database transaction. Workspace creation is serialized per verified UUID and protected by the existing owner RLS policy.
 - Authentication endpoints enforce fixed loopback Host, same-origin POSTs, request size limits, schema validation and generic login/recovery errors. Callback destinations are restricted to known application paths. Auth callback query strings are excluded from development request logging.
 - Passwords are handled by Supabase Auth APIs. The application has no password table, hashing implementation or manually inserted Auth users. Service-role credentials are not used by the web application.
-- The local Auth migration runner reuses the eight immutable shared/hosted revisions in their established order, then applies local-only revisions `202611190001_runtime.sql` and `202611190002_workspace.sql`. Its ledger is `kyb_private.auth_local_migrations`. It excludes the fixture Auth shim. The local-only changes restrict Auth session existence checks to the worker and permit RLS-checked workspace inserts by the backend.
+- The local Auth migration runner reuses the eight immutable shared/hosted revisions in their established order, then applies local-only revisions `202611190001_runtime.sql` and `202611190002_workspace.sql`. Its ledger is `nextsignal_private.auth_local_migrations`. It excludes the fixture Auth shim. The local-only changes restrict Auth session existence checks to the worker and permit RLS-checked workspace inserts by the backend.
 
 ## Verification
 

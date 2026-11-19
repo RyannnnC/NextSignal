@@ -16,7 +16,7 @@ export class FixtureDatabase implements Database {
   async asUser<T>(userId: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
     z.uuid().parse(userId);
     return this.engine.transaction(async tx => {
-      await tx.exec('set local role kyb_app');
+      await tx.exec('set local role nextsignal_app');
       await tx.query("select set_config('request.jwt.claim.sub',$1,true)", [userId]);
       return work(tx);
     });
@@ -24,7 +24,7 @@ export class FixtureDatabase implements Database {
   /** 使用 worker 角色领取一条 fixture 任务。 */
   async claimJob() {
     return this.engine.transaction(async tx => {
-      await tx.exec('set local role kyb_worker');
+      await tx.exec('set local role nextsignal_worker');
       const result = await tx.query('select * from public.claim_fixture_job()');
       if (!result.rows.length) return null;
       const row = z.object({ id: z.uuid(), workspace_id: z.uuid(), user_id: z.uuid(), run_id: z.uuid(), lease_token: z.uuid(), attempts: z.number().int() }).parse(result.rows[0]);

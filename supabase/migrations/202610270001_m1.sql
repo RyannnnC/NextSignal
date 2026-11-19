@@ -1,12 +1,12 @@
 -- M1 core only. Production/Supabase supplies auth.users and auth.uid().
 -- Local PGlite creates an explicitly separate auth compatibility shim.
 begin;
-create schema if not exists kyb_private;
-revoke all on schema kyb_private from public;
-create role kyb_app nologin nosuperuser nobypassrls;
-create role kyb_worker nologin nosuperuser nobypassrls;
-grant usage on schema public, auth to kyb_app;
-grant execute on function auth.uid() to kyb_app;
+create schema if not exists nextsignal_private;
+revoke all on schema nextsignal_private from public;
+create role nextsignal_app nologin nosuperuser nobypassrls;
+create role nextsignal_worker nologin nosuperuser nobypassrls;
+grant usage on schema public, auth to nextsignal_app;
+grant execute on function auth.uid() to nextsignal_app;
 
 create table public.workspaces (
   id uuid primary key default gen_random_uuid(),
@@ -122,37 +122,37 @@ insert into public.provider_licenses values
 
 alter table public.workspaces enable row level security;
 alter table public.workspaces force row level security;
-create policy workspace_owner on public.workspaces to kyb_app using(owner_id=auth.uid()) with check(owner_id=auth.uid());
-grant select on public.workspaces to kyb_app;
+create policy workspace_owner on public.workspaces to nextsignal_app using(owner_id=auth.uid()) with check(owner_id=auth.uid());
+grant select on public.workspaces to nextsignal_app;
 do $$
 declare tab text;
 begin
   foreach tab in array array['projects','profile_versions','consent_events','research_runs','jobs','run_events','provider_calls','evidence_records','findings','finding_evidence_links','action_items','report_versions','audit_events','deletion_requests'] loop
     execute format('alter table public.%I enable row level security',tab);
     execute format('alter table public.%I force row level security',tab);
-    execute format('create policy tenant_owner on public.%I to kyb_app using (workspace_id in (select id from public.workspaces where owner_id=auth.uid())) with check (workspace_id in (select id from public.workspaces where owner_id=auth.uid()))',tab);
-    execute format('grant select,insert,update,delete on public.%I to kyb_app',tab);
+    execute format('create policy tenant_owner on public.%I to nextsignal_app using (workspace_id in (select id from public.workspaces where owner_id=auth.uid())) with check (workspace_id in (select id from public.workspaces where owner_id=auth.uid()))',tab);
+    execute format('grant select,insert,update,delete on public.%I to nextsignal_app',tab);
   end loop;
 end $$;
-revoke update,delete on public.audit_events from kyb_app;
-revoke update,delete on public.consent_events from kyb_app;
-revoke update,delete on public.run_events from kyb_app;
-grant select on public.provider_licenses to kyb_app;
+revoke update,delete on public.audit_events from nextsignal_app;
+revoke update,delete on public.consent_events from nextsignal_app;
+revoke update,delete on public.run_events from nextsignal_app;
+grant select on public.provider_licenses to nextsignal_app;
 
-create function kyb_private.immutable_report() returns trigger language plpgsql set search_path='' as $$
+create function nextsignal_private.immutable_report() returns trigger language plpgsql set search_path='' as $$
 begin raise exception 'report versions are immutable'; end $$;
-create trigger immutable_report before update on public.report_versions for each row execute function kyb_private.immutable_report();
-create function kyb_private.immutable_profile() returns trigger language plpgsql set search_path='' as $$
+create trigger immutable_report before update on public.report_versions for each row execute function nextsignal_private.immutable_report();
+create function nextsignal_private.immutable_profile() returns trigger language plpgsql set search_path='' as $$
 begin raise exception 'profile versions are immutable; create another version'; end $$;
-create trigger immutable_profile before update on public.profile_versions for each row execute function kyb_private.immutable_profile();
-create function kyb_private.require_confirmed_profile() returns trigger language plpgsql set search_path='' as $$
+create trigger immutable_profile before update on public.profile_versions for each row execute function nextsignal_private.immutable_profile();
+create function nextsignal_private.require_confirmed_profile() returns trigger language plpgsql set search_path='' as $$
 begin
   if not exists(select 1 from public.profile_versions where id=new.profile_id and project_id=new.project_id and workspace_id=new.workspace_id and status='confirmed') then
     raise exception 'profile confirmation required';
   end if;
   return new;
 end $$;
-create trigger confirmed_profile before insert on public.research_runs for each row execute function kyb_private.require_confirmed_profile();
+create trigger confirmed_profile before insert on public.research_runs for each row execute function nextsignal_private.require_confirmed_profile();
 
 -- Only the worker can claim tasks. It cannot select customer tables directly.
 create function public.claim_fixture_job() returns table(id uuid, workspace_id uuid, user_id uuid, run_id uuid, lease_token uuid, attempts integer)
@@ -168,7 +168,7 @@ language sql security definer set search_path='' as $$
   ) select c.id,c.workspace_id,w.owner_id,c.run_id,c.lease_token,c.attempts from claimed c join public.workspaces w on w.id=c.workspace_id;
 $$;
 revoke all on function public.claim_fixture_job() from public;
-grant usage on schema public to kyb_worker;
-grant execute on function public.claim_fixture_job() to kyb_worker;
-revoke all on all functions in schema kyb_private from public;
+grant usage on schema public to nextsignal_worker;
+grant execute on function public.claim_fixture_job() to nextsignal_worker;
+revoke all on all functions in schema nextsignal_private from public;
 commit;

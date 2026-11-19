@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
 import { parseEnv } from 'node:util';
 import { Client } from 'pg';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { verifyHostedPersistence } from './lib/supabase-dev-verify.js';
+import { hasNamingCutover, matchesMigration, migrationChecksum } from '@nextsignal/adapters/migration-history';
 
 const Environment = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.string().regex(/^https:\/\/[a-z0-9]{20}\.supabase\.co\/?$/),
@@ -110,8 +110,8 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
       to_regclass('public.projects') is not null as projects,
       to_regclass('storage.buckets') is not null as storage_schema,
       (select count(*)::integer from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as public_relations,
-      (select count(*)::integer from pg_roles where rolname in ('kyb_app','kyb_worker')) as application_roles,
-      to_regclass('kyb_private.hosted_migrations') is not null as hosted_ledger`);
+      (select count(*)::integer from pg_roles where rolname in ('nextsignal_app','nextsignal_worker')) as application_roles,
+      to_regclass('nextsignal_private.hosted_migrations') is not null as hosted_ledger`);
     const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), application_roles: z.number().int(), hosted_ledger: z.boolean() }).strict().parse(result.rows[0]);
     let cliVersions = 0;
     if (metadata.migration_table) {
@@ -120,7 +120,7 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
       cliVersions = history.rows.length;
     }
     if (metadata.hosted_ledger) {
-      const ledger = await client.query('select count(*)::integer as applied from kyb_private.hosted_migrations');
+      const ledger = await client.query('select count(*)::integer as applied from nextsignal_private.hosted_migrations');
       console.log('NextSignal hosted migrations recorded:', z.object({ applied: z.number().int() }).parse(ledger.rows[0]).applied);
       console.log(cliVersions
         ? 'Both migration ledgers contain state. Review both histories before applying changes.'
@@ -146,11 +146,12 @@ async function applyMigrations(client: Client) {
   try {
     await client.query("set local lock_timeout = '5s'");
     await client.query("select pg_advisory_xact_lock(hashtextextended('next-signal-hosted-dev', 0))");
+    const cutover = await hasNamingCutover(client, 'hosted');
     const state = await client.query(`select
-      to_regnamespace('kyb_private') is not null as private_schema,
+      to_regnamespace('nextsignal_private') is not null as private_schema,
       to_regclass('supabase_migrations.schema_migrations') is not null as existing_ledger,
-      to_regclass('kyb_private.hosted_migrations') is not null as hosted_ledger,
-      exists(select from pg_roles where rolname in ('kyb_app','kyb_worker')) as existing_roles,
+      to_regclass('nextsignal_private.hosted_migrations') is not null as hosted_ledger,
+      exists(select from pg_roles where rolname in ('nextsignal_app','nextsignal_worker')) as existing_roles,
       exists(select from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as existing_relations`);
     const { private_schema, existing_ledger, hosted_ledger, existing_roles, existing_relations } = z.object({ private_schema: z.boolean(), existing_ledger: z.boolean(), hosted_ledger: z.boolean(), existing_roles: z.boolean(), existing_relations: z.boolean() }).parse(state.rows[0]);
     if (existing_ledger) {
@@ -160,13 +161,13 @@ async function applyMigrations(client: Client) {
       if (history.rows.length) throw new PreflightError('The Supabase CLI ledger contains migration entries. Reconcile the two histories before applying.');
     }
     if (!hosted_ledger && (private_schema || existing_roles || existing_relations)) throw new PreflightError('Refusing to initialize an occupied project without a hosted migration ledger.');
-    const applied = hosted_ledger ? z.array(z.object({ path: z.string(), checksum: z.string() })).parse((await client.query('select path,checksum from kyb_private.hosted_migrations')).rows) : [];
+    const applied = hosted_ledger ? z.array(z.object({ path: z.string(), checksum: z.string() })).parse((await client.query('select path,checksum from nextsignal_private.hosted_migrations')).rows) : [];
     const files = await Promise.all(migrations.map(async path => {
       const sql = await readFile(new URL(`../supabase/${path}`, import.meta.url), 'utf8');
-      return { path, sql, checksum: createHash('sha256').update(sql).digest('hex') };
+      return { path, sql, checksum: migrationChecksum(sql) };
     }));
     const prefix = files.slice(0, applied.length);
-    if (prefix.length !== applied.length || applied.some(row => !prefix.some(file => file.path === row.path && file.checksum === row.checksum))) {
+    if (prefix.length !== applied.length || applied.some(row => !prefix.some(file => file.path === row.path && matchesMigration(file.path, file.sql, row.checksum, cutover)))) {
       throw new PreflightError('Hosted migration ledger does not match the source files. Review its history before applying changes.');
     }
     const owner = await client.query('select rolbypassrls or rolsuper as can_claim from pg_roles where rolname = current_user');
@@ -178,18 +179,18 @@ async function applyMigrations(client: Client) {
         const code = z.object({ code: z.string().regex(/^[A-Z0-9]{5}$/) }).safeParse(error);
         throw new PreflightError(`Migration ${path} failed${code.success ? ` (SQLSTATE ${code.data.code})` : ''}. The transaction will roll back.`);
       }
-      await client.query(`create table if not exists kyb_private.hosted_migrations (
+      await client.query(`create table if not exists nextsignal_private.hosted_migrations (
         path text primary key, checksum text not null, applied_at timestamptz not null default now())`);
-      await client.query('insert into kyb_private.hosted_migrations(path,checksum) values($1,$2)', [path, checksum]);
+      await client.query('insert into nextsignal_private.hosted_migrations(path,checksum) values($1,$2)', [path, checksum]);
     }
     const grants = await client.query(`select
       exists(select from pg_roles cross join pg_class
         where rolname in ('anon','authenticated','service_role') and relnamespace = 'public'::regnamespace and relkind = 'r'
         and (has_table_privilege(rolname, pg_class.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')
           or has_any_column_privilege(rolname, pg_class.oid, 'SELECT,INSERT,UPDATE,REFERENCES'))) as leaked_table_grant,
-      exists(select from pg_roles where rolname in ('anon','authenticated','service_role','kyb_app')
+      exists(select from pg_roles where rolname in ('anon','authenticated','service_role','nextsignal_app')
         and has_function_privilege(rolname, 'public.claim_fixture_job()', 'EXECUTE')) as leaked_queue_grant,
-      has_function_privilege('kyb_worker', 'public.claim_fixture_job()', 'EXECUTE') as worker_grant,
+      has_function_privilege('nextsignal_worker', 'public.claim_fixture_job()', 'EXECUTE') as worker_grant,
       exists(select from pg_class where relnamespace = 'public'::regnamespace and relkind = 'r' and relname <> 'provider_licenses'
         and not (relrowsecurity and relforcerowsecurity)) as missing_rls`);
     const checks = z.object({ leaked_table_grant: z.literal(false), leaked_queue_grant: z.literal(false), worker_grant: z.literal(true), missing_rls: z.literal(false) });

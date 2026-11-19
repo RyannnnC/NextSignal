@@ -11,7 +11,7 @@ Reviewed on 2026-11-10 in the local development workspace.
 
 ## License inventory
 
-`npm sbom --sbom-format cyclonedx` inventoried 189 installed components. `npm sbom --omit=dev --sbom-format cyclonedx` inventoried 40 production components on this Windows workspace. The lockfile-only inventory listed 272 components, including optional dependencies for other platforms. Six entries without license metadata were the private `@kyb` workspaces.
+`npm sbom --sbom-format cyclonedx` inventoried 189 installed components. `npm sbom --omit=dev --sbom-format cyclonedx` inventoried 40 production components on this Windows workspace. The lockfile-only inventory listed 272 components, including optional dependencies for other platforms. Six entries without license metadata were the private `@nextsignal` workspaces.
 
 Review the license files for the packages actually distributed in the target release. The inventories include OFL-1.1 fonts, CC-BY-4.0 browser data (`caniuse-lite`), MPL-2.0 tooling, and platform-dependent Sharp and libvips packages with LGPL-3.0-or-later terms. Preserve applicable notices and assess distribution requirements for any native libraries included in a Linux image.
 

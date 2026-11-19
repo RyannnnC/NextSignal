@@ -1,7 +1,7 @@
 begin;
 
-alter table kyb_private.abs_observation_cache drop constraint abs_observation_cache_cache_key_check;
-alter table kyb_private.abs_observation_cache add constraint abs_observation_cache_cache_key_check
+alter table nextsignal_private.abs_observation_cache drop constraint abs_observation_cache_cache_key_check;
+alter table nextsignal_private.abs_observation_cache add constraint abs_observation_cache_cache_key_check
   check (cache_key ~ '^abs:(census_total_persons:C21_G01_SAL|census_household_income:C21_G02_SAL|census_age_groups:C21_G04_SAL):' and length(cache_key) <= 240);
 
 alter table public.evidence_records drop constraint evidence_records_payload_check;

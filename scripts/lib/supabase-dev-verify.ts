@@ -19,11 +19,11 @@ export async function verifyHostedPersistence(client: Client) {
     await client.query('lock table public.jobs in share row exclusive mode');
     assert.equal((await client.query('select exists (select from public.jobs) as occupied')).rows[0]?.occupied, false, 'Smoke requires an empty queue');
     phase = 'assuming restricted application and worker roles';
-    await client.query('grant kyb_app, kyb_worker to current_user');
+    await client.query('grant nextsignal_app, nextsignal_worker to current_user');
 
     // Savepoints preserve separate role boundaries while allowing the entire smoke to roll back.
     /** 在保存点内临时切换 SQL 角色，并在结束时恢复身份。 */
-    async function asRole<T>(role: 'kyb_app' | 'kyb_worker', work: () => Promise<T>) {
+    async function asRole<T>(role: 'nextsignal_app' | 'nextsignal_worker', work: () => Promise<T>) {
       await client.query('savepoint smoke_role');
       try {
         await client.query(`set local role ${role}`);
@@ -42,7 +42,7 @@ export async function verifyHostedPersistence(client: Client) {
     const tx: Transaction = { query: async <T>(sql: string, values?: unknown[]) => ({ rows: (await client.query(sql, values)).rows as T[] }) };
     let cacheQueue = Promise.resolve();
     const cache = new PostgresAbsCache(work => {
-      const result = cacheQueue.then(() => asRole('kyb_worker', () => work(tx)));
+      const result = cacheQueue.then(() => asRole('nextsignal_worker', () => work(tx)));
       cacheQueue = result.then(() => undefined, () => undefined);
       return result;
     });
@@ -52,12 +52,12 @@ export async function verifyHostedPersistence(client: Client) {
       return fetch(url, options);
     }) : undefined;
     const db: Database = {
-      asUser: (userId, work) => asRole('kyb_app', async () => {
+      asUser: (userId, work) => asRole('nextsignal_app', async () => {
         await client.query("select set_config('request.jwt.claim.sub', $1, true)", [userId]);
-        assert.equal((await client.query('select kyb_private.current_actor() as id')).rows[0]?.id, userId);
+        assert.equal((await client.query('select nextsignal_private.current_actor() as id')).rows[0]?.id, userId);
         return work(tx);
       }),
-      claimJob: () => asRole('kyb_worker', async () => {
+      claimJob: () => asRole('nextsignal_worker', async () => {
         const result = await client.query(`select id, workspace_id as "workspaceId", user_id as "userId", run_id as "runId",
           lease_token as "leaseToken", attempts from public.claim_fixture_job()`);
         return result.rows.length ? z.object({ id: z.uuid(), workspaceId: z.uuid(), userId: z.uuid(), runId: z.uuid(), leaseToken: z.uuid(), attempts: z.number().int() }).parse(result.rows[0]) : null;
@@ -97,12 +97,12 @@ export async function verifyHostedPersistence(client: Client) {
       assert.equal(absRequests, before, 'Cache hit must not call ABS again');
       for (const cached of Object.values(snapshots)) {
       assert.ok(typeof cached === 'object');
-      const cacheKey = await asRole('kyb_worker', async () => (await tx.query<{ cache_key: string }>(
-        "select cache_key from kyb_private.abs_observation_cache where payload->>'sourceUrl'=$1 and collected_at=$2::timestamptz", [cached.sourceUrl, cached.collectedAt]
+      const cacheKey = await asRole('nextsignal_worker', async () => (await tx.query<{ cache_key: string }>(
+        "select cache_key from nextsignal_private.abs_observation_cache where payload->>'sourceUrl'=$1 and collected_at=$2::timestamptz", [cached.sourceUrl, cached.collectedAt]
       )).rows[0]?.cache_key);
       assert.ok(cacheKey, 'The verified snapshot must exist in the shared cache');
-      await asRole('kyb_worker', async () => {
-        await tx.query("update kyb_private.abs_observation_cache set collected_at=now()-interval '8 days', expires_at=now()-interval '1 day' where cache_key=$1", [cacheKey]);
+      await asRole('nextsignal_worker', async () => {
+        await tx.query("update nextsignal_private.abs_observation_cache set collected_at=now()-interval '8 days', expires_at=now()-interval '1 day' where cache_key=$1", [cacheKey]);
       });
       assert.equal(await cache.read(cacheKey), undefined, 'Expired entries must be skipped');
       }
@@ -119,18 +119,18 @@ export async function verifyHostedPersistence(client: Client) {
     const anonymous = await client.query(`select has_table_privilege('anon', 'public.projects', 'SELECT') as projects,
       has_function_privilege('anon', 'public.claim_fixture_job()', 'EXECUTE') as claim`);
     assert.deepEqual(anonymous.rows[0], { projects: false, claim: false });
-    const cachePrivileges = await client.query(`select has_table_privilege('anon', 'kyb_private.abs_observation_cache', 'SELECT') as anon,
-      has_table_privilege('authenticated', 'kyb_private.abs_observation_cache', 'SELECT') as authenticated,
-      has_table_privilege('kyb_app', 'kyb_private.abs_observation_cache', 'SELECT') as app`);
+    const cachePrivileges = await client.query(`select has_table_privilege('anon', 'nextsignal_private.abs_observation_cache', 'SELECT') as anon,
+      has_table_privilege('authenticated', 'nextsignal_private.abs_observation_cache', 'SELECT') as authenticated,
+      has_table_privilege('nextsignal_app', 'nextsignal_private.abs_observation_cache', 'SELECT') as app`);
     assert.deepEqual(cachePrivileges.rows[0], { anon: false, authenticated: false, app: false });
-    await asRole('kyb_app', async () => {
-      assert.equal((await client.query('select kyb_private.current_actor() as actor')).rows[0]?.actor, null);
+    await asRole('nextsignal_app', async () => {
+      assert.equal((await client.query('select nextsignal_private.current_actor() as actor')).rows[0]?.actor, null);
       assert.equal((await client.query('select id from public.projects')).rowCount, 0);
     });
 
     phase = 'checking conversation and export isolation';
     const conversation = randomUUID(), file = randomUUID();
-    await assert.rejects(asRole('kyb_app', () => client.query('insert into public.conversations(workspace_id,project_id) values($1,$2)', [owner.workspaceId,id])), { code: '42501' });
+    await assert.rejects(asRole('nextsignal_app', () => client.query('insert into public.conversations(workspace_id,project_id) values($1,$2)', [owner.workspaceId,id])), { code: '42501' });
     await client.query('insert into public.conversations(id,workspace_id,project_id) values($1,$2,$3)', [conversation,owner.workspaceId,id]);
     await client.query("insert into public.messages(workspace_id,conversation_id,role,content) values($1,$2,'user','Synthetic smoke message')", [owner.workspaceId,conversation]);
     await client.query(`insert into public.report_files(id,workspace_id,project_id,report_id,object_path,mime_type,size_bytes)

@@ -6,9 +6,8 @@ Last discussed: 2026-10-26. This document distills product decisions from a long
 Solo developer in Sydney with software engineering experience, Windows workstation and early budget around AUD 1,000. Target customers: Australian startup founders, pre-launch solo builders, small SaaS operators and small business owners. Product research and customer acquisition in Australia first. Avoid building a commodity SEO score generator or generic AI business-plan tool.
 
 ## Messaging (draft, not yet approved brand)
-- Name working title: **Know Your Business**.
+- Product name: **NextSignal**.
 - Tagline: **Validate your idea. Grow with evidence.**
-- Alternative: **Know your business. Know your market. Know your next move.**
 - Promise: Australia-first, source-grounded research, not AI certainty or success guarantees.
 - DO NOT claim AI knows owners' businesses better than owners do. Owners confirm/modify inferred business profiles.
 
@@ -51,7 +50,7 @@ Do not prematurely implement: continuous GEO monitoring, guaranteed search ranki
 Sensitive unpublished founder ideas and customer reports must be private by default, deletion supported, no undisclosed training or reuse, provider disclosures accurate. Comply with relevant Australia Consumer Law / ACCC advertising obligations, Spam Act / ACMA marketing rules, applicable Privacy Act / OAIC rules, ABN and GST obligations when relevant, and third-party API commercial licensing. Lawyer review prior to paid public launch. A general disclaimer is distinct from a Privacy Policy and cannot cancel statutory consumer guarantees. Human-reviewed label only on genuinely reviewed outputs.
 
 ## Visual design
-Root DESIGN.md and PNG assets were supplied on 2026-10-27. The supplied material uses NextSignal while the product specification uses Know Your Business; final naming and existing component-library handoff remain pending. Preserve supplied assets and do not select or purchase a new UI system. See ADR 0003 for the functional M1 UI scope.
+Root DESIGN.md and PNG assets were supplied on 2026-10-27. The supplied assets use NextSignal, the confirmed product name. The existing component-library handoff remains pending. Preserve supplied assets and do not select or purchase a new UI system. See ADR 0003 for the functional M1 UI scope.
 
 Update 2026-10-28: the owner confirmed **Next Signal** and approved applying DESIGN.md plus English/Simplified Chinese UI switching. Fonts are self-hosted with OFL notices; no new component framework is chosen. Native PostgreSQL verification is required separately from PGlite; the workstation's Docker Engine is currently blocked by Desktop's firmware virtualisation diagnostic. See ADRs 0004–0005 and operations/NATIVE_POSTGRES.md.
 

@@ -15,9 +15,11 @@ await admin.connect();
 try {
   const activity = await admin.query("select count(*)::int as active from pg_stat_activity where datname=current_database() and pid<>pg_backend_pid() and backend_type='client backend'");
   if (activity.rows[0]?.active !== 0) throw new Error('Stop application connections before backup.');
-  await admin.query('begin');
-  await admin.query('lock table public.projects,public.jobs,public.report_versions in share mode');
-  await docker(['exec', source, 'pg_dump', '-U', 'postgres', '-d', 'next_signal_local', '-Fc', '-f', '/tmp/nextsignal-backup.dump'], root);
+  await admin.query('begin isolation level repeatable read read only');
+  await admin.query("set local timezone = 'UTC'");
+  const snapshot = (await admin.query('select pg_export_snapshot() as id')).rows[0]?.id;
+  if (typeof snapshot !== 'string') throw new Error('Could not export a consistent backup snapshot');
+  await docker(['exec', source, 'pg_dump', '-U', 'postgres', '-d', 'next_signal_local', '--snapshot', snapshot, '-Fc', '-f', '/tmp/nextsignal-backup.dump'], root);
   await docker(['exec', source, 'sh', '-c', 'pg_dumpall -U postgres --roles-only > /tmp/nextsignal-roles.sql'], root);
   await docker(['cp', `${source}:/tmp/nextsignal-backup.dump`, resolve(directory, 'database.dump')], root);
   await docker(['cp', `${source}:/tmp/nextsignal-roles.sql`, resolve(directory, 'roles.sql')], root);
@@ -37,14 +39,14 @@ try {
     await docker(['exec', restore, 'createdb', '-U', 'postgres', 'next_signal_restore'], root);
     await docker(['cp', resolve(directory, 'database.dump'), `${restore}:/tmp/database.dump`], root);
     await docker(['exec', restore, 'pg_restore', '-U', 'postgres', '-d', 'next_signal_restore', '--exit-on-error', '/tmp/database.dump'], root, 120000);
-    const tables = await admin.query("select schemaname,tablename from pg_tables where schemaname in ('public','auth','local_fixture','kyb_private') order by 1,2");
+    const tables = await admin.query("select schemaname,tablename from pg_tables where schemaname in ('public','auth','local_fixture','nextsignal_private') order by 1,2");
     const verified = [];
     for (const row of tables.rows as { schemaname: string; tablename: string }[]) {
       if (!/^[a-z_]+$/.test(row.schemaname + row.tablename)) throw new Error('Unexpected table name');
       const sql = `select count(*)::text as count,md5(coalesce(string_agg(row_to_json(t)::text,E'\\n' order by row_to_json(t)::text),'')) as hash from "${row.schemaname}"."${row.tablename}" t`;
       const expected = (await admin.query(sql)).rows[0];
-      const restored = (await docker(['exec', restore, 'psql', '-U', 'postgres', '-d', 'next_signal_restore', '-At', '-c', sql], root)).trim();
-      if (restored !== `${expected.count}|${expected.hash}`) throw new Error('Restore content mismatch');
+      const restored = (await docker(['exec', '-e', 'PGTZ=UTC', restore, 'psql', '-U', 'postgres', '-d', 'next_signal_restore', '-At', '-c', sql], root)).trim();
+      if (restored !== `${expected.count}|${expected.hash}`) throw new Error(`Restore content mismatch for ${row.schemaname}.${row.tablename}`);
       verified.push({ table: `${row.schemaname}.${row.tablename}`, ...expected });
     }
     await writeFile(resolve(directory, 'receipt.json'), JSON.stringify({ verifiedAt: new Date().toISOString(), source, databaseSha256: createHash('sha256').update(await readFile(resolve(directory, 'database.dump'))).digest('hex'), verified }, null, 2), { mode: 0o600 });

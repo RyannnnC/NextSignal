@@ -1,0 +1,13 @@
+{
+  "auth-local/202611190001_runtime.sql": "3ff021c9ac676e559d9ba34155d52442eb30db91cbb2f8a92c6c935c0be3f576",
+  "auth-local/202611190002_workspace.sql": "b42325c0de16ab242012d654c75079eeaf1fbbdb2246486b235125a1432eb2e0",
+  "hosted/migrations/202611070001_dev_access_controls.sql": "05168da8db06e205e7b1da3f2eb48e7d94644ab18ecf4d94c5af2a02732f95b9",
+  "hosted/migrations/202611100001_conversations.sql": "219e426291571f4cc70c475701929522d5e082133231591c43ff4027e778ca81",
+  "hosted/migrations/202611100002_report_exports.sql": "5375aa230d157e83f90259d21a1f13fbd9a5f5baaa48091d1532aebfab3b2a4c",
+  "hosted/migrations/202611100003_hosted_actor.sql": "14aafaf4d4959db242dc3dcae1dc25d91fe397929b40e67420d1fdd599169761",
+  "local/0001_runtime.sql": "a2b128536c9cfaee97387243cf4fa2182d493344aa6d8f6e17f7a8aaa5bafcb5",
+  "migrations/202610270001_m1.sql": "705463909c4075b3f86465f7eef7d2234469929f6c169263f3b9a54e59967daf",
+  "migrations/202610270002_lease_exhaustion.sql": "3d1d1a5bf537386db08332c75c8cc349ec4a6fb51bf4bed2021328876112bbed",
+  "migrations/202611120001_abs_cache.sql": "bc42bf313a37fb15d6d1a5f538dbf559dbde452b26ff998ee3f8079f754a1d4f",
+  "migrations/202611140001_abs_regional_indicators.sql": "8ee69173e36c9e4b5ef45dac365d0386be89df13601759108768943e01293d21"
+}

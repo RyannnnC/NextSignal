@@ -25,7 +25,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect(version.rows[0]?.version).toContain('PostgreSQL 17.');
     console.info('Native PostgreSQL:', version.rows[0]?.version);
     const identity = await db.asUser(alice.userId, tx => tx.query('select current_user as name,rolsuper,rolbypassrls from pg_roles where rolname=current_user'));
-    expect(identity.rows).toEqual([{ name: 'kyb_app', rolsuper: false, rolbypassrls: false }]);
+    expect(identity.rows).toEqual([{ name: 'nextsignal_app', rolsuper: false, rolbypassrls: false }]);
     const tables = await root.query("select relname,relrowsecurity,relforcerowsecurity from pg_class where relnamespace='public'::regnamespace and relkind='r' and relname<>'provider_licenses'");
     expect(tables.rows.length).toBeGreaterThan(10);
     for (const row of tables.rows) expect(row).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
@@ -47,10 +47,10 @@ describe('native PostgreSQL migration, roles and workers', () => {
         and has_table_privilege(rolname, pg_class.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')`);
       expect(leaked.rows).toEqual([]);
       const claims = await client.query(`select rolname from pg_roles
-        where rolname in ('anon', 'authenticated', 'service_role', 'kyb_app', 'kyb_worker')
+        where rolname in ('anon', 'authenticated', 'service_role', 'nextsignal_app', 'nextsignal_worker')
         and has_function_privilege(rolname, 'public.claim_fixture_job()', 'EXECUTE')`);
-      expect(claims.rows).toEqual([{ rolname: 'kyb_worker' }]);
-      const application = await client.query("select has_table_privilege('kyb_app', 'public.projects', 'INSERT') as can_insert");
+      expect(claims.rows).toEqual([{ rolname: 'nextsignal_worker' }]);
+      const application = await client.query("select has_table_privilege('nextsignal_app', 'public.projects', 'INSERT') as can_insert");
       expect(application.rows).toEqual([{ can_insert: true }]);
     } finally {
       await client.query('rollback');
@@ -183,7 +183,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect((await root.query("select to_regclass('public.projects') as table_name")).rows[0]?.table_name).toBeNull();
     await migrations(root);
     // Recreate harness-only memberships/seed rows lost when the application schema/roles were dropped.
-    await root.query('grant kyb_app to nextsignal_test_backend; grant kyb_worker to nextsignal_test_queue');
+    await root.query('grant nextsignal_app to nextsignal_test_backend; grant nextsignal_worker to nextsignal_test_queue');
     for(const actor of [alice,bob]) await root.query('insert into public.workspaces(id,owner_id) values($1,$2)',[actor.workspaceId,actor.userId]);
     const {id}=await prepared(projects,alice);
     await runner.processOne();

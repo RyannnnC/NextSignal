@@ -7,7 +7,7 @@
 
 ## 1. Product mission and bounds
 
-**Positioning:** *Know Your Business. Validate your idea. Grow with evidence.*
+**Positioning:** *Know your market. Validate your idea. Grow with evidence.*
 
 Two independent entry points share one evidence engine:
 

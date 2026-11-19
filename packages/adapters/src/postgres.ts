@@ -7,7 +7,7 @@ export class PostgresDatabase implements Database {
   /** 分别接收应用查询和 worker 领任务所用的连接池。 */
   constructor(private readonly applicationPool: Pool, private readonly queuePool: Pool) {}
   /** 在事务内设置受限角色与超时，失败时回滚。 */
-  private async transaction<T>(pool: Pool, role: 'kyb_app' | 'kyb_worker', work: (client: PoolClient) => Promise<T>): Promise<T> {
+  private async transaction<T>(pool: Pool, role: 'nextsignal_app' | 'nextsignal_worker', work: (client: PoolClient) => Promise<T>): Promise<T> {
     const client = await pool.connect();
     try {
       await client.query('begin');
@@ -23,7 +23,7 @@ export class PostgresDatabase implements Database {
   /** 将可信服务端身份绑定到单个事务，供 RLS 使用。 */
   async asUser<T>(userId: string, work: (tx: Transaction) => Promise<T>): Promise<T> {
     z.uuid().parse(userId);
-    return this.transaction(this.applicationPool, 'kyb_app', async client => {
+    return this.transaction(this.applicationPool, 'nextsignal_app', async client => {
       await client.query("select set_config('request.jwt.claim.sub',$1,true)", [userId]);
       return work({ query: async <R>(sql: string, parameters?: unknown[]) => {
         const result = await client.query<Record<string, unknown>>(sql, parameters);
@@ -33,14 +33,14 @@ export class PostgresDatabase implements Database {
   }
   /** 公共统计缓存使用受限 worker 角色及相同的事务时限。 */
   async asWorker<T>(work: (tx: Transaction) => Promise<T>): Promise<T> {
-    return this.transaction(this.queuePool, 'kyb_worker', async client => work({ query: async <R>(sql: string, parameters?: unknown[]) => {
+    return this.transaction(this.queuePool, 'nextsignal_worker', async client => work({ query: async <R>(sql: string, parameters?: unknown[]) => {
       const result = await client.query<Record<string, unknown>>(sql, parameters);
       return { rows: result.rows as R[] };
     } }));
   }
   /** 使用受限 worker 角色调用领任务函数并校验返回值。 */
   async claimJob() {
-    return this.transaction(this.queuePool, 'kyb_worker', async client => {
+    return this.transaction(this.queuePool, 'nextsignal_worker', async client => {
       const result = await client.query('select * from public.claim_fixture_job()');
       if (result.rows.length === 0) return null;
       const row = z.object({ id: z.uuid(), workspace_id: z.uuid(), user_id: z.uuid(), run_id: z.uuid(), lease_token: z.uuid(), attempts: z.number().int() }).parse(result.rows[0]);

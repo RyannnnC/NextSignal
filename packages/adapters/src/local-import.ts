@@ -50,7 +50,9 @@ export async function importSnapshot(pool:Pool,input:unknown,beforeCommit?:()=>P
   const client=await pool.connect();
   try{
     await client.query('begin');await client.query("set local timezone='UTC'");
-    await client.query("select pg_advisory_xact_lock(hashtextextended('kyb-local-import',0))");
+    // Keep the original PostgreSQL hash key as an interlock with earlier revisions.
+    await client.query('select pg_advisory_xact_lock($1::bigint)', ['1012818118071902578']);
+    await client.query("select pg_advisory_xact_lock(hashtextextended('nextsignal-local-import',0))");
     const previous=(await client.query('select source_hash,receipt from local_fixture.import_history')).rows;
     if(previous.length){
       const same=previous.find(r=>r.source_hash===sourceHash);
