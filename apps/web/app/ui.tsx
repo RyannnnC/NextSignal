@@ -59,7 +59,6 @@ export function IdeaEntry() {
         ...(opportunity ? { localOpportunity: { ...opportunity, targetCustomer } } : {}),
       });
       try {
-        await api('session');
         const { id } = IdResponse.parse(await api('projects', 'POST', input));
         router.push(`/validate/${id}/review`);
       } catch (failure) {

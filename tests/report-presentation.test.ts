@@ -5,6 +5,7 @@ import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { LOCAL_OPPORTUNITY_EXAMPLE, SydneyAreaId } from '@nextsignal/contracts';
 import { presentReport, reportPath, reportReturnPath } from '../apps/web/lib/report-presentation';
+import { authReturn } from '../apps/web/lib/auth-return';
 import { createInput, prepared } from './helpers';
 
 let db: FixtureDatabase;
@@ -45,4 +46,14 @@ it('persists unavailable population with no recorded fallback when ABS fails', a
   const population = report.evidence.filter(item => item.metric === 'market_context');
   expect(population).toHaveLength(3);
   expect(population.every(item => item.classification === 'NOT_AVAILABLE' && item.value === null && !item.citation)).toBe(true);
+});
+it('auth return accepts only supported routes with valid contract IDs', () => {
+  const project = '10000000-0000-4000-8000-000000000001';
+  const report = '10000000-0000-4000-8000-000000000002';
+  for (const path of ['/account', '/account/reports', '/validate', `/validate/${project}/review`, `/validate/${project}/progress`, reportPath(project, report)]) {
+    expect(authReturn(path)).toBe(path);
+  }
+  for (const path of ['//example.com', '/account?other=1', `/validate/${'-'.repeat(36)}/review`, `/projects/${project}/reports/${'-'.repeat(36)}`, ['/validate']]) {
+    expect(authReturn(path)).toBe('/account');
+  }
 });

@@ -13,13 +13,6 @@ const steps = [
   ['Choose what to test', 'See what you can check next and where more information is needed.'],
 ] as const;
 
-const features: Record<string, readonly string[]> = {
-  free: ['Review your business idea', 'See what the example can and cannot tell you', 'Get three practical next steps'],
-  'idea-report': ['Check local demand', 'See what people search for', 'Compare other businesses and plan what to test'],
-  'growth-report': ['Review your website', 'Find topics your customers look for', 'Choose the changes to make first'],
-  expert: ['Discuss your report with a specialist', 'Improve how customers find your website', 'Get help improving key pages'],
-};
-
 /** 展示首页的产品入口、示例和计划报价。 */
 export function MarketingHome() {
   const {t,locale} = useLanguage();
@@ -89,7 +82,7 @@ export function MarketingHome() {
           <p className={styles.availability}>{t(service.status === 'planned' ? 'Planned — not available' : 'Free demo')}</p>
           <h3 id={`service-${service.id}`}>{t(service.name)}</h3>
           <p className={styles.price}>{service.amount === null ? t('Custom Quote') : <>A${new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN').format(service.amount)}{service.perReport && <small> {t('/ report')}</small>}</>}</p>
-          <ul>{(features[service.id] ?? service.features).map(feature => <li key={feature}>{t(feature)}</li>)}</ul>
+          <ul>{service.features.map(feature => <li key={feature}>{t(feature)}</li>)}</ul>
           <Link href={service.href}>{t(service.id === 'free' ? 'Try the free demo' : service.id === 'expert' ? 'View service status' : 'See what’s planned')}</Link>
         </article>)}</div>
         <details id="idea-scope"><summary>{t('What the idea report would cover')}</summary><p>{t('We plan to add search data and business comparisons. You can try the sample report today.')}</p></details>

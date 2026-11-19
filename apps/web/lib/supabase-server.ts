@@ -16,12 +16,3 @@ export async function supabaseServer() {
     },
   });
 }
-
-/** 仅允许返回已知站内工作流，拒绝任意 URL 和编码跳转。 */
-export function authReturn(value: unknown): string {
-  if (typeof value !== 'string') return '/account';
-  if (['/validate', '/account', '/account/reports'].includes(value)) return value;
-  if (/^\/validate\/[0-9a-f-]{36}\/(review|progress)$/.test(value) ||
-      /^\/projects\/[0-9a-f-]{36}\/reports\/[0-9a-f-]{36}$/.test(value)) return value;
-  return '/account';
-}

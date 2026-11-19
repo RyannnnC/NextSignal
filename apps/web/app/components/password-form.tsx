@@ -1,6 +1,7 @@
 'use client';
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { requestAuth } from '../../lib/client-api';
 import { useLanguage } from './site-shell';
 
 /** 通过同源服务端入口请求恢复邮件或更新已验证账号的密码。 */
@@ -13,9 +14,9 @@ export function PasswordForm({ reset = false }: { reset?: boolean }) {
     const data = new FormData(event.currentTarget);
     setBusy(true);
     try {
-      const response = await fetch('/auth/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(reset
-        ? { action: 'reset-password', password: data.get('password') } : { action: 'forgot-password', email: data.get('email') }) });
-      setMessage(response.ok ? reset ? 'Password updated. You can sign in with your new password.' : 'If this address can receive a reset link, check your email.' : 'Check your details and email verification, then try again.');
+      const ok = await requestAuth(reset
+        ? { action: 'reset-password', password: data.get('password') } : { action: 'forgot-password', email: data.get('email') });
+      setMessage(ok ? reset ? 'Password updated. You can sign in with your new password.' : 'If this address can receive a reset link, check your email.' : 'Check your details and email verification, then try again.');
     } catch { setMessage('Unable to connect. Please try again.'); }
     finally { setBusy(false); }
   }

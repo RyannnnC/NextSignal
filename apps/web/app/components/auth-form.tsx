@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { requestAuth } from '../../lib/client-api';
 import { useLanguage } from './site-shell';
 
 /** 通过服务端认证入口提交注册或登录，浏览器不保存访问令牌。 */
@@ -16,10 +17,10 @@ export function AuthForm({ signup = false, returnTo = '/account', verificationEr
     const data = new FormData(event.currentTarget);
     setBusy(true); setMessage('');
     try {
-      const response = await fetch('/auth/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
+      const ok = await requestAuth({
         action: signup ? 'sign-up' : 'sign-in', email: data.get('email'), password: data.get('password'), next: returnTo,
-      }) });
-      if (!response.ok) { setMessage('Check your details and email verification, then try again.'); return; }
+      });
+      if (!ok) { setMessage('Check your details and email verification, then try again.'); return; }
       if (signup) setMessage('Check your email for a verification link. If this address can register, a message will arrive.');
       else { router.replace(returnTo); router.refresh(); }
     } catch { setMessage('Unable to connect. Please try again.'); }

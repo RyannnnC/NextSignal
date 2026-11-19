@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { cookies } from 'next/headers';
-import { authReturn, supabaseServer } from '../../../lib/supabase-server';
+import { supabaseServer } from '../../../lib/supabase-server';
+import { authReturn } from '../../../lib/auth-return';
 
 const Input = z.object({
   action: z.enum(['sign-in', 'sign-up', 'sign-out', 'forgot-password', 'reset-password']),

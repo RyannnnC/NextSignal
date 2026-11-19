@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
 import { ProjectView, SessionView } from '@nextsignal/contracts';
-import { api, ClientApiError } from '../../lib/client-api';
+import { api, ClientApiError, requestAuth } from '../../lib/client-api';
 import { reportPath } from '../../lib/report-presentation';
 import { useLanguage } from './site-shell';
 
@@ -87,8 +87,7 @@ export function AccountPage({ history }: { history: boolean }) {
         <button className="secondary" onClick={async () => {
           try {
             if (session.email) {
-              const response = await fetch('/auth/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sign-out' }) });
-              if (!response.ok) throw new Error('Sign out failed');
+              if (!(await requestAuth({ action: 'sign-out' }))) throw new Error('Sign out failed');
             } else await api('session', 'DELETE');
             router.replace('/auth/sign-in'); router.refresh();
           }

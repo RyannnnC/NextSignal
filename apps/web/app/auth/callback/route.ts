@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { authReturn, supabaseServer } from '../../../lib/supabase-server';
+import { supabaseServer } from '../../../lib/supabase-server';
+import { authReturn } from '../../../lib/auth-return';
 
 /** 用 PKCE 验证码交换会话，失败时返回通用错误，不回显验证码。 */
 export async function GET(request: Request) {
