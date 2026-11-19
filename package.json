@@ -12,7 +12,8 @@
   },
   "scripts": {
     "dev": "tsx scripts/dev.ts",
-    "dev:auth": "tsx scripts/dev-auth.ts",
+    "dev:auth": "npm run dev",
+    "dev:fixture": "tsx scripts/dev.ts --fixture",
     "auth:setup": "tsx scripts/setup-auth-local.ts",
     "auth:up": "tsx scripts/start-auth-local.ts",
     "db:backup": "tsx scripts/backup-local.ts",

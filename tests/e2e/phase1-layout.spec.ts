@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 const widths = [375, 768, 1024, 1440, 1920];
-const origin = { origin: 'http://127.0.0.1:3000' };
+const origin = { origin: 'http://127.0.0.1:3001' };
 
 /** 核对各断点的布局，并输出可复审的浏览器截图。 */
 async function capture(page: Page, name: string, mask: Locator[] = []) {

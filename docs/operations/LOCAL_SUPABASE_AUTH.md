@@ -15,7 +15,7 @@ Requires Docker Desktop's healthy Linux engine, Node.js 24 and project dependenc
 ```sh
 npm ci
 npm run auth:up
-npm run dev:auth
+npm run dev
 ```
 
 | Service | Local URL or port |
@@ -39,7 +39,7 @@ To stop the Auth stack while retaining its volumes:
 npx supabase stop --workdir supabase/auth-local
 ```
 
-Stop the application before changing modes. `npm run dev` continues to run the preserved fixture environment. `npm run dev:auth` selects local Supabase identity and business storage together. No identity synchronization or fixture-user import is performed. Avoid database reset, volume deletion and broad Docker prune commands.
+Stop the application before changing modes. `npm run dev` selects local Supabase identity and business storage together. `npm run dev:fixture` opens the preserved fixture environment on port 3001. Both modes share the local worker port, so run one at a time. No identity synchronization or fixture-user import is performed. Avoid database reset, volume deletion and broad Docker prune commands.
 
 ## Trust and schema
 

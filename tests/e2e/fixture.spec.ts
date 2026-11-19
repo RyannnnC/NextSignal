@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 
-test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3000'}}); });
+test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3001'}}); });
 
 /** 通过页面控件登录指定 fixture 账号，并等待表单可用。 */
 async function login(page: Page, account = 'alice') {
@@ -41,7 +41,7 @@ test('idea → correction → private fixture report → new version → deletio
     expect(firstReportPath).toMatch(/^\/projects\/[^/]+\/reports\/[^/]+$/);
     await firstReportLink.click();
     // CI starts a fresh Next.js dev server and compiles this dynamic route on first navigation.
-    await expect(page).toHaveURL(new URL(firstReportPath!, 'http://127.0.0.1:3000').href, { timeout: 20_000 });
+    await expect(page).toHaveURL(new URL(firstReportPath!, 'http://127.0.0.1:3001').href, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: 'Local fixture snapshot — not market research', exact: true })).toBeVisible({ timeout: 10_000 });
     expect((await context.cookies()).find(c => c.name === 'next_signal_session')).toMatchObject({ httpOnly: true, sameSite: 'Strict' });
     expect(await page.evaluate(() => document.cookie)).not.toContain('next_signal_session');
@@ -72,7 +72,7 @@ test('idea → correction → private fixture report → new version → deletio
     expect((await page.request.get(`/api/projects/${id}`)).status()).toBe(404);
     expect(external).toEqual([]);
   } finally {
-    await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3000' } });
+    await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3001' } });
   }
 });
 
@@ -83,7 +83,7 @@ test('Sydney reference report preserves provenance and stays private after reope
   const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
   const { id } = await (await created).json() as { id: string };
-  const origin = { origin: 'http://127.0.0.1:3000' };
+  const origin = { origin: 'http://127.0.0.1:3001' };
   try {
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue(/International students in Sydney/);
     await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
@@ -118,7 +118,7 @@ test('local opportunity brief saves three locations and survives refresh with ow
   const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
   const { id } = await (await created).json() as { id: string };
-  const origin = { origin: 'http://127.0.0.1:3000' };
+  const origin = { origin: 'http://127.0.0.1:3001' };
   try {
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Students and young professionals');
     await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
@@ -164,12 +164,12 @@ test('local opportunity brief saves three locations and survives refresh with ow
 });
 
 test('HTTP boundaries: anonymous, CSRF, forged tenant, disabled URL input and request cap', async ({ page, browser }) => {
-  const origin = { origin: 'http://127.0.0.1:3000' };
+  const origin = { origin: 'http://127.0.0.1:3001' };
   expect((await page.request.post('/api/health', { headers: origin, data: {} })).status()).toBe(404);
   expect((await page.request.get('/api/projects/not-a-uuid')).status()).toBe(404);
   expect((await page.request.get('/api/projects/00000000-0000-4000-8000-000000000001/runs')).status()).toBe(404);
   const anon = await browser.newContext();
-  try { expect((await anon.request.get('http://127.0.0.1:3000/api/projects')).status()).toBe(401); } finally { await anon.close(); }
+  try { expect((await anon.request.get('http://127.0.0.1:3001/api/projects')).status()).toBe(401); } finally { await anon.close(); }
   expect((await page.request.post('/api/session', { data: { account: 'alice' } })).status()).toBe(403);
   expect((await page.request.post('/api/session', { headers: { origin: 'https://untrusted.example' }, data: { account: 'alice' } })).status()).toBe(403);
   await login(page);
@@ -183,7 +183,7 @@ test('HTTP boundaries: anonymous, CSRF, forged tenant, disabled URL input and re
   const bob = await browser.newContext();
   try {
     const bobPage = await bob.newPage(); await login(bobPage, 'bob');
-    expect((await bob.request.get(`http://127.0.0.1:3000/api/projects/${id}`)).status()).toBe(404);
+    expect((await bob.request.get(`http://127.0.0.1:3001/api/projects/${id}`)).status()).toBe(404);
     expect((await page.request.get(`/api/projects/${id}`)).headers()['cache-control']).toContain('no-store');
     await bobPage.goto('/account');
     await bobPage.getByRole('button', { name: 'Sign out', exact: true }).click();
@@ -207,5 +207,5 @@ test('keyboard access and untrusted input stays text', async ({ page }) => {
     await expect(page.getByLabel('Idea summary — founder statement')).toHaveValue(/<img/);
     expect(await page.evaluate(() => 'compromised' in window)).toBe(false);
     expect(await page.locator('img[onerror]').count()).toBe(0);
-  } finally { await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3000' } }); }
+  } finally { await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3001' } }); }
 });

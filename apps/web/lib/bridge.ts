@@ -9,15 +9,16 @@ import { supabaseServer } from './supabase-server';
 const Runtime = z.object({ url: z.literal('http://127.0.0.1:4311'), key: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 /** 检查本地运行开关、来源和路由，再转发到受保护的 worker。 */
 export async function bridge(request: Request, path: string): Promise<Response> {
-  if (process.env.NEXTSIGNAL_LOCAL_FIXTURE !== '1' || process.env.NODE_ENV === 'production') return error(503, 'local_fixture_only');
+  const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';
+  if ((!realAuth && process.env.NEXTSIGNAL_LOCAL_FIXTURE !== '1') || process.env.NODE_ENV === 'production') return error(503, 'local_runtime_only');
   const host = request.headers.get('host');
-  if (host !== '127.0.0.1:3000' && host !== 'localhost:3000') return error(403, 'loopback_only');
+  const port = realAuth ? 3000 : 3001;
+  if (host !== `127.0.0.1:${port}` && (realAuth || host !== `localhost:${port}`)) return error(403, 'loopback_only');
   if (!['GET', 'HEAD'].includes(request.method) && request.headers.get('origin') !== `http://${host}`) return error(403, 'origin_required');
   if (!isFixtureRoute(path, request.method)) return error(404, 'not_found');
   try {
     const runtime = Runtime.parse(JSON.parse(await readFile(resolve(process.env.NEXTSIGNAL_ROOT ?? resolve(process.cwd(), '../..'), '.local/runtime.json'), 'utf8')));
     const jar = await cookies();
-    const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';
     let token = jar.get('next_signal_session')?.value;
     if (realAuth && path !== 'health') {
       if (path === 'session' && request.method !== 'GET') return error(404, 'not_found');

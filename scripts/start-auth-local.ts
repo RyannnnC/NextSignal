@@ -16,4 +16,4 @@ try {
 } catch { throw new Error('Local Supabase start failed. Check Docker and the isolated project configuration.'); }
 await import('./bind-auth-loopback.js');
 await import('./setup-auth-local.js');
-console.log('Local Supabase ready. Start the application with npm run dev:auth.');
+console.log('Local Supabase ready. Start the application with npm run dev.');

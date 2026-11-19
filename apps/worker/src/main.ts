@@ -16,7 +16,7 @@ catch(error) { if(!(typeof error==='object'&&error&&'code' in error&&error.code=
 const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';
 const local = realAuth ? openAuthRuntime(await readLocalAuth(root)) : openLocalRuntime(await readRuntimeConfig(root));
 const ready=await local.db.asUser('00000000-0000-4000-8000-000000000001',tx=>tx.query('select id from public.workspaces limit 1'));
-if(!ready.rows.length && !realAuth){await local.close();throw new Error('Native local database is not initialized/migrated. Run db:migrate or npm run dev first.');}
+if(!ready.rows.length && !realAuth){await local.close();throw new Error('Native local database is not initialized/migrated. Run db:migrate or npm run dev:fixture first.');}
 const key = randomBytes(32).toString('hex');
 const abs = process.env.NEXTSIGNAL_ABS_ENABLED === '1'
   ? new AbsProvider(new PostgresAbsCache(work => local.db.asWorker(work))) : undefined;

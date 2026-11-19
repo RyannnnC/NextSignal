@@ -46,7 +46,7 @@ Verify the genuine query, cache reuse and expiry behaviour, unavailable and malf
 ## Development operation
 
 - The ABS flow metadata includes the `NonProductionDataflow` annotation. Check ABS guidance and availability before any public use. The counts are based on usual residence and may contain small confidentiality adjustments.
-- To test in a browser, set `NEXTSIGNAL_ABS_ENABLED=1` in the shell running `npm run dev`. The local worker uses its existing Docker PostgreSQL connection.
+- To test in a browser, set `NEXTSIGNAL_ABS_ENABLED=1` in the shell running `npm run dev:fixture`. The local worker uses its existing Docker PostgreSQL connection.
 - To exercise the same runner against Sydney Supabase, set `NEXTSIGNAL_ABS_VERIFY=1` and run `npm run supabase:preflight -- --verify` with the existing development configuration. The transaction rolls back the sample projects and cache changes. A separately configured production worker is out of scope.
 - The cache retains an entry as fresh for seven days. Old versions stop matching when the dataflow or DSD changes. The current allowlist bounds the number of region combinations. No deletion schedule is needed for the pilot.
 - Migration `supabase/migrations/202611120001_abs_cache.sql` adds a worker-only cache and widens the evidence constraint. Existing migration checksums and tenant policies are preserved. Prefer a forward fix if migration changes are needed after any ABS evidence is persisted.

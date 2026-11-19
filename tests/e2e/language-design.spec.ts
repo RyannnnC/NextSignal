@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { mkdir } from 'node:fs/promises';
 
-test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3000'}}); });
+test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3001'}}); });
 
 test('bilingual design: local fonts, accessible flags, persistence, input preservation and responsive layout', async ({page,context})=>{
   const external:string[]=[];
@@ -64,5 +64,5 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
     await page.emulateMedia({reducedMotion:'reduce'});
     expect(await page.locator('.language-switch button').first().evaluate(e=>getComputedStyle(e).transitionDuration)).toBe('0s');
     expect(external).toEqual([]);
-  } finally {await page.request.delete(`/api/projects/${id}`,{headers:{origin:'http://127.0.0.1:3000'}});}
+  } finally {await page.request.delete(`/api/projects/${id}`,{headers:{origin:'http://127.0.0.1:3001'}});}
 });

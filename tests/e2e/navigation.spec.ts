@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
 
-test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3000'}}); });
+test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3001'}}); });
 
 test('marketing navigation, honest availability, original brand assets and responsive bilingual routes', async ({page,context}) => {
   const external: string[] = [];
@@ -39,7 +39,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   const hrefs=await page.locator('a[href]').evaluateAll(links=>links.map(link=>link.getAttribute('href')!));
   for(const href of new Set(hrefs)){
     expect(href.startsWith('/' )||href.startsWith('#')).toBe(true);
-    const url=new URL(href,'http://127.0.0.1:3000');
+    const url=new URL(href,'http://127.0.0.1:3001');
     expect((await page.request.get(url.pathname)).status()).toBe(200);
     if(url.hash)expect(await page.locator(url.hash).count()).toBe(1);
   }
@@ -57,7 +57,7 @@ test('marketing navigation, honest availability, original brand assets and respo
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
-  await expect(page).toHaveURL('http://127.0.0.1:3000/');
+  await expect(page).toHaveURL('http://127.0.0.1:3001/');
   await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
   await page.reload();
   await page.setViewportSize({width:375,height:812});
@@ -70,7 +70,7 @@ test('marketing navigation, honest availability, original brand assets and respo
 });
 
 test('private report deep links preserve authorization, login return, historical profile and deletion behavior',async ({page,browser})=>{
-  const origin={origin:'http://127.0.0.1:3000'};
+  const origin={origin:'http://127.0.0.1:3001'};
   await page.goto('/auth/sign-in?next=%2Fvalidate');
   await page.getByRole('button',{name:'Sign in locally',exact:true}).click();
   await expect(page.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();
@@ -101,28 +101,28 @@ test('private report deep links preserve authorization, login return, historical
     await page.reload();
     await expect(page.getByRole('heading',{name:'Sign in to view this report',exact:true})).toBeVisible();
     const anon=await browser.newContext();contexts.push(anon);
-    const anonPage=await anon.newPage();await anonPage.goto(`http://127.0.0.1:3000${url}`);
+    const anonPage=await anon.newPage();await anonPage.goto(`http://127.0.0.1:3001${url}`);
     await expect(anonPage.getByRole('heading',{name:'Sign in to view this report',exact:true})).toBeVisible();
     expect(await anonPage.getByText('Original private fixture customer',{exact:true}).count()).toBe(0);
     await anonPage.getByRole('link',{name:'Sign in locally',exact:true}).click();
     await anonPage.getByRole('button',{name:'Sign in locally',exact:true}).click();
-    await expect(anonPage).toHaveURL(`http://127.0.0.1:3000${url}`);
+    await expect(anonPage).toHaveURL(`http://127.0.0.1:3001${url}`);
     await expect(anonPage.getByText('Original private fixture customer',{exact:true})).toBeVisible();
     ownerRequest=anon.request;
     const bob=await browser.newContext();contexts.push(bob);
-    const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3000/auth/sign-in?next=%2Fvalidate');
+    const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3001/auth/sign-in?next=%2Fvalidate');
     await bobPage.getByLabel('Fixture account',{exact:true}).selectOption('bob');
     await bobPage.getByRole('button',{name:'Sign in locally',exact:true}).click();
     await expect(bobPage.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();
-    await bobPage.goto(`http://127.0.0.1:3000${url}`);
+    await bobPage.goto(`http://127.0.0.1:3001${url}`);
     await expect(bobPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
     expect(await bobPage.getByText('Original private fixture customer',{exact:true}).count()).toBe(0);
-    await anonPage.goto(`http://127.0.0.1:3000/projects/${id}/reports/${randomUUID()}`);await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
-    await anonPage.goto('http://127.0.0.1:3000/projects/invalid/reports/invalid');await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
+    await anonPage.goto(`http://127.0.0.1:3001/projects/${id}/reports/${randomUUID()}`);await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
+    await anonPage.goto('http://127.0.0.1:3001/projects/invalid/reports/invalid');await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
     await ownerRequest.delete(`/api/projects/${id}`,{headers:origin});
-    await anonPage.goto(`http://127.0.0.1:3000${url}`);await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
+    await anonPage.goto(`http://127.0.0.1:3001${url}`);await expect(anonPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
   } finally {
     await ownerRequest.delete(`/api/projects/${id}`,{headers:origin});
-    for(const context of contexts){await context.request.delete('http://127.0.0.1:3000/api/session',{headers:origin});await context.close();}
+    for(const context of contexts){await context.request.delete('http://127.0.0.1:3001/api/session',{headers:origin});await context.close();}
   }
 });
