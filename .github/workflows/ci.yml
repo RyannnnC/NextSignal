@@ -1,4 +1,4 @@
-name: M1 checks
+name: NextSignal checks
 on: [push, pull_request]
 permissions:
   contents: read
@@ -26,6 +26,21 @@ jobs:
           path: test-results/
           if-no-files-found: ignore
       - run: npm run test:local-persistence
+      - run: npm run db:backup
+  local-supabase-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: docker info
+      - run: npx playwright install --with-deps chromium
+      - run: npm run auth:up
+      - run: npm run auth:setup
+      - run: npm run test:auth
   secrets:
     runs-on: ubuntu-latest
     steps:

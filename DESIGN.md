@@ -305,5 +305,5 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 
 - Inspiration: [VoltAgent's MongoDB DESIGN.md](https://github.com/voltagent/awesome-design-md/blob/main/design-md/mongodb/DESIGN.md) for visual rhythm: deep-teal hero, bright green contrast, **12px card corners**, pill buttons, 8px controls, white research surfaces.
 - This is an **original NextSignal specification**, not MongoDB's design system and not an endorsement or affiliation.
-- The name **NextSignal** is a working selection, pending full Australian trade mark clearance and final asset checks.
+- **NextSignal** is the confirmed product name. Australian trade mark clearance and release asset checks are pre-launch tasks.
 - Amend this file when visual decisions change; record major changes in `docs/adr/` and update `AGENTS.md` to require the root `DESIGN.md`.

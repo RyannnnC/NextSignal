@@ -1,49 +1,13 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createClient } from '@supabase/supabase-js';
-import { Client } from 'pg';
-
-const origin = { origin: 'http://127.0.0.1:3000' };
-
-/** 只从指定测试邮箱的 Mailpit 邮件提取验证链接，不保存含凭据的 trace。 */
-async function verificationLink(email: string) {
-  let id = '';
-  await expect.poll(async () => {
-    const messages = await (await fetch('http://127.0.0.1:55424/api/v1/messages')).json();
-    const match = messages.messages.find((item: { To: { Address: string }[] }) => item.To.some(to => to.Address === email));
-    id = match?.ID ?? '';
-    return Boolean(id);
-  }, { timeout: 20_000 }).toBe(true);
-  const message = await (await fetch(`http://127.0.0.1:55424/api/v1/message/${id}`)).json();
-  const href = /href="([^"]+)"/.exec(message.HTML)?.[1]?.replaceAll('&amp;', '&');
-  if (!href || new URL(href).origin !== 'http://127.0.0.1:55421') throw new Error('Unexpected email verification origin');
-  return href;
-}
-
-/** 从页面注册真实账号并通过本地收件箱验证。 */
-async function register(page: Page, email: string, password: string) {
-  await page.goto('/auth/sign-up');
-  await page.getByLabel('Email', { exact: true }).fill(email);
-  await page.getByLabel('Password', { exact: true }).fill(password);
-  await page.getByRole('button', { name: 'Create account', exact: true }).click();
-  await expect(page.getByRole('status')).toContainText('Check your email');
-  const sql = new Client({ connectionString: 'postgresql://postgres:postgres@127.0.0.1:55422/postgres' });
-  await sql.connect();
-  try {
-    expect((await sql.query('select email_confirmed_at from auth.users where email=$1', [email])).rows[0]?.email_confirmed_at).toBeNull();
-  } finally { await sql.end(); }
-  expect((await page.request.get('/api/projects')).status()).toBe(401);
-  expect((await page.request.post('/auth/action', { headers: origin, data: { action: 'sign-in', email, password } })).status()).toBe(400);
-  await page.goto(await verificationLink(email));
-  await expect(page).toHaveURL(/\/account$/);
-  await expect(page.getByText(email, { exact: true })).toBeVisible();
-  await expect(page.getByText('Email verified', { exact: true })).toBeVisible();
-}
+import { beginSignup, origin, register, verificationLink } from './helpers';
 
 test('real local signup, email verification, session, owner isolation, research and logout', async ({ page, browser }) => {
   const suffix = randomBytes(8).toString('hex');
   const email = `owner-${suffix}@example.test`, password = randomBytes(24).toString('base64url');
+  expect(await (await page.request.get('/api/health')).json()).toMatchObject({ mode: 'local-supabase' });
   await register(page, email, password);
   await page.reload();
   await expect(page.getByText(email, { exact: true })).toBeVisible();
@@ -56,9 +20,11 @@ test('real local signup, email verification, session, owner isolation, research 
   const runtime = openAuthRuntime(config);
   try { expect(await runtime.sessions.resolve(revokedSession.data.session.access_token)).toBeNull(); }
   finally { await runtime.close(); }
-  const rawCookies = await page.context().cookies();
-  expect(rawCookies.filter(cookie => cookie.name.startsWith('nextsignal-auth')).every(cookie => cookie.httpOnly)).toBe(true);
+  const sessionCookies = (await page.context().cookies()).filter(cookie => /^nextsignal-auth(?:\.\d+)?$/.test(cookie.name));
+  expect(sessionCookies.length).toBeGreaterThan(0);
+  for (const cookie of sessionCookies) expect(cookie.httpOnly).toBe(true);
   await page.goto('/auth/sign-in?next=https%3A%2F%2Fevil.example');
+  await expect(page.getByLabel('Fixture account')).toHaveCount(0);
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
@@ -73,15 +39,30 @@ test('real local signup, email verification, session, owner isolation, research 
   try {
     const saved = await (await page.request.get(`/api/projects/${id}`)).json();
     const profile = saved.profiles[0];
-    const confirmed = await page.request.post(`/api/projects/${id}/confirm`, { headers: origin, data: { profileId: profile.id, profile: profile.content, requestKey: crypto.randomUUID() } });
+    const initialCustomer = 'Original synthetic report customer';
+    const confirmed = await page.request.post(`/api/projects/${id}/confirm`, { headers: origin, data: { profileId: profile.id, profile: { ...profile.content, customer: initialCustomer }, requestKey: crypto.randomUUID() } });
     expect(confirmed.status()).toBe(200);
-    expect((await page.request.post(`/api/projects/${id}/runs`, { headers: origin, data: { profileId: (await confirmed.json()).id, requestKey: crypto.randomUUID() } })).status()).toBe(202);
+    const { id: firstProfile } = await confirmed.json();
+    expect((await page.request.post(`/api/projects/${id}/runs`, { headers: origin, data: { profileId: firstProfile, requestKey: crypto.randomUUID() } })).status()).toBe(202);
     await expect.poll(async () => (await (await page.request.get(`/api/projects/${id}`)).json()).reports.length).toBe(1);
     const report = (await (await page.request.get(`/api/projects/${id}`)).json()).reports[0];
+    const revised = await page.request.post(`/api/projects/${id}/confirm`, { headers: origin, data: {
+      profileId: firstProfile, profile: { ...profile.content, summary: 'Revised synthetic project title', customer: 'Revised synthetic report customer' }, requestKey: crypto.randomUUID(),
+    } });
+    expect(revised.status()).toBe(200);
+    expect((await page.request.post(`/api/projects/${id}/runs`, { headers: origin, data: { profileId: (await revised.json()).id, requestKey: crypto.randomUUID() } })).status()).toBe(202);
+    await expect.poll(async () => (await (await page.request.get(`/api/projects/${id}`)).json()).reports.length).toBe(2);
+    await page.goto('/account/reports');
+    const history = page.locator('.history-row').filter({ hasText: 'Revised synthetic project title' });
+    await expect(history.getByRole('link', { name: /View report/ })).toHaveCount(2);
+    await history.getByRole('link', { name: 'View report 2' }).click();
+    await expect(page.getByText('Revised synthetic report customer', { exact: true })).toBeVisible();
     await page.goto(`/projects/${id}/reports/${report.id}`);
     await expect(page.getByRole('heading', { name: report.title, exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('heading', { name: report.title, exact: true })).toBeVisible();
+    await expect(page.getByText(initialCustomer, { exact: true })).toBeVisible();
+    await expect(page.getByText('Revised synthetic report customer', { exact: true })).toHaveCount(0);
     const other = await browser.newContext();
     const second = await other.newPage();
     try {
@@ -115,7 +96,8 @@ test('real local signup, email verification, session, owner isolation, research 
   await page.getByLabel('Password', { exact: true }).fill(nextPassword);
   await page.getByRole('button', { name: 'Sign In', exact: true }).click();
   await expect(page).toHaveURL(/\/account$/);
-  const signedInCookies = await page.context().cookies();
+  const signedInCookies = (await page.context().cookies()).filter(cookie => /^nextsignal-auth(?:\.\d+)?$/.test(cookie.name));
+  expect(signedInCookies.length).toBeGreaterThan(0);
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
   const expiredContext = await browser.newContext();
   try {
@@ -124,6 +106,62 @@ test('real local signup, email verification, session, owner isolation, research 
   } finally { await expiredContext.close(); }
   await page.goto('/auth/callback?code=invalid');
   await expect(page).toHaveURL(/\/auth\/sign-in\?error=verification$/);
-  await expect(page.getByRole('alert')).toContainText('invalid or expired');
+  await expect(page.getByRole('main').getByRole('alert')).toContainText('invalid or expired');
   expect((await page.request.post('/auth/action', { data: { action: 'sign-in', email, password } })).status()).toBe(403);
+});
+
+test('opted-in draft survives reload and verification in another tab, then clears', async ({ page, context }) => {
+  const email = `draft-${randomBytes(8).toString('hex')}@example.test`;
+  const idea = 'Synthetic idea for testing a local repair service draft';
+  const field = page.getByLabel('Test business idea', { exact: true });
+  await page.goto('/validate');
+  await expect(page.getByText('Sign in to save your idea as a private project.')).toBeVisible();
+  await field.fill(idea);
+  await page.reload();
+  await expect(field).toHaveValue('');
+  await field.fill(idea);
+  await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
+  await page.reload();
+  await expect(field).toHaveValue(idea);
+  await page.getByRole('button', { name: 'Discard draft' }).click();
+  await page.reload();
+  await expect(field).toHaveValue('');
+  await field.fill(idea);
+  await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
+  await page.evaluate(() => {
+    const key = 'nextsignal-fixture-draft';
+    sessionStorage.setItem(key, JSON.stringify({ ...JSON.parse(sessionStorage.getItem(key)!), expires: Date.now() - 1 }));
+  });
+  await page.reload();
+  await expect(field).toHaveValue('');
+
+  await field.fill(idea);
+  await page.getByRole('checkbox', { name: /I understand/ }).check();
+  await page.getByRole('checkbox', { name: /Record optional marketing/ }).check();
+  await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
+  await page.getByRole('button', { name: 'Create project and review idea' }).click();
+  await expect(page).toHaveURL(/\/auth\/sign-in\?next=%2Fvalidate$/);
+  await beginSignup(page, email, randomBytes(24).toString('base64url'), '/validate');
+  const verification = await context.newPage();
+  try {
+    await verification.goto(await verificationLink(email));
+    await expect(verification).toHaveURL(/\/validate$/);
+    await expect(verification.getByLabel('Test business idea')).toHaveValue('');
+  } finally { await verification.close(); }
+  await page.getByRole('link', { name: 'Continue to your idea' }).click();
+  await expect(page).toHaveURL(/\/validate$/);
+  await expect(field).toHaveValue(idea);
+  await page.reload();
+  await expect(field).toHaveValue(idea);
+  await expect(page.getByRole('checkbox', { name: /I understand/ })).toBeChecked();
+  await expect(page.getByRole('checkbox', { name: /Record optional marketing/ })).toBeChecked();
+  const creation = page.waitForResponse(response => response.url().endsWith('/api/projects') && response.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Create project and review idea' }).click();
+  const response = await creation;
+  expect(response.status()).toBe(201);
+  const { id } = await response.json();
+  try {
+    await expect(page).toHaveURL(new RegExp('/validate/' + id + '/review$'));
+    expect(await page.evaluate(() => sessionStorage.getItem('nextsignal-fixture-draft'))).toBeNull();
+  } finally { await page.request.delete(`/api/projects/${id}`, { headers: origin }); }
 });

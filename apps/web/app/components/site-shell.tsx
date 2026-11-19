@@ -46,7 +46,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     if (pathname === '/') {
       document.title = `${translate(locale, 'Find your next business opportunity.')} | NextSignal`;
     } else {
-      const title = pathname.startsWith('/projects/') ? 'Private fixture report'
+      const title = pathname.startsWith('/projects/') ? 'Private preview report'
         : pathname.endsWith('/review') ? 'Review business profile' : pathname.endsWith('/progress') ? 'Research runs'
         : pathname === '/validate' ? 'Validate My Idea' : authTitles[pathname] ? realAuth ? authTitles[pathname] : 'Local fixture sign in'
         : pathname === '/example-report' ? 'Example report'
@@ -89,7 +89,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     <main id="main" className={pathname === '/' ? styles.homeMain : undefined}>{children}
     </main>
       <footer className={styles.footer}><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
-        {pathname !== '/' && <div className="trust-strip"><span>✓ {t('No external processing')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
+        {pathname !== '/' && <div className="trust-strip"><span>✓ {t('Idea text stays local')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
         <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Try the free preview')}</Link><Link href="/example-report">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
       </footer>
   </Language.Provider>;

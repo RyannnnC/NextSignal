@@ -1,7 +1,7 @@
 # ADR 0003: Received design assets, deferred brand and UI library selection
 
 - Date: 2026-10-27
-- Status: Received; brand identity and component-library choice pending owner confirmation
+- Status: Historical handoff. Naming is recorded in ADR 0004 and full UI framework adoption remains deferred.
 - Owner: Project owner
 
 ## Context

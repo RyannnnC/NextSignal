@@ -33,16 +33,20 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [signedOut, setSignedOut] = useState(false);
-  const open = useCallback(async (key: string, edit = true) => {
-    const value = ProjectView.parse(await api(`projects/${key}`));
+  const open = useCallback(async (key: string, edit = true, signal?: AbortSignal) => {
+    const value = ProjectView.parse(await api(`projects/${key}`, 'GET', undefined, signal));
+    if (signal?.aborted) return;
     setProject(value);
     if (edit) setProfile(value.profiles.at(-1)?.content ?? null);
   }, []);
   useEffect(() => {
-    void open(id).catch(failure => {
+    const controller = new AbortController();
+    void open(id, true, controller.signal).catch(failure => {
+      if (controller.signal.aborted) return;
       if (failure instanceof ClientApiError && failure.status === 401) setSignedOut(true);
       else setError('Report unavailable. It may have been deleted or belong to another account.');
     });
+    return () => controller.abort();
   }, [id, open]);
   const run = project?.runs.at(-1);
   const active = run && activeStatuses.has(run.status);
@@ -83,15 +87,13 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
           <p className="hypothesis"><strong>{t('Hypothesis')}:</strong> {profile.assumptions.map(a=>a==='The intended customer experiences this problem. This has not been researched.'?t(a):a).join(' ')}</p><button className={canStart ? 'secondary' : undefined} disabled={busy || canStart || profile.localOpportunity?.areaIds.length === 0}>{t('Confirm corrected profile')}</button>
         </form>
         <div className="button-row">{active ? <Link className="button" href={`/validate/${id}/progress`}>{t('View research progress')}</Link>
-          : <button className={canStart ? undefined : 'secondary'} disabled={busy || !canStart} onClick={() => { void act(async () => { await api(`projects/${project.id}/runs`, 'POST', { profileId: latest.id, requestKey: crypto.randomUUID() }); router.push(`/validate/${project.id}/progress`); }); }}>{t('Run fixture snapshot')}</button>}
+          : <button className={canStart ? undefined : 'secondary'} disabled={busy || !canStart} onClick={() => { void act(async () => { await api(`projects/${project.id}/runs`, 'POST', { profileId: latest.id, requestKey: crypto.randomUUID() }); router.push(`/validate/${project.id}/progress`); }); }}>{t('Generate preview report')}</button>}
         <button className="secondary" disabled={busy} onClick={() => { void act(async () => { await open(project.id); setMessage('Project refreshed.'); }); }}>{t('Refresh project')}</button></div>
-        {!canStart && <p className="metadata">{t('Confirm the profile to enable a fixture run.')}</p>}
+        {!canStart && <p className="metadata">{t('Confirm the profile to generate a preview report.')}</p>}
 
     </section>}
-    </div>
     {mode === 'progress' && project && <section className="flow-form" aria-label={t('Research runs')}>
-      <p role="status">{t(run?.status ?? 'No run has started.')}</p>
-      {run && <p>{t(progressDescriptions[run.status])}</p>}
+      <p role="status">{t(run ? progressDescriptions[run.status] : 'No run has started.')}</p>
       {run?.errorCode && <p role="alert">{t(run.errorCode)}</p>}
       {active && <button className="secondary" disabled={busy} onClick={() => void act(async () => {
         await api(`projects/${id}/cancel`, 'POST', { runId: run.id });
@@ -104,5 +106,6 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
       </div>
       {(run?.status === 'failed' || run?.status === 'cancelled') && <p>{t('Return to review to start a new run.')}</p>}
     </section>}
+    </div>
   </div>;
 }

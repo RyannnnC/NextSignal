@@ -2,6 +2,8 @@
 
 Updated 2026-11-10, Australia/Sydney. Scope is the existing M1 database path and access controls in the Sydney development project.
 
+The repository naming cutover has only been rehearsed locally for the hosted migration scope. The default browser application and its Auth tests use loopback Supabase. The Sydney commands below describe separately authorized hosted operations. They do not form part of local initialization or CI. [Naming cutover](DATABASE_NAMING_CUTOVER.md)
+
 ## First increment — read-only connection probe
 
 Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in the ignored `.env.supabase-dev.local` at the repository root. Use the project's default HTTPS URL from the development dashboard. Run `npm run supabase:preflight` from the root. The command checks the key against the hosted Auth settings endpoint without signing in. The browser and local fixture runtime do not read this file.
@@ -16,7 +18,7 @@ For the optional SQL metadata probe, add the three entries in [the database temp
 
 ### Recovering from duplicate role error `42710`
 
-On the Sydney development project, `supabase db push` can try to replay the baseline when `supabase_migrations.schema_migrations` is empty. The baseline already exists in `nextsignal_private.hosted_migrations`, and the CLI only scans `supabase/migrations`. Run `npm run supabase:preflight` to see the CLI versions, then use `npm run supabase:preflight -- --apply` for this project. The runner accepts an empty CLI table, checks the hosted ledger against the source files, and skips recorded migrations. An empty CLI table may remain in place. Keep using the hosted runner for this database. If the CLI ledger contains versions, review the two histories before applying anything. [Supabase migration history](https://supabase.com/docs/guides/deployment/database-migrations)
+On the Sydney development project, `supabase db push` can try to replay the baseline when `supabase_migrations.schema_migrations` is empty. The established hosted runner uses a separate ledger and checks each recorded migration checksum. An empty CLI ledger may remain in place. Existing historical databases must complete the naming cutover before the current hosted runner can apply a new revision. Review any nonempty CLI ledger before applying migrations. [Supabase migration history](https://supabase.com/docs/guides/deployment/database-migrations)
 
 ### Application integration sequence
 
@@ -28,8 +30,8 @@ On the Sydney development project, `supabase db push` can try to replay the base
 
 | Area | Current implementation |
 | --- | --- |
-| Authentication | The Next BFF forwards the local Alice/Bob login to the loopback worker host. The browser holds an HttpOnly cookie and PostgreSQL stores the session digest and expiry. The worker binds a trusted user ID to a transaction. Local auth.users and auth.uid() come from a compatibility shim. |
-| Database | Browser runtime uses Docker PostgreSQL 17 with a named local volume, using pg and SQL migrations. PGlite is for tests and legacy import. The SDK is used by the hosted smoke command. The hosted development database has six versioned migrations recorded in `nextsignal_private.hosted_migrations`. |
+| Authentication | The default loopback BFF verifies local Supabase email sessions and the worker revalidates their session record. The compatibility identity schema and test logins exist only in the explicit fixture mode. A hosted browser mode remains planned. |
+| Database | Local Auth and fixture modes have separate persistent volumes and migration ledgers. PGlite is for tests and legacy import. The current hosted runner uses `nextsignal_private.hosted_migrations` after the naming cutover. The previous live ledger inspection belongs to the dated development record. |
 | Reports | Private, immutable JSON snapshots in report_versions. They bind to a historical profile through the run and payload. The report page uses the existing authorized project API. |
 | Conversations and files | The hosted schema now has `conversations`, `messages`, and `report_files`. The current application has no conversation endpoint, export route, or upload path. New tables are read-only to the runtime role until their write workflows are implemented. |
 | Runtime | The BFF and worker explicitly gate local fixture execution. The Compose files run development and native test databases. The VPS runtime needs its own entry points and release verification. |

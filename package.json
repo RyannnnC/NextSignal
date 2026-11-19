@@ -18,6 +18,7 @@
     "auth:up": "tsx scripts/start-auth-local.ts",
     "db:backup": "tsx scripts/backup-local.ts",
     "test:auth": "playwright test --config playwright.auth.config.ts",
+    "test:design": "playwright test --config playwright.design.config.ts",
     "worker": "tsx apps/worker/src/main.ts",
     "db:up": "tsx scripts/db.ts up",
     "db:stop": "tsx scripts/db.ts stop",

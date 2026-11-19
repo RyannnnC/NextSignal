@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
-import { CreateProject, FIXTURE_NOTICE, Id, LOCAL_OPPORTUNITY_EXAMPLE, LocalOpportunityInput, SYDNEY_REFERENCE_IDEA, SydneyAreaId } from '@nextsignal/contracts';
+import { CreateProject, FIXTURE_NOTICE, Id, LOCAL_AUTH_NOTICE, LOCAL_OPPORTUNITY_EXAMPLE, LocalOpportunityInput, SYDNEY_REFERENCE_IDEA, SydneyAreaId } from '@nextsignal/contracts';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
 import { api, ClientApiError } from '../lib/client-api';
@@ -103,7 +103,7 @@ export function IdeaEntry() {
     try {
       const fields = {
         idea, geography: { country: 'AU', granularity: 'national' },
-        processingConsent: consent, noticeVersion: 'local-fixture-v1',
+        processingConsent: consent, noticeVersion: realAuth ? 'local-auth-preview-v1' : 'local-fixture-v1',
         marketingOptIn: marketing,
         ...(opportunity ? { localOpportunity: { ...opportunity, targetCustomer } } : {}),
       };
@@ -126,7 +126,6 @@ export function IdeaEntry() {
   return <div className="flow-layout">
     <div><h1>{t('Validate My Idea')}</h1><p>{t('Describe what you want to test and where you plan to start.')}</p>
       <p>{t('Sign in to save your idea as a private project.')}</p>
-      {realAuth && <p>{t('If you verify your email in another tab, return to this tab and reload to continue a saved draft.')}</p>}
     </div>
     <section className="flow-form" aria-label={t('Describe')}>
       {error && <p className="error-banner" role="alert">{t(error)}</p>}
@@ -158,7 +157,7 @@ export function IdeaEntry() {
             <LocalOpportunityFields value={opportunity} onChange={setOpportunity} prefix="draft" />
           </>}
           </details>
-          <details className="processing-notice"><summary>{t('Processing notice')}</summary><p id="processing-notice">{t(FIXTURE_NOTICE)}</p></details>
+          <details className="processing-notice"><summary>{t('Processing notice')}</summary><p id="processing-notice">{t(realAuth ? LOCAL_AUTH_NOTICE : FIXTURE_NOTICE)}</p></details>
           <label className="checkbox-label"><input type="checkbox" name="consent" required checked={consent} onChange={event => setConsent(event.target.checked)} /> {t('I understand the local processing notice.')}</label>
           <label className="checkbox-label"><input type="checkbox" name="marketing" checked={marketing} onChange={event => setMarketing(event.target.checked)} /> {t('Record optional marketing interest (no messages are sent).')}</label>
           <label className="checkbox-label"><input type="checkbox" name="saveDraft" checked={Boolean(expires)} onChange={event => setExpires(event.target.checked ? Date.now() + draftLifetime : undefined)} /> {t('Keep this draft in this tab for 15 minutes.')}</label>

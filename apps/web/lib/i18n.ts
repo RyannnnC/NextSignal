@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FIXTURE_NOTICE } from '@nextsignal/contracts';
+import { FIXTURE_NOTICE, LOCAL_AUTH_NOTICE } from '@nextsignal/contracts';
 
 export const Locale = z.enum(['en', 'zh-CN']);
 export type Locale = z.infer<typeof Locale>;
@@ -48,7 +48,7 @@ const zh: Record<string, string> = {
   'Problem to solve — founder statement': '待解决的问题 — 创始人陈述',
   'Hypothesis': '待验证假设', 'Confirm corrected profile': '确认修正后的资料',
   'Profile confirmed as a new version. Earlier reports remain unchanged.': '已确认并保存新版本，历史报告保持不变。',
-  'Run fixture snapshot': '生成模拟快照', 'Confirm the profile to enable a fixture run.': '先确认资料，再生成模拟快照。',
+  'Generate preview report': '生成预览报告', 'Confirm the profile to generate a preview report.': '先确认资料，再生成预览报告。',
   'Fixture run queued.': '模拟研究已排队。', 'Refresh project': '刷新项目', 'Project refreshed.': '项目已刷新。',
   'Delete project and reports': '删除项目和报告',
   'Project input, versions, runs and reports deleted from the local database.': '项目输入、版本、任务和报告已从本地数据库删除。',
@@ -99,13 +99,14 @@ const zh: Record<string, string> = {
   'interest reported': '报告有兴趣（模拟）', 'interest disputed': '兴趣受到质疑（模拟）'
 };
 const webZh: Record<string,string> = {
+  [LOCAL_AUTH_NOTICE]:'本地预览：你的邮箱、创意和私有报告保存在本地 Supabase 中。资料和报告使用模板生成。启用 ABS 比较时，系统按所选地区代码获取公开普查数据。你的邮箱和创意文本仍保存在本地。请只使用测试创意。删除项目会移除其输入、版本、任务和报告。',
+  'Idea text stays local':'创意文本保存在本地',
   'Please wait…':'请稍候…', 'Signing in…':'正在登录…', 'Signing out…':'正在退出…',
   'Sending verification email…':'正在发送验证邮件…', 'Requesting reset email…':'正在请求重置邮件…', 'Updating password…':'正在更新密码…',
   'Open the verification link in the same browser.':'请在同一浏览器打开验证链接。',
   'If you verify in another tab, come back here and continue in this tab to reopen your saved draft.':'若在另一个标签页完成验证，请回到此处并在本标签页继续，以打开已保存的草稿。',
   'Continue to your idea':'继续填写创意',
   'Sign in to save your idea as a private project.':'登录后可将创意保存为私有项目。',
-  'If you verify your email in another tab, return to this tab and reload to continue a saved draft.':'若在另一个标签页完成邮箱验证，请返回此标签页并刷新，以继续填写已保存的草稿。',
   'Market: Australia. The preview does not measure local demand.':'市场：澳大利亚。预览版不衡量当地需求。',
   'Use an example':'使用示例', 'Sydney repair comparison options':'悉尼维修地点比较选项',
   'Keep this draft in this tab for 15 minutes.':'在此标签页保留草稿 15 分钟。',
@@ -189,7 +190,7 @@ const webZh: Record<string,string> = {
   'Available today: a local idea fixture, not real AI or market research.':'当前可体验本地创意模拟流程，并非真实 AI 或市场研究。',
   'Describe a test business idea.':'描述一条测试业务创意。',
   'Correct and confirm your business assumptions.':'修正并确认你的业务假设。',
-  'Explore a private fixture report and its limitations.':'查看私有模拟报告及其局限。',
+  'Explore a private fixture report and its limitations.':'查看私有预览报告及其局限。',
   'Prices are proposals, not offers to purchase. Paid reports and expert services are not available.':'价格仅为规划占位，并非购买要约。付费报告和专家服务尚未开放。',
   'Planned — not available':'规划中 — 尚未开放', 'Local fixture only':'仅限本地模拟',
   'Free Business Snapshot':'免费业务快照', 'Idea Validation Report':'创意验证报告', 'Business Growth Report':'业务增长报告', 'Expert Services':'专家服务',
@@ -218,7 +219,7 @@ const webZh: Record<string,string> = {
   'Planned growth research':'增长研究规划',
   'There is no website crawler, SEO/GEO analysis or live growth report in this version. No URL is collected or fetched.':'此版本尚无网站抓取、SEO/GEO 分析或真实增长报告，不会收集或访问网站 URL。',
   'Try the local idea fixture':'体验本地创意模拟流程',
-  'Private fixture report':'私有模拟报告', 'View report':'查看报告', 'Loading report…':'正在读取报告…',
+  'Private preview report':'私有预览报告', 'View report':'查看报告', 'Loading report…':'正在读取报告…',
   'Sign in to view this report':'登录后查看此报告', 'Reports are only available to their local account.':'报告仅供所属本地账号访问。',
   'Report unavailable. It may have been deleted or belong to another account.':'报告不可用，可能已删除或属于其他账号。',
   'Could not load the report. Check the local worker and try again.':'无法读取报告，请检查本地 worker 后重试。', 'Try again':'重试',

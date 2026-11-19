@@ -17,8 +17,8 @@ export class ClientApiError extends Error {
   constructor(readonly status: number, readonly code: string, message: string) { super(message); }
 }
 /** 发起同源 API 请求，并将错误响应解析为类型化异常。 */
-export async function api(path: string, method = 'GET', body?: unknown): Promise<unknown> {
-  const response = await fetch(`/api/${path}`, { method, headers: { 'Content-Type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}), cache: 'no-store' });
+export async function api(path: string, method = 'GET', body?: unknown, signal?: AbortSignal): Promise<unknown> {
+  const response = await fetch(`/api/${path}`, { method, headers: { 'Content-Type': 'application/json' }, ...(body !== undefined ? { body: JSON.stringify(body) } : {}), signal: signal ?? null, cache: 'no-store' });
   const data: unknown = await response.json();
   if (!response.ok) {
     const error = ApiError.parse(data);

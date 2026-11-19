@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
+  devIndicators: false,
   logging: { incomingRequests: { ignore: [/\/auth\//] } },
   transpilePackages: ['@nextsignal/contracts'],
   poweredByHeader: false,

@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { TextDecoder } from 'node:util';
 
 const expression = process.argv[2];
 if (!expression) throw new Error('Pass a regular expression to scan tracked paths and UTF-8 text.');
@@ -8,6 +9,7 @@ const files = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8', maxBuf
 let identifiers = 0;
 let integrity = 0;
 for (const path of files) {
+  if (!existsSync(path)) continue;
   if (pattern.test(path)) { console.log(`path ${path}`); identifiers++; }
   const bytes = readFileSync(path);
   if (bytes.includes(0)) continue;

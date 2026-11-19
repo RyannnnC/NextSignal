@@ -28,6 +28,7 @@ Reports use a local simulated research workflow by default. The email service, o
 | `npx playwright install chromium` | Install the browser for Playwright |
 | `npm run test:auth` | Auth browser tests with the local Supabase stack running |
 | `npm run test:e2e` | Browser tests in fixture mode |
+| `npm run test:design` | Optional layout checks and screenshots with local Supabase Auth |
 | `npm run test:postgres` | Native PostgreSQL, RLS and multi-worker tests |
 
-[Local Auth and recovery](docs/operations/LOCAL_SUPABASE_AUTH.md) · [Fixture database and legacy import](docs/operations/LOCAL_DEVELOPMENT.md) · [Architecture](docs/ARCHITECTURE.md) · [Engineering rules](docs/ENGINEERING_RULES.md) · [Design](DESIGN.md)
+[Documentation index](docs/README.md) · [Local Auth and recovery](docs/operations/LOCAL_SUPABASE_AUTH.md) · [Database naming cutover](docs/operations/DATABASE_NAMING_CUTOVER.md) · [Design](DESIGN.md)

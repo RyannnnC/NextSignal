@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { randomUUID } from 'node:crypto';
-import { mkdir } from 'node:fs/promises';
 
 test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3001'}}); });
 
@@ -52,8 +51,6 @@ test('marketing navigation, honest availability, original brand assets and respo
   }
   const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
   expect(audit.violations).toEqual([]);
-  await mkdir('artifacts',{recursive:true});
-  await page.screenshot({path:'artifacts/phase2-home-desktop.png',fullPage:true});
   await page.getByRole('navigation',{name:'Main navigation'}).getByRole('link',{name:'Grow My Business',exact:true}).click();
   await expect(page.getByText('There is no website crawler, SEO/GEO analysis or live growth report in this version. No URL is collected or fetched.')).toBeVisible();
   await expect(page.locator('main')).toHaveCSS('width', '1440px');
@@ -71,7 +68,6 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(logo).toBeVisible();
   await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-  await page.screenshot({path:'artifacts/phase2-home-mobile.png',fullPage:true});
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations).toEqual([]);
   expect(external).toEqual([]);
 });

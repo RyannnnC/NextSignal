@@ -6,6 +6,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider, LOCAL_ACCOUNTS } from '@nextsignal/adapters';
+import { PostgresAbsCache } from '@nextsignal/adapters/abs-provider';
 import type { Database, ResearchProvider } from '@nextsignal/application';
 import { admin, bootstrap, database, migrations, pool } from './setup.js';
 import { createInput, prepared } from '../helpers.js';
@@ -56,6 +57,24 @@ describe('native PostgreSQL migration, roles and workers', () => {
       await client.query('rollback');
       client.release();
     }
+  });
+  it('reads and writes the private ABS cache via the worker without granting access to tenants', async () => {
+    const cache = new PostgresAbsCache(work => db.asWorker(work));
+    const key = 'abs:census_total_persons:C21_G01_SAL:1.0.0:1.0.0:2021:11884';
+    const fresh = {
+      dataflowVersion: '1.0.0', structureVersion: '1.0.0', collectedAt: new Date().toISOString(),
+      sourceUrl: 'https://data.api.abs.gov.au/rest/data/ABS,C21_G01_SAL,1.0.0/3.P_1.11884.SAL.1',
+      observations: [{ region: '11884', value: 8305 }],
+    };
+    const expired = { ...fresh, collectedAt: '2025-01-01T00:00:00.000Z' };
+    try {
+      await cache.write(key, expired);
+      expect(await cache.read(key)).toBeUndefined();
+      await cache.write(key, fresh);
+      await cache.write(key, expired);
+      expect(await cache.read(key)).toEqual(fresh);
+      await expect(db.asUser(alice.userId, tx => tx.query('select * from nextsignal_private.abs_observation_cache'))).rejects.toThrow('permission denied');
+    } finally { await root.query('delete from nextsignal_private.abs_observation_cache where cache_key=$1', [key]); }
   });
   it('denies cross-tenant reads, writes, job access and report mutation using real SQL roles', async () => {
     const { id, runId } = await prepared(projects, alice); await runner.processOne();

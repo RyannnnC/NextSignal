@@ -29,7 +29,7 @@ button,a { touch-action: manipulation; }
 a { color: var(--ns-primary); text-underline-offset: 4px; }
 main,.site-header { max-width: var(--ns-page-max-width); margin-inline: auto; padding-inline: var(--ns-page-gutter); }
 .site-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-block: 24px; }
-.wordmark { display: flex; align-items: center; gap: 4px; text-decoration: none; color: var(--ns-brand-ink); font-size: 24px; font-weight: 700; letter-spacing: -.035em; }
+.wordmark { display: flex; align-items: center; text-decoration: none; color: var(--ns-brand-ink); font-size: 24px; font-weight: 700; letter-spacing: -.035em; }
 .wordmark span:not(.brand-dot) { font-weight: 400; }
 .brand-dot { width: 8px; height: 8px; border-radius: var(--ns-radius-pill); background: var(--ns-primary); margin-left: 4px; }
 .language-switch { display: flex; align-items: center; gap: 4px; border: 1px solid var(--ns-border-strong); border-radius: var(--ns-radius-pill); padding: 4px; background: var(--ns-canvas); }

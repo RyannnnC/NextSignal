@@ -38,7 +38,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
     window.addEventListener('focus',refresh);
     return () => window.removeEventListener('focus',refresh);
   },[]);
-  return <div className="report-layout"><h1>{t('Private fixture report')}</h1>
+  return <div className="report-layout"><h1>{t('Private preview report')}</h1>
     <p>{t('Private by default')} · {t('Not human reviewed')}</p>
     {state === 'loading' && <p role="status">{t('Loading report…')}</p>}
     {state === 'signin' && <section><h2>{t('Sign in to view this report')}</h2><p>{t('Reports are only available to their local account.')}</p><Link className="button" href={`/auth/sign-in?next=${encodeURIComponent(reportPath(projectId,reportId))}`}>{t(realAuth ? 'Sign In' : 'Sign in locally')}</Link></section>}
