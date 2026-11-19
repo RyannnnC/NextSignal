@@ -135,7 +135,7 @@ export const ProjectView = z.object({
   id: Id, stage: z.enum(['idea', 'launch', 'growth']), scenario: Scenario,
   profiles: z.array(ProfileVersion), runs: z.array(Run), reports: z.array(Report)
 }).strict();
-export const SessionView = z.object({ account: z.enum(['alice', 'bob']), workspaceId: Id }).strict();
+export const SessionView = z.object({ account: z.string().min(1).max(320), workspaceId: Id, email: z.email().optional(), verified: z.boolean().optional() }).strict();
 export const ApiError = z.object({ error: z.string(), code: z.string() }).strict();
 
 export type Geography = z.infer<typeof Geography>;

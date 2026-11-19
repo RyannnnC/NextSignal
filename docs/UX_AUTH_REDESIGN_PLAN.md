@@ -1,5 +1,7 @@
 # NextSignal UX and Auth Redesign Plan
 
+Phase 2 local setup and real Auth verification are documented in [Local Supabase Auth](operations/LOCAL_SUPABASE_AUTH.md).
+
 ## Phase 0 audit
 
 | Existing route | Responsibility and change |

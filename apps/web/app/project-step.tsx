@@ -25,7 +25,7 @@ const progressDescriptions: Record<RunStatus, string> = {
 
 /** 通过既有私有项目接口读取复核或进度页面。 */
 export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progress' }) {
-  const { t } = useLanguage();
+  const { t, realAuth } = useLanguage();
   const router = useRouter();
   const [project, setProject] = useState<ProjectView | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -69,7 +69,7 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
     <div><h1>{t(mode === 'review' ? 'Review business profile' : 'Research runs')}</h1>
       <p>{t(mode === 'review' ? 'Check these details before starting research.' : 'Follow this research run and open its report when ready.')}</p></div>
     <div className="flow-content">
-    {signedOut && <Link className="button" href={`/auth/sign-in?next=${encodeURIComponent(`/validate/${id}/${mode}`)}`}>{t('Sign in locally')}</Link>}
+    {signedOut && <Link className="button" href={`/auth/sign-in?next=${encodeURIComponent(`/validate/${id}/${mode}`)}`}>{t(realAuth ? 'Sign In' : 'Sign in locally')}</Link>}
     {error && <p className="error-banner" role="alert">{t(error)}</p>}
     {!project && !signedOut && !error && <p role="status">{t('Loading project…')}</p>}
     {message && <p role="status">{t(message)}</p>}

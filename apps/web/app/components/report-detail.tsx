@@ -12,7 +12,7 @@ import { useLanguage } from './site-shell';
 type Presentation = NonNullable<ReturnType<typeof presentReport>>;
 /** 从私有项目接口加载指定报告，并处理会话和读取失败状态。 */
 export function ReportDetail({projectId,reportId}: {projectId: string;reportId: string}) {
-  const {locale,t} = useLanguage();
+  const {locale,t,realAuth} = useLanguage();
   const [view,setView] = useState<Presentation | null>(null);
   const [state,setState] = useState<'loading' | 'ready' | 'signin' | 'missing' | 'error'>('loading');
   const [retry,setRetry] = useState(0);
@@ -41,7 +41,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
   return <div className="report-layout"><h1>{t('Private fixture report')}</h1>
     <p>{t('Private by default')} · {t('Not human reviewed')}</p>
     {state === 'loading' && <p role="status">{t('Loading report…')}</p>}
-    {state === 'signin' && <section><h2>{t('Sign in to view this report')}</h2><p>{t('Reports are only available to their local account.')}</p><Link className="button" href={`/auth/sign-in?next=${encodeURIComponent(reportPath(projectId,reportId))}`}>{t('Sign in locally')}</Link></section>}
+    {state === 'signin' && <section><h2>{t('Sign in to view this report')}</h2><p>{t('Reports are only available to their local account.')}</p><Link className="button" href={`/auth/sign-in?next=${encodeURIComponent(reportPath(projectId,reportId))}`}>{t(realAuth ? 'Sign In' : 'Sign in locally')}</Link></section>}
     {state === 'missing' && <p role="alert" className="empty">{t('Report unavailable. It may have been deleted or belong to another account.')}</p>}
     {state === 'error' && <div role="alert"><p>{t('Could not load the report. Check the local worker and try again.')}</p><button onClick={()=>setRetry(value=>value+1)}>{t('Try again')}</button></div>}
     {state === 'ready' && view && view.report.projectId === projectId && view.report.id === reportId && <div className="report-grid">

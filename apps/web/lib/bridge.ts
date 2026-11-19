@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 import { isFixtureRoute } from '@nextsignal/contracts';
+import { supabaseServer } from './supabase-server';
 
 const Runtime = z.object({ url: z.literal('http://127.0.0.1:4311'), key: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 /** 检查本地运行开关、来源和路由，再转发到受保护的 worker。 */
@@ -16,7 +17,15 @@ export async function bridge(request: Request, path: string): Promise<Response> 
   try {
     const runtime = Runtime.parse(JSON.parse(await readFile(resolve(process.env.NEXTSIGNAL_ROOT ?? resolve(process.cwd(), '../..'), '.local/runtime.json'), 'utf8')));
     const jar = await cookies();
-    const token = jar.get('next_signal_session')?.value;
+    const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';
+    let token = jar.get('next_signal_session')?.value;
+    if (realAuth && path !== 'health') {
+      if (path === 'session' && request.method !== 'GET') return error(404, 'not_found');
+      const client = await supabaseServer();
+      const { data, error: authError } = await client.auth.getUser();
+      if (authError || !data.user?.email_confirmed_at) return error(401, 'unauthorized');
+      token = (await client.auth.getSession()).data.session?.access_token;
+    }
     const headers: Record<string, string> = { 'x-local-key': runtime.key, 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
     let body: string | undefined;

@@ -42,7 +42,7 @@ export function FixtureSignIn({ returnTo }: { returnTo: string }) {
 
 /** 使用原有私有 API 分页展示项目与报告。 */
 export function AccountPage({ history }: { history: boolean }) {
-  const { t, locale } = useLanguage();
+  const { t, locale, realAuth } = useLanguage();
   const router = useRouter();
   const [session, setSession] = useState<z.infer<typeof SessionView>>();
   const [ids, setIds] = useState<string[]>([]);
@@ -74,17 +74,24 @@ export function AccountPage({ history }: { history: boolean }) {
     return () => { active = false; };
   }, [history, page]);
   return <div className="flow-layout">
-    <div><h1>{t(history ? 'My reports' : 'Account')}</h1><p>{t(history ? 'Reopen a private report or continue a saved project.' : 'Manage your local preview session.')}</p></div>
+    <div><h1>{t(history ? 'My reports' : 'Account')}</h1><p>{t(history ? 'Reopen a private report or continue a saved project.' : realAuth ? 'Manage your account and private reports.' : 'Manage your local preview session.')}</p></div>
     <div className="flow-content">
     {loading && <p role="status">{t('Loading project…')}</p>}
     {error && <p role="alert">{t('Request failed')}</p>}
     {notice && <p role="status">{t(notice)}</p>}
-    {!loading && !session && !error && <Link className="button" href={history ? '/auth/sign-in?next=%2Faccount%2Freports' : '/auth/sign-in'}>{t('Sign in locally')}</Link>}
+    {!loading && !session && !error && <Link className="button" href={history ? '/auth/sign-in?next=%2Faccount%2Freports' : '/auth/sign-in'}>{t(realAuth ? 'Sign In' : 'Sign in locally')}</Link>}
     {session && !history && <section className="flow-form">
-      <p>{t('Fixture account')}: <strong>{session.account}</strong></p>
+      <p>{t(session.email ? 'Email' : 'Fixture account')}: <strong>{session.account}</strong></p>
+      {session.email && <p>{t(session.verified ? 'Email verified' : 'Verification required')}</p>}
       <div className="button-row"><Link className="button" href="/account/reports">{t('My reports')}</Link>
         <button className="secondary" onClick={async () => {
-          try { await api('session', 'DELETE'); router.replace('/auth/sign-in'); }
+          try {
+            if (session.email) {
+              const response = await fetch('/auth/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'sign-out' }) });
+              if (!response.ok) throw new Error('Sign out failed');
+            } else await api('session', 'DELETE');
+            router.replace('/auth/sign-in'); router.refresh();
+          }
           catch { setError(true); }
         }}>{t('Sign out')}</button>
       </div>

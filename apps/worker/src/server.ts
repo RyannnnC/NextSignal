@@ -7,10 +7,11 @@ import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider } from '@nextsignal/adapters';
 import type { FixtureSessions } from '@nextsignal/adapters/local-sessions';
+import type { openAuthRuntime } from '@nextsignal/adapters/auth-local';
 import type { AbsPopulationProvider, Actor, Database } from '@nextsignal/application';
 
 /** 创建本地 HTTP 服务及复用同一数据库的 fixture 执行器。 */
-export function createFixtureServer(db: Database, sessions: FixtureSessions, key: string, abs?: AbsPopulationProvider) {
+export function createFixtureServer(db: Database, sessions: FixtureSessions | ReturnType<typeof openAuthRuntime>['sessions'], key: string, abs?: AbsPopulationProvider) {
   const projects = new Projects(db);
   const runner = new ResearchRunner(db, new FixtureProvider(), abs);
   const server = createServer((req, res) => { void handle(req, res).catch(() => send(res, 500, { error: 'Local request failed', code: 'internal_error' })); });
@@ -23,18 +24,20 @@ export function createFixtureServer(db: Database, sessions: FixtureSessions, key
       if (typeof supplied !== 'string' || supplied.length !== key.length || !timingSafeEqual(Buffer.from(supplied), Buffer.from(key))) throw new DomainError('unauthorized', 401);
       const path = req.url ?? '/';
       if (!path.startsWith('/') || !isFixtureRoute(path.slice(1), req.method ?? '')) throw new DomainError('not_found', 404);
-      if (path === '/health' && req.method === 'GET') return send(res, 200, { mode: 'local-fixture', database: 'postgresql' });
+      if (path === '/health' && req.method === 'GET') return send(res, 200, { mode: 'create' in sessions ? 'local-fixture' : 'local-supabase', database: 'postgresql' });
       if (path === '/session' && req.method === 'POST') {
+        if (!('create' in sessions)) throw new DomainError('not_found', 404);
         const { account } = Login.parse(await body(req));
         return send(res, 200, await sessions.create(account));
       }
       const token = req.headers.authorization?.replace(/^Bearer /, '');
-      if (!token || !/^[a-f0-9]{64}$/.test(token)) throw new DomainError('unauthorized', 401);
+      if (!token || token.length > 8192 || ('create' in sessions && !/^[a-f0-9]{64}$/.test(token))) throw new DomainError('unauthorized', 401);
       const session = await sessions.resolve(token);
       if (!session) throw new DomainError('unauthorized', 401);
       const actor: Actor = { userId: session.userId, workspaceId: session.workspaceId };
-      if (path === '/session' && req.method === 'GET') return send(res, 200, SessionView.parse({ account: session.account, workspaceId: actor.workspaceId }));
+      if (path === '/session' && req.method === 'GET') return send(res, 200, SessionView.parse({ account: session.account, workspaceId: actor.workspaceId, ...('email' in session ? { email: session.email, verified: session.verified } : {}) }));
       if (path === '/session' && req.method === 'DELETE') {
+        if (!('revoke' in sessions)) throw new DomainError('not_found', 404);
         await sessions.revoke(token);
         return send(res, 200, { ok: true });
       }

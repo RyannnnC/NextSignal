@@ -10,7 +10,7 @@ import { Locale, translate } from '../../lib/i18n';
 import { LanguageSwitch } from '../language-switch';
 import styles from './site-shell.module.css';
 
-const Language = createContext<{locale: Locale; t: (text: string) => string} | null>(null);
+const Language = createContext<{locale: Locale; t: (text: string) => string; realAuth: boolean} | null>(null);
 /** 从站点上下文获取当前语言和翻译函数。 */
 export function useLanguage() {
   const value = useContext(Language);
@@ -18,7 +18,7 @@ export function useLanguage() {
   return value;
 }
 /** 提供全站布局及语言偏好。 */
-export function SiteShell({children}: {children: ReactNode}) {
+export function SiteShell({children, realAuth = false}: {children: ReactNode; realAuth?: boolean}) {
   const [locale, setLocale] = useState<Locale>('en');
   const pathname = usePathname();
   const [session, setSession] = useState(false);
@@ -44,17 +44,17 @@ export function SiteShell({children}: {children: ReactNode}) {
     } else {
       const title = pathname.startsWith('/projects/') ? 'Private fixture report'
         : pathname.endsWith('/review') ? 'Review business profile' : pathname.endsWith('/progress') ? 'Research runs'
-        : pathname === '/validate' ? 'Validate My Idea' : pathname.startsWith('/auth/') ? 'Local fixture sign in'
+        : pathname === '/validate' ? 'Validate My Idea' : pathname.startsWith('/auth/') ? realAuth ? 'Sign In' : 'Local fixture sign in'
         : pathname === '/account/reports' ? 'My reports' : pathname === '/account' ? 'Account' : 'Grow My Business';
       document.title = `NextSignal — ${translate(locale, title)}`;
     }
-  }, [locale, pathname]);
+  }, [locale, pathname, realAuth]);
   /** 更新语言状态，并尽可能保存到本地。 */
   function changeLocale(value: Locale) {
     setLocale(value);
     try { localStorage.setItem('next-signal-language', value); } catch { /* In-memory switching remains available. */ }
   }
-  return <Language.Provider value={{locale,t}}>
+  return <Language.Provider value={{locale,t,realAuth}}>
     <a className="skip" href="#main">{t('Skip to content')}</a>
     <header className={styles.header}>
       <div className={`site-header ${styles.headerInner}`}>

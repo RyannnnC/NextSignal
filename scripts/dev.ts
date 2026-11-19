@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { prepareLocalRuntime } from './lib/local-postgres.js';
 
 const root = process.cwd();
-await prepareLocalRuntime(root);
+if (process.env.NEXTSIGNAL_AUTH_MODE !== 'supabase-local') await prepareLocalRuntime(root);
 const env = { ...process.env, NEXTSIGNAL_LOCAL_FIXTURE: '1', NEXTSIGNAL_ROOT: root, NEXT_TELEMETRY_DISABLED: '1' };
 const children = [
   spawn(process.execPath, ['--import', 'tsx', 'apps/worker/src/main.ts'], { cwd: root, env, stdio: 'inherit', windowsHide: true }),
