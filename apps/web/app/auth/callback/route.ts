@@ -6,7 +6,7 @@ import { authReturn } from '../../../lib/auth-return';
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = 'http://127.0.0.1:3000';
-  if (process.env.NEXTSIGNAL_AUTH_MODE !== 'supabase-local' || request.headers.get('host') !== '127.0.0.1:3000') return new Response(null, { status: 404 });
+  if (process.env.NEXTSIGNAL_AUTH_MODE !== 'supabase-local' || process.env.NODE_ENV === 'production' || request.headers.get('host') !== '127.0.0.1:3000') return new Response(null, { status: 404 });
   const code = url.searchParams.get('code');
   if (code && code.length < 2048) {
     const client = await supabaseServer();

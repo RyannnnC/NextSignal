@@ -3,6 +3,8 @@ import { FixtureSignIn } from '../../components/account-pages';
 import { authReturn } from '../../../lib/auth-return';
 import { AuthForm } from '../../components/auth-form';
 
+export const metadata = { title: 'Sign in' };
+
 /** 仅接受已知路由和经过校验的项目 UUID。 */
 export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string | string[]; error?: string }> }) {
   const { next, error } = await searchParams;

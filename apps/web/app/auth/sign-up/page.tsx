@@ -1,6 +1,8 @@
 import { AuthForm } from '../../components/auth-form';
 import { authReturn } from '../../../lib/auth-return';
 
+export const metadata = { title: 'Create your account' };
+
 /** 注册仅在独立本地 Auth 模式下启用。 */
 export default async function Page({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   if (process.env.NEXTSIGNAL_AUTH_MODE !== 'supabase-local') return <p>Registration is available in local Supabase mode.</p>;

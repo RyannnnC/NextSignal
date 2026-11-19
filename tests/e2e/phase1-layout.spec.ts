@@ -43,19 +43,19 @@ test('phase 1 layout and opted-in draft through the separated private flow', asy
   await page.keyboard.press('Escape');
   await expect(menu).toBeFocused();
   await expect(nav).toBeHidden();
+  await page.getByText('Use an example', { exact: true }).click();
   await page.getByRole('button', { name: 'Load three-area comparison example' }).click();
   const draft = await idea.inputValue();
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
-  await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
+  await page.getByRole('button', { name: 'Create project and review idea' }).click();
   await expect(page).toHaveURL(/\/auth\/sign-in\?/);
   await capture(page, 'sign-in');
   await page.getByRole('button', { name: 'Sign in locally' }).click();
   await expect(idea).toHaveValue(draft);
-  await expect(page.getByRole('checkbox', { name: /I understand/ })).not.toBeChecked();
-  await page.getByRole('checkbox', { name: /I understand/ }).check();
+  await expect(page.getByRole('checkbox', { name: /I understand/ })).toBeChecked();
   const created = page.waitForResponse(response => response.url().endsWith('/api/projects') && response.request().method() === 'POST');
-  await page.getByRole('button', { name: 'Prepare fixture profile' }).click();
+  await page.getByRole('button', { name: 'Create project and review idea' }).click();
   const { id } = await (await created).json() as { id: string };
   try {
     await expect(page.getByRole('heading', { name: 'Review business profile' })).toBeVisible();

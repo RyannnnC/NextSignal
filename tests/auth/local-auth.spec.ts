@@ -124,6 +124,6 @@ test('real local signup, email verification, session, owner isolation, research 
   } finally { await expiredContext.close(); }
   await page.goto('/auth/callback?code=invalid');
   await expect(page).toHaveURL(/\/auth\/sign-in\?error=verification$/);
-  await expect(page.getByRole('status')).toContainText('invalid or expired');
+  await expect(page.getByRole('alert')).toContainText('invalid or expired');
   expect((await page.request.post('/auth/action', { data: { action: 'sign-in', email, password } })).status()).toBe(403);
 });

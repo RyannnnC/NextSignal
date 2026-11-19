@@ -11,6 +11,10 @@ import { LanguageSwitch } from '../language-switch';
 import styles from './site-shell.module.css';
 
 const Language = createContext<{locale: Locale; t: (text: string) => string; realAuth: boolean} | null>(null);
+const authTitles: Record<string, string> = {
+  '/auth/sign-in': 'Sign In', '/auth/sign-up': 'Create your account',
+  '/auth/forgot-password': 'Reset password', '/auth/reset-password': 'Set a new password',
+};
 /** 从站点上下文获取当前语言和翻译函数。 */
 export function useLanguage() {
   const value = useContext(Language);
@@ -44,7 +48,8 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     } else {
       const title = pathname.startsWith('/projects/') ? 'Private fixture report'
         : pathname.endsWith('/review') ? 'Review business profile' : pathname.endsWith('/progress') ? 'Research runs'
-        : pathname === '/validate' ? 'Validate My Idea' : pathname.startsWith('/auth/') ? realAuth ? 'Sign In' : 'Local fixture sign in'
+        : pathname === '/validate' ? 'Validate My Idea' : authTitles[pathname] ? realAuth ? authTitles[pathname] : 'Local fixture sign in'
+        : pathname === '/example-report' ? 'Example report'
         : pathname === '/account/reports' ? 'My reports' : pathname === '/account' ? 'Account' : 'Grow My Business';
       document.title = `NextSignal — ${translate(locale, title)}`;
     }
@@ -70,7 +75,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
       }}>
         <Link onClick={() => setMenu(false)} href="/validate" aria-current={pathname.startsWith('/validate') ? 'page' : undefined}>{t('Validate My Idea')}</Link>
         <Link onClick={() => setMenu(false)} href="/grow" aria-current={pathname === '/grow' ? 'page' : undefined}>{t('Grow My Business')}</Link>
-        <Link onClick={() => setMenu(false)} href="/#research">{t('Example report')}</Link><Link onClick={() => setMenu(false)} href="/#pricing">{t('Pricing & Services')}</Link>
+        <Link onClick={() => setMenu(false)} href="/example-report" aria-current={pathname === '/example-report' ? 'page' : undefined}>{t('Example report')}</Link><Link onClick={() => setMenu(false)} href="/#pricing">{t('Pricing & Services')}</Link>
       </nav>
       <div className={styles.controls}>
         <LanguageSwitch locale={locale} onChange={changeLocale}/>
@@ -85,7 +90,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     </main>
       <footer className={styles.footer}><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
         {pathname !== '/' && <div className="trust-strip"><span>✓ {t('No external processing')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
-        <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Start Free')}</Link><Link href="/#research">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
+        <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Try the free preview')}</Link><Link href="/example-report">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
       </footer>
   </Language.Provider>;
 }

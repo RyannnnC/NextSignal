@@ -51,6 +51,7 @@ export function AccountPage({ history }: { history: boolean }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [notice, setNotice] = useState('');
+  const [signingOut, setSigningOut] = useState(false);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -84,23 +85,24 @@ export function AccountPage({ history }: { history: boolean }) {
       <p>{t(session.email ? 'Email' : 'Fixture account')}: <strong>{session.account}</strong></p>
       {session.email && <p>{t(session.verified ? 'Email verified' : 'Verification required')}</p>}
       <div className="button-row"><Link className="button" href="/account/reports">{t('My reports')}</Link>
-        <button className="secondary" onClick={async () => {
+        <button className="secondary" disabled={signingOut} onClick={async () => {
+          setSigningOut(true);
+          setError(false);
           try {
             if (session.email) {
               if (!(await requestAuth({ action: 'sign-out' }))) throw new Error('Sign out failed');
             } else await api('session', 'DELETE');
             router.replace('/auth/sign-in'); router.refresh();
           }
-          catch { setError(true); }
-        }}>{t('Sign out')}</button>
+          catch { setError(true); setSigningOut(false); }
+        }}>{t(signingOut ? 'Signing out…' : 'Sign out')}</button>
       </div>
     </section>}
-    </div>
     {session && history && !loading && <section aria-label={t('My reports')}>
       {ids.length === 0 && <><p>{t('No projects yet.')}</p><Link className="button" href="/validate">{t('Validate My Idea')}</Link></>}
       {projects.map(project => <article className="history-row" key={project.id}>
-        <h2>{project.profiles[0]?.content.summary || t('Open project')}</h2>
-        <p>{t('Validate My Idea')} · {project.profiles[0]?.content.geography.state ?? t('Australia')} · {t(project.runs.at(-1)?.status ?? 'No run has started.')}</p>
+        <h2>{project.profiles.at(-1)?.content.summary || t('Open project')}</h2>
+        <p>{t('Validate My Idea')} · {project.profiles.at(-1)?.content.geography.state ?? t('Australia')} · {t(project.runs.at(-1)?.status ?? 'No run has started.')}</p>
         <ul>{project.reports.map((report, index) => <li key={report.id}><Link href={reportPath(project.id, report.id)}>{t('View report')} {index + 1}</Link> · <time dateTime={report.createdAt}>{new Intl.DateTimeFormat(locale === 'en' ? 'en-AU' : 'zh-CN', { dateStyle: 'medium' }).format(new Date(report.createdAt))}</time></li>)}</ul>
         <div className="button-row"><Link className="button secondary" href={`/validate/${project.id}/review`}>{t('Open project')}</Link>
           <button className="secondary danger" onClick={async () => {
@@ -120,5 +122,6 @@ export function AccountPage({ history }: { history: boolean }) {
         <button className="secondary" disabled={(page + 1) * pageSize >= ids.length} onClick={() => setPage(page + 1)}>{t('Next page')}</button>
       </div>}
     </section>}
+    </div>
   </div>;
 }

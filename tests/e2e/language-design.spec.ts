@@ -25,7 +25,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   await expect(page.getByRole('button',{name:'简体中文',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.reload();
   await page.getByRole('navigation',{name:'主要导航'}).getByRole('link',{name:'验证我的创意',exact:true}).click();
-  await expect(page.getByRole('button',{name:'生成模拟资料',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'创建项目并检查创意',exact:true})).toBeVisible();
   const audit=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze();
   expect(audit.violations).toEqual([]);
   await page.screenshot({path:'artifacts/design-zh-desktop.png',fullPage:false});
@@ -37,7 +37,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   await expect(page.getByLabel('Test business idea',{exact:true})).toHaveValue('一个帮助澳大利亚创始人核对业务假设的测试服务');
   await page.getByRole('button',{name:'简体中文',exact:true}).click();
   const created=page.waitForResponse(r=>r.url().endsWith('/api/projects')&&r.request().method()==='POST');
-  await page.getByRole('button',{name:'生成模拟资料',exact:true}).click();
+  await page.getByRole('button',{name:'创建项目并检查创意',exact:true}).click();
   const id=(await (await created).json() as {id:string}).id;
   try {
     await page.getByLabel('目标客户 — 创始人陈述',{exact:true}).fill('澳大利亚的独立创业者');

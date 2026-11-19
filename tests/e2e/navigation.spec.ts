@@ -35,6 +35,13 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.getByText('Planned — not available',{exact:true})).toHaveCount(3);
   await expect(page.getByRole('heading',{name:'See an example report',exact:true})).toBeVisible();
   await expect(page.locator('main > section').last()).toHaveAttribute('id', 'pricing');
+  await page.getByRole('link', { name: 'View example report' }).first().click();
+  await expect(page).toHaveURL(/\/example-report$/);
+  await expect(page.getByRole('heading', { name: 'Published statistic' })).toBeVisible();
+  await expect(page.getByText('8,305', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Simulated report output' })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL('http://127.0.0.1:3001/');
   // Every homepage link is internal and has a real page or anchor target.
   const hrefs=await page.locator('a[href]').evaluateAll(links=>links.map(link=>link.getAttribute('href')!));
   for(const href of new Set(hrefs)){
@@ -52,8 +59,8 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.locator('main')).toHaveCSS('width', '1440px');
   expect(await page.locator('input[type=url]').count()).toBe(0);
   await page.getByRole('button',{name:'简体中文',exact:true}).click();
-  await page.getByRole('link',{name:'体验本地创意模拟流程',exact:true}).click();
-  await expect(page.getByRole('button',{name:'生成模拟资料',exact:true})).toBeVisible();
+  await page.getByRole('main').getByRole('link',{name:'免费试用预览版',exact:true}).click();
+  await expect(page.getByRole('button',{name:'创建项目并检查创意',exact:true})).toBeVisible();
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
@@ -73,7 +80,7 @@ test('private report deep links preserve authorization, login return, historical
   const origin={origin:'http://127.0.0.1:3001'};
   await page.goto('/auth/sign-in?next=%2Fvalidate');
   await page.getByRole('button',{name:'Sign in locally',exact:true}).click();
-  await expect(page.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Create project and review idea',exact:true})).toBeVisible();
   const created=await page.request.post('/api/projects',{headers:origin,data:{idea:'Navigation test only: a synthetic reminder service for local tutors',geography:{country:'AU',granularity:'national'},processingConsent:true,noticeVersion:'local-fixture-v1',requestKey:randomUUID()}});
   expect(created.status()).toBe(201);
   const {id}=await created.json() as {id:string};
@@ -90,7 +97,11 @@ test('private report deep links preserve authorization, login return, historical
     const saved=await (await page.request.get(`/api/projects/${id}`)).json();
     const reportId=saved.reports[0].id as string;
     const url=`/projects/${id}/reports/${reportId}`;
-    await page.request.post(`/api/projects/${id}/confirm`,{headers:origin,data:{profileId,profile:{...profile.content,customer:'New private fixture customer'},requestKey:randomUUID()}});
+    await page.request.post(`/api/projects/${id}/confirm`,{headers:origin,data:{profileId,profile:{...profile.content,summary:'Updated project list title',customer:'New private fixture customer'},requestKey:randomUUID()}});
+    await page.setViewportSize({ width: 1440, height: 960 });
+    await page.goto('/account/reports');
+    await expect(page.getByRole('heading', { name: 'Updated project list title' })).toBeVisible();
+    expect((await page.getByRole('region', { name: 'My reports' }).boundingBox())?.width).toBeGreaterThan(700);
     await page.goto(url); await page.reload();
     await expect(page.getByText('Original private fixture customer',{exact:true})).toBeVisible();
     expect(await page.getByText('New private fixture customer',{exact:true}).count()).toBe(0);
@@ -113,7 +124,7 @@ test('private report deep links preserve authorization, login return, historical
     const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3001/auth/sign-in?next=%2Fvalidate');
     await bobPage.getByLabel('Fixture account',{exact:true}).selectOption('bob');
     await bobPage.getByRole('button',{name:'Sign in locally',exact:true}).click();
-    await expect(bobPage.getByRole('button',{name:'Prepare fixture profile',exact:true})).toBeVisible();
+    await expect(bobPage.getByRole('button',{name:'Create project and review idea',exact:true})).toBeVisible();
     await bobPage.goto(`http://127.0.0.1:3001${url}`);
     await expect(bobPage.locator('main [role="alert"]')).toContainText('Report unavailable.');
     expect(await bobPage.getByText('Original private fixture customer',{exact:true}).count()).toBe(0);
