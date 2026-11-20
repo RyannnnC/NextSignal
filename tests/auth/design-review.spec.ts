@@ -15,6 +15,11 @@ async function capture(page: Page, name: string, mask: Locator[] = []) {
     await expect(page.locator('.site-header')).toHaveCSS('width', variant.width + 'px');
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(variant.width);
     await page.screenshot({ path: 'artifacts/remediation/design/' + name + '-' + variant.width + '.png', animations: 'disabled', fullPage: true, mask });
+    if (name === 'private-report') {
+      const height = variant.width === 1440 ? 900 : 844;
+      await page.screenshot({ path: `artifacts/remediation/design/${name}-first-screen-${variant.width}.png`,
+        animations: 'disabled', clip: { x: 0, y: 0, width: variant.width, height }, mask });
+    }
   }
   await page.getByRole('button', { name: 'English (Australia)', exact: true }).click();
 }
@@ -43,6 +48,8 @@ test('real local account and report layouts @design', async ({ page }) => {
   test.setTimeout(180_000);
   await page.goto('/');
   await checkMenu(page);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Know what to test next.');
+  await expect(page.getByRole('link', { name: 'See example report', exact: true })).toHaveAttribute('href', '/example-report');
   await capture(page, 'home');
   await page.goto('/example-report');
   await capture(page, 'example-report');
@@ -87,9 +94,37 @@ test('real local account and report layouts @design', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 960 });
     expect((await page.getByRole('region', { name: 'Research runs' }).boundingBox())?.width).toBeGreaterThan(700);
     await capture(page, 'progress');
+    await page.setViewportSize({ width: 1440, height: 960 });
     await current.click();
     await expect(page.getByRole('heading', { name: 'Business Overview' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Evidence at a glance' })).toBeVisible();
+    const firstExperiment = page.getByRole('link', { name: 'First experiment', exact: true });
+    const experimentTarget = await firstExperiment.getAttribute('href');
+    expect(experimentTarget).toMatch(/^#action-/);
+    await firstExperiment.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator(experimentTarget!)).toBeFocused();
+    await expect(page.getByRole('navigation', { name: 'Report navigation' }).getByRole('link', { name: 'Validation plan' }))
+      .toHaveAttribute('aria-current', 'location');
+    const evidence = page.getByRole('heading', { name: 'Evidence at a glance' });
+    const founderStatement = page.getByRole('region', { name: 'Evidence at a glance' }).locator('summary').filter({ hasText: 'Founder statement' });
+    await founderStatement.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('link', { name: 'View saved business profile' })).toBeVisible();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('link', { name: 'View saved business profile' })).toBeHidden();
+    await expect(evidence).toBeVisible();
+    await page.goBack();
+    await expect(page.getByRole('navigation', { name: 'Report navigation' }).getByRole('link', { name: 'Summary' }))
+      .toHaveAttribute('aria-current', 'location');
     await capture(page, 'private-report');
+    const reportMenu = page.getByText('Jump to a section', { exact: true });
+    await reportMenu.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('navigation', { name: 'Report navigation' })).toBeVisible();
+    await page.getByRole('link', { name: 'Evidence and gaps', exact: true }).click();
+    await expect(page.locator('#report-evidence')).toBeFocused();
+    await expect(page.getByRole('navigation', { name: 'Report navigation' })).toBeHidden();
     await page.goto('/account/reports');
     const list = page.getByRole('region', { name: 'My reports' });
     await expect(list.getByRole('link', { name: 'View report 1' })).toBeVisible();

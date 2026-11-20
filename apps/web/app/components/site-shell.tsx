@@ -25,6 +25,8 @@ export function useLanguage() {
 export function SiteShell({children, realAuth = false}: {children: ReactNode; realAuth?: boolean}) {
   const [locale, setLocale] = useState<Locale>('en');
   const pathname = usePathname();
+  const reportPage = pathname.startsWith('/projects/');
+  const focusedLayout = pathname === '/' || reportPage;
   const [session, setSession] = useState(false);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
@@ -44,7 +46,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
   useEffect(() => {
     document.documentElement.lang = locale;
     if (pathname === '/') {
-      document.title = `${translate(locale, 'Find your next business opportunity.')} | NextSignal`;
+      document.title = `${translate(locale, 'Know what to test next.')} | NextSignal`;
     } else {
       const title = pathname.startsWith('/projects/') ? 'Private preview report'
         : pathname.endsWith('/review') ? 'Review business profile' : pathname.endsWith('/progress') ? 'Research runs'
@@ -61,10 +63,12 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
   }
   return <Language.Provider value={{locale,t,realAuth}}>
     <a className="skip" href="#main">{t('Skip to content')}</a>
-    <header className={styles.header}>
+    <header className={`${styles.header} ${focusedLayout ? styles.focused : ''}`}>
       <div className={`site-header ${styles.headerInner}`}>
       <Link className="wordmark" href="/" aria-label="NextSignal">Next<span>Signal</span><span className="brand-dot" aria-hidden="true"/></Link>
-      <button type="button" className={`secondary ${styles.menuToggle}`} aria-controls="site-navigation" aria-expanded={menu} onClick={() => setMenu(!menu)}>
+      <button type="button" className={`secondary ${styles.menuToggle}`} aria-controls="site-navigation" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={event => {
+        if (event.key === 'Escape') setMenu(false);
+      }}>
         <MenuOutlined aria-hidden="true" />{t('Menu')}
       </button>
       <nav id="site-navigation" aria-label={t('Main navigation')} className={`${styles.nav} ${menu ? styles.open : ''}`} onKeyDown={event => {
@@ -76,6 +80,10 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
         <Link onClick={() => setMenu(false)} href="/validate" aria-current={pathname.startsWith('/validate') ? 'page' : undefined}>{t('Validate My Idea')}</Link>
         <Link onClick={() => setMenu(false)} href="/grow" aria-current={pathname === '/grow' ? 'page' : undefined}>{t('Grow My Business')}</Link>
         <Link onClick={() => setMenu(false)} href="/example-report" aria-current={pathname === '/example-report' ? 'page' : undefined}>{t('Example report')}</Link><Link onClick={() => setMenu(false)} href="/#pricing">{t('Pricing & Services')}</Link>
+        {focusedLayout && <div className={styles.mobileAccount}>
+          <Link onClick={() => setMenu(false)} href={session ? '/account' : '/auth/sign-in'}>{t(session ? 'Account' : 'Sign In')}</Link>
+          {session && <Link onClick={() => setMenu(false)} href="/account/reports">{t('My reports')}</Link>}
+        </div>}
       </nav>
       <div className={styles.controls}>
         <LanguageSwitch locale={locale} onChange={changeLocale}/>
@@ -88,7 +96,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     </header>
     <main id="main" className={pathname === '/' ? styles.homeMain : undefined}>{children}
     </main>
-      <footer className={styles.footer}><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
+      <footer className={`${styles.footer} ${pathname === '/' ? styles.homeFooter : ''}`}><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
         {pathname !== '/' && <div className="trust-strip"><span>✓ {t('Idea text stays local')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
         <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Try the free preview')}</Link><Link href="/example-report">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
       </footer>

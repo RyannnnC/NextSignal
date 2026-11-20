@@ -14,10 +14,30 @@
 .footer { max-width: var(--ns-page-max-width); margin-inline: auto; padding-inline: var(--ns-page-gutter); }
 .footerNav { display: flex; justify-content: center; gap: 12px 24px; flex-wrap: wrap; margin-top: 24px; }
 .footerNav a { min-height: 44px; display: inline-flex; align-items: center; }
+.homeFooter { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; text-align: start; padding-block: 18px; padding-inline: max(var(--ns-page-gutter), calc((100% - 1280px) / 2)); }
+.homeFooter p { margin: 0; }
+.homeFooter .footerNav { margin: 0 0 0 auto; justify-content: flex-start; }
+.mobileAccount { display: none; }
+.focused .headerInner { padding-inline: max(var(--ns-page-gutter), calc((100% - 1280px) / 2)); }
+.focused .signIn, .focused .account summary { border: 1px solid var(--ns-border-strong); border-radius: var(--ns-radius-pill); padding-inline: 15px; }
+.focused .account { margin-block: 0; }
+.focused .account summary { list-style: none; }
+.focused .account summary::-webkit-details-marker { display: none; }
 @media (max-width: 1023px) {
   .headerInner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
   .controls { margin-inline-start: auto; }
   .headerInner .menuToggle { display: inline-flex; width: auto; margin: 0; padding-inline: 12px; gap: 6px; }
   .nav { display: none; position: absolute; inset: 100% var(--ns-page-gutter) auto; padding: 8px 16px; background: var(--ns-canvas); border: 1px solid var(--ns-border-strong); border-radius: var(--ns-radius-card); }
   .nav.open { display: grid; gap: 0; }
+}
+@media (max-width: 639px) {
+  .homeFooter { justify-content: space-between; gap: 0 12px; }
+  .homeFooter .footerNav { margin-inline-start: 0; gap: 0 16px; }
+  .focused .headerInner { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; padding-block: 8px; min-height: 62px; }
+  .focused .menuToggle { grid-column: 2; grid-row: 1; padding-inline: 7px; border-color: transparent; }
+  .focused .controls { grid-column: 3; grid-row: 1; }
+  .focused :global(.language-switch) { gap: 0; padding: 0; border: 0; }
+  .focused :global(.language-switch button) { gap: 0; padding-inline: 5px; font-size: 12px; }
+  .focused :global(.language-switch svg), .focused .signIn, .focused .account { display: none; }
+  .focused .mobileAccount { display: grid; border-top: 1px solid var(--ns-border); }
 }

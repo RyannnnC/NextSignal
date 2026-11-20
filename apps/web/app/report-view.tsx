@@ -77,11 +77,19 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
       <h3>{t('Opportunities and risks')}</h3>
       <p>{t('The population figures provide context. Repair demand, local alternatives and setup costs must be checked before choosing an area.')}</p>
     </>}
-    {report.findings.map(f=><div className="reality-check" key={f.id}><span className="eyebrow">{t('Reality Check')}</span><h3>{t(f.text)}</h3><p><span className="chip warning">{t(f.status)}</span> <small>{t(f.claimType === 'research_hypothesis' ? 'Research hypothesis' : f.claimType)}</small></p><p>{t('Test')}: {t(f.validationMethod)}</p>
-      <details><summary>{t('Supporting evidence')} / {t('Counter-evidence')}</summary><p className="technical">{t('Supporting evidence')}: {f.evidenceIds.join(', ')||t('None')}. {t('Counter-evidence')}: {f.counterEvidenceIds.join(', ')||t('None')}.</p></details>
+    {report.findings.map(f=><div className="reality-check" key={f.id} id={`finding-${f.id}`} tabIndex={-1}><span className="eyebrow">{t('Reality Check')}</span><h3>{t(f.text)}</h3><p><span className="chip warning">{t(f.status)}</span> <small>{t(f.claimType === 'research_hypothesis' ? 'Research hypothesis' : f.claimType)}</small></p><p>{t('Test')}: {t(f.validationMethod)}</p>
+      <details><summary>{t('Supporting evidence')} / {t('Counter-evidence')}</summary>
+        {([['Supporting evidence', f.evidenceIds], ['Counter-evidence', f.counterEvidenceIds]] as const).map(([label, ids]) => <div key={label}>
+          <strong>{t(label)}</strong>
+          {ids.length ? <ul>{ids.map(id => {
+            const item = report.evidence.find(e => e.id === id);
+            return <li key={id}>{item ? <a href={`#evidence-${id}`}>{t(item.metric)}{item.scope ? ` · ${t(item.scope)}` : ''}</a> : t('Unavailable')}</li>;
+          })}</ul> : <p>{t('None')}</p>}
+        </div>)}
+      </details>
     </div>)}
-    <h3 id="report-evidence">{t('Evidence')}</h3>{report.evidence.length===0&&<p className="empty">{t('Not enough data. No provider evidence returned.')}</p>}
-    {report.evidence.map(e=><details className="evidence" key={e.id}><summary>{t(e.metric)}: {e.classification ?? (e.value===null?t('Not enough data'):`${typeof e.value==='string'?t(e.value):e.value} (${t('Synthetic fixture')})`)}</summary>
+    <h3 id="report-evidence" tabIndex={-1}>{t('Evidence')}</h3>{report.evidence.length===0&&<p className="empty">{t('Not enough data. No provider evidence returned.')}</p>}
+    {report.evidence.map(e=><details className="evidence" key={e.id}><summary id={`evidence-${e.id}`}>{t(e.metric)}: {e.classification ? t(e.classification) : e.value===null?t('Not enough data'):`${typeof e.value==='string'?t(e.value):numbers.format(e.value)} (${t('Synthetic fixture')})`}</summary>
       {e.classification && <p>{e.value === null ? t('Not enough data') : typeof e.value === 'string' ? t(e.value) : numbers.format(e.value)}</p>}
       {e.absUnavailable && <p>{t(failureText[e.absUnavailable])}</p>}
       <dl><div><dt>{t('Source')}</dt><dd className="technical">{e.citation ? <a href={e.citation.url} rel="noreferrer">{e.citation.name}</a> : e.sourceRef}</dd></div><div><dt>{t('Region')}</dt><dd>{e.scope ?? `${t(e.geography.country)}, ${t(e.geography.granularity)}`}</dd></div>
@@ -91,7 +99,7 @@ export function ReportView({ report, index, locale }: { report: Report; index: n
       {e.attribution && <div><dt>{t('Attribution')}</dt><dd><a href={e.attribution.url} rel="noreferrer">{e.attribution.license}</a></dd></div>}
       <div><dt>{t('Method')}</dt><dd>{t(e.kind)} · {t('confidence')}: {t(e.confidence)} · {t('stale')}: {t(String(e.stale))}</dd></div>
       <div><dt>{t('Evidence ID')}</dt><dd className="technical">{e.id}</dd></div></dl><ul>{e.limitations.map(l=><li key={l}>{t(l)}</li>)}</ul></details>)}
-    <h3 id="report-actions">{t(report.referenceProfile ? 'Prioritised validation actions' : 'Template experiments — not personalised advice')}</h3><ol className="actions">{report.actions.map(a=><li key={a.id}><h4>{t(a.title)}</h4><p>{t(a.steps)}</p><p className="metadata">{t('Reason')}: {t(a.rationale)} {t('Effort')}: {t(a.effort)}.</p><p><strong>{t('What would disprove it')}:</strong> {t(a.falsification)}</p></li>)}</ol>
+    <h3 id="report-actions" tabIndex={-1}>{t(report.referenceProfile ? 'Prioritised validation actions' : 'Template experiments — not personalised advice')}</h3><ol className="actions">{[...report.actions].sort((a,b) => a.priority - b.priority).map(a=><li key={a.id}><h4 id={`action-${a.id}`} tabIndex={-1}>{t(a.title)}</h4><p>{t(a.steps)}</p><p className="metadata">{t('Reason')}: {t(a.rationale)} {t('Effort')}: {t(a.effort)}.</p><p><strong>{t('What would disprove it')}:</strong> {t(a.falsification)}</p></li>)}</ol>
     <details><summary>{t('Profile version ID')}</summary><p className="technical">{report.profileId}</p></details>
     <p className="metadata">{t('For a correction, edit and confirm the profile, then start a new fixture run.')}</p>
   </article>;

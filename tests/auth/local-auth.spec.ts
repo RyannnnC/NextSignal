@@ -56,12 +56,14 @@ test('real local signup, email verification, session, owner isolation, research 
     const history = page.locator('.history-row').filter({ hasText: 'Revised synthetic project title' });
     await expect(history.getByRole('link', { name: /View report/ })).toHaveCount(2);
     await history.getByRole('link', { name: 'View report 2' }).click();
-    await expect(page.getByText('Revised synthetic report customer', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Revised synthetic project title');
+    await expect(page.getByRole('region', { name: 'Business Overview' }).getByText('Revised synthetic report customer', { exact: true })).toBeVisible();
     await page.goto(`/projects/${id}/reports/${report.id}`);
     await expect(page.getByRole('heading', { name: report.title, exact: true })).toBeVisible();
     await page.reload();
     await expect(page.getByRole('heading', { name: report.title, exact: true })).toBeVisible();
-    await expect(page.getByText(initialCustomer, { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Business Overview' }).getByText(initialCustomer, { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Evidence at a glance' }).getByText(initialCustomer, { exact: true })).toBeVisible();
     await expect(page.getByText('Revised synthetic report customer', { exact: true })).toHaveCount(0);
     const other = await browser.newContext();
     const second = await other.newPage();

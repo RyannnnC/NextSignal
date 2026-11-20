@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 
 test.afterEach(async ({page}) => { await page.request.delete('/api/session',{headers:{origin:'http://127.0.0.1:3001'}}); });
 
-test('marketing navigation, honest availability, original brand assets and responsive bilingual routes', async ({page,context}) => {
+test('marketing navigation, honest availability, brand and responsive bilingual routes', async ({page,context}) => {
   const external: string[] = [];
   await context.route('**/*',route=>{
     const host=new URL(route.request().url()).hostname;
@@ -13,28 +13,27 @@ test('marketing navigation, honest availability, original brand assets and respo
   });
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('Find your next business opportunity.');
-  await expect(page).toHaveTitle('Find your next business opportunity. | NextSignal');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('Know what to test next.');
+  await expect(page).toHaveTitle('Know what to test next. | NextSignal');
   await expect(page.locator('meta[name="description"]')).toHaveAttribute('content', /Australian business idea/);
   expect((await page.request.get('/')).headers()['x-robots-tag']).toContain('noindex');
   expect(await page.locator('main').evaluate(main => main.getBoundingClientRect().width)).toBe(1440);
   await expect(page.locator('.site-header')).toHaveCSS('width', '1440px');
-  await expect(page.locator('#pricing > div')).toHaveCSS('width', '1440px');
+  await expect(page.locator('#pricing')).toHaveCSS('width', '1440px');
   expect(await page.getByLabel('Test business idea',{exact:true}).count()).toBe(0);
-  const logo=page.getByRole('img', { name: 'NextSignal', exact: true });
-  await expect(logo).toHaveAttribute('alt','NextSignal');
-  expect(await logo.evaluate((image: HTMLImageElement)=>Number(image.getAttribute('width'))/Number(image.getAttribute('height')))).toBe(3);
-  expect(await logo.evaluate(image=>image.getBoundingClientRect().width/image.getBoundingClientRect().height)).toBeCloseTo(3,2);
+  const logo=page.getByRole('link', { name: 'NextSignal', exact: true });
+  await expect(logo).toBeVisible();
   const icon=await page.locator('link[rel="icon"]').getAttribute('href');
   expect(icon).toBeTruthy(); expect((await page.request.get(icon!)).status()).toBe(200);
   await expect(page.locator('#pricing article')).toHaveCount(4);
   await expect(page.locator('#pricing article a').filter({ hasText: '↗' })).toHaveCount(0);
+  await page.getByText('View planned services and proposed prices', { exact: true }).click();
   await expect(page.getByText('A$49',{exact:false})).toBeVisible();
   await expect(page.getByText('A$79',{exact:false})).toBeVisible();
   await expect(page.getByText('Planned — not available',{exact:true})).toHaveCount(3);
-  await expect(page.getByRole('heading',{name:'See an example report',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Laptop repairs for students in Sydney',exact:true})).toBeVisible();
   await expect(page.locator('main > section').last()).toHaveAttribute('id', 'pricing');
-  await page.getByRole('link', { name: 'View example report' }).first().click();
+  await page.getByRole('link', { name: 'See example report', exact: true }).click();
   await expect(page).toHaveURL(/\/example-report$/);
   await expect(page.getByRole('heading', { name: 'Published statistic' })).toBeVisible();
   await expect(page.getByText('8,305', { exact: true })).toBeVisible();
@@ -62,11 +61,11 @@ test('marketing navigation, honest availability, original brand assets and respo
   await expect(page.locator('html')).toHaveAttribute('lang','zh-CN');
   await page.getByRole('link',{name:'NextSignal',exact:true}).click();
   await expect(page).toHaveURL('http://127.0.0.1:3001/');
-  await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('明确下一步， 先验证关键假设。');
   await page.reload();
   await page.setViewportSize({width:375,height:812});
   await expect(logo).toBeVisible();
-  await expect(page.getByRole('heading',{level:1})).toHaveText('发现你的下一个创业机会。');
+  await expect(page.getByRole('heading',{level:1})).toHaveText('明确下一步， 先验证关键假设。');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   expect((await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa','wcag22aa']).analyze()).violations).toEqual([]);
   expect(external).toEqual([]);
@@ -99,7 +98,7 @@ test('private report deep links preserve authorization, login return, historical
     await expect(page.getByRole('heading', { name: 'Updated project list title' })).toBeVisible();
     expect((await page.getByRole('region', { name: 'My reports' }).boundingBox())?.width).toBeGreaterThan(700);
     await page.goto(url); await page.reload();
-    await expect(page.getByText('Original private fixture customer',{exact:true})).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Business Overview' }).getByText('Original private fixture customer',{exact:true})).toBeVisible();
     expect(await page.getByText('New private fixture customer',{exact:true}).count()).toBe(0);
     expect((await page.request.get(url)).headers()['cache-control']).toContain('no-store');
     // End the first owner's session before testing an anonymous viewer and a new login.
@@ -114,7 +113,7 @@ test('private report deep links preserve authorization, login return, historical
     await anonPage.getByRole('link',{name:'Sign in locally',exact:true}).click();
     await anonPage.getByRole('button',{name:'Sign in locally',exact:true}).click();
     await expect(anonPage).toHaveURL(`http://127.0.0.1:3001${url}`);
-    await expect(anonPage.getByText('Original private fixture customer',{exact:true})).toBeVisible();
+    await expect(anonPage.getByRole('region', { name: 'Evidence at a glance' }).getByText('Original private fixture customer',{exact:true})).toBeVisible();
     ownerRequest=anon.request;
     const bob=await browser.newContext();contexts.push(bob);
     const bobPage=await bob.newPage();await bobPage.goto('http://127.0.0.1:3001/auth/sign-in?next=%2Fvalidate');
