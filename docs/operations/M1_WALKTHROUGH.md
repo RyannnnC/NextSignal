@@ -4,7 +4,7 @@ Verified locally on 2026-10-29. This is synthetic demonstration data, not market
 
 ## Open in VS Code
 
-The repository folder is C:\Users\Admin\Desktop\Github Work\KnowYourBusiness. The Explorer should show apps, packages, supabase, docker and docs. Use Ctrl+P to open the paths below. For a readable table reference, open docs/database/SCHEMA.md and press Ctrl+Shift+V for Markdown preview. Use Ctrl+P again to move from the reference to the actual SQL or TypeScript.
+Open this repository in VS Code. The Explorer should show apps, packages, supabase, docker and docs. Use Ctrl+P to open the paths below. For a readable table reference, open docs/database/SCHEMA.md and press Ctrl+Shift+V for Markdown preview. Use Ctrl+P again to move from the reference to the actual SQL or TypeScript.
 
 The PostgreSQL container holds the engine and binary database storage. The repository on Windows holds the application and migration code. Editing a Markdown field reference does not change the database. Schema changes require a new reviewed SQL migration; do not edit Docker volume files or rewrite applied migrations.
 
@@ -31,7 +31,7 @@ Then enter these psql commands one at a time:
 
 These commands use the PostgreSQL client already installed in Docker. No additional extension or host psql installation is needed. The existing inspector is read-only and receives no tenant-owned rows under RLS; an empty SELECT result is expected. Do not disable RLS or connect as postgres to make a viewer show customer data.
 
-For the same structure in Docker Desktop: Containers -> next-signal-local -> postgres -> Exec, then `psql -U kyb_local_inspector -d next_signal_local`.
+For the same structure in Docker Desktop: Containers -> next-signal-local -> postgres -> Exec, then `psql -U nextsignal_local_inspector -d next_signal_local`.
 
 Key fields to read first:
 
@@ -92,7 +92,7 @@ Actual row counts for this project: 2 profile versions, 1 consent event, 1 run, 
 | Show progress/report | GET /api/projects/{id} through periodic polling | Read profiles, runs and report payload under tenant RLS | Projects.get; apps/web/app/report-view.tsx ReportView |
 | Switch English/Chinese | Local UI preference | No research data rewrite or translation-provider call | apps/web/lib/i18n.ts; apps/web/app/language-switch.tsx |
 
-Every web request passes through apps/web/lib/bridge.ts and apps/worker/src/server.ts. The worker resolves the fixture session to an actor; browser-supplied workspace IDs are not trusted. packages/adapters/src/postgres.ts binds that actor within a transaction using SET LOCAL ROLE kyb_app and a transaction-local identity. This is an explicit local test-identity model, not production JWT authentication.
+Every web request passes through apps/web/lib/bridge.ts and apps/worker/src/server.ts. The worker resolves the fixture session to an actor; browser-supplied workspace IDs are not trusted. packages/adapters/src/postgres.ts binds that actor within a transaction using SET LOCAL ROLE nextsignal_app and a transaction-local identity. This is an explicit local test-identity model, not production JWT authentication.
 
 ```mermaid
 flowchart LR

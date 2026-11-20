@@ -163,7 +163,7 @@ describe('SQL permissions and evidence integrity', () => {
     await expect(db.asUser(bob.userId, tx => tx.query('insert into public.evidence_records(id,workspace_id,project_id,run_id,payload) values($1,$2,$3,$4,$5)', [randomUUID(), bob.workspaceId, id, runId, { synthetic: true, provider: 'fixture' }]))).rejects.toThrow('foreign key constraint');
   });
   it('has no anonymous access and the queue worker cannot read tenant tables', async () => {
-    await expect(db.engine.transaction(async tx => { await tx.exec('set local role kyb_worker'); return tx.query('select * from public.projects'); })).rejects.toThrow('permission denied');
+    await expect(db.engine.transaction(async tx => { await tx.exec('set local role nextsignal_worker'); return tx.query('select * from public.projects'); })).rejects.toThrow('permission denied');
     await expect(db.asUser('00000000-0000-4000-8000-000000000099', tx => tx.query('select * from public.workspaces'))).resolves.toMatchObject({ rows: [] });
     await expect(db.asUser(alice.userId, tx => tx.query('select * from local_fixture.sessions'))).rejects.toThrow('permission denied');
     await expect(db.asUser(alice.userId, tx => tx.query('select * from public.claim_fixture_job()'))).rejects.toThrow('permission denied');

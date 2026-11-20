@@ -14,7 +14,7 @@ try{
     await docker([...composeArguments(root),'stop'],root);console.log('PostgreSQL stopped. Persistent volume preserved.');
   }else if(command==='shell'){
     await readInspectorConfig(root);
-    const args=[...composeArguments(root),'exec',...(process.stdin.isTTY?[]:['-T']),'postgres','psql','-U','kyb_local_inspector','-d','next_signal_local',...process.argv.slice(3)];
+    const args=[...composeArguments(root),'exec',...(process.stdin.isTTY?[]:['-T']),'postgres','psql','-U','nextsignal_local_inspector','-d','next_signal_local',...process.argv.slice(3)];
     const child=spawn('docker',args,{stdio:'inherit',windowsHide:true});
     process.exitCode=await new Promise<number>((done,reject)=>{child.on('error',reject);child.on('exit',code=>done(code??1));});
   }else if(command==='schema'){

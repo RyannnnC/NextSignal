@@ -1,18 +1,17 @@
 # Project Handoff — NextSignal
 
-Last discussed: 2026-10-26. This document distills product decisions from a long ChatGPT planning conversation. It is context, not a substitute for current provider documentation or legal review.
+Product planning notes from 2026-10-26. For the current local workflow, see [the documentation index](README.md).
 
 ## Founder and goals
 Solo developer in Sydney with software engineering experience, Windows workstation and early budget around AUD 1,000. Target customers: Australian startup founders, pre-launch solo builders, small SaaS operators and small business owners. Product research and customer acquisition in Australia first. Avoid building a commodity SEO score generator or generic AI business-plan tool.
 
-## Messaging (draft, not yet approved brand)
-- Name working title: **Know Your Business**.
+## Product name and draft messaging
+- Product name: **NextSignal**.
 - Tagline: **Validate your idea. Grow with evidence.**
-- Alternative: **Know your business. Know your market. Know your next move.**
 - Promise: Australia-first, source-grounded research, not AI certainty or success guarantees.
 - DO NOT claim AI knows owners' businesses better than owners do. Owners confirm/modify inferred business profiles.
 
-## Two products
+## Planned product capabilities
 ### A. Validate My Idea
 Natural-language idea + target geography -> business hypotheses and problem/solution framing -> user corrections -> keyword seeds and question mapping -> Australian contextual stats (ABS where semantically applicable), search demand/SERP (DataForSEO), customer questions (AnswerThePublic) -> identifiable direct/substitute competitors -> counter-evidence/failure patterns and unknowns -> three prioritized cheap validation experiments. Results must visibly distinguish evidence and inference.
 
@@ -51,13 +50,10 @@ Do not prematurely implement: continuous GEO monitoring, guaranteed search ranki
 Sensitive unpublished founder ideas and customer reports must be private by default, deletion supported, no undisclosed training or reuse, provider disclosures accurate. Comply with relevant Australia Consumer Law / ACCC advertising obligations, Spam Act / ACMA marketing rules, applicable Privacy Act / OAIC rules, ABN and GST obligations when relevant, and third-party API commercial licensing. Lawyer review prior to paid public launch. A general disclaimer is distinct from a Privacy Policy and cannot cancel statutory consumer guarantees. Human-reviewed label only on genuinely reviewed outputs.
 
 ## Visual design
-Root DESIGN.md and PNG assets were supplied on 2026-10-27. The supplied material uses NextSignal while the product specification uses Know Your Business; final naming and existing component-library handoff remain pending. Preserve supplied assets and do not select or purchase a new UI system. See ADR 0003 for the functional M1 UI scope.
+Root DESIGN.md and PNG assets were supplied on 2026-10-27. The supplied assets use NextSignal, the confirmed product name. The existing component-library handoff remains pending. Preserve supplied assets and do not select or purchase a new UI system. See ADR 0003 for the functional M1 UI scope.
 
-Update 2026-10-28: the owner confirmed **Next Signal** and approved applying DESIGN.md plus English/Simplified Chinese UI switching. Fonts are self-hosted with OFL notices; no new component framework is chosen. Native PostgreSQL verification is required separately from PGlite; the workstation's Docker Engine is currently blocked by Desktop's firmware virtualisation diagnostic. See ADRs 0004–0005 and operations/NATIVE_POSTGRES.md.
+The owner approved English and Simplified Chinese UI switching, with self-hosted fonts and OFL notices. The dated native verification and fixture cutover are recorded separately. [Native PostgreSQL history](operations/2026-10-28-NATIVE-VERIFICATION.md) · [Fixture cutover history](operations/2026-10-28-LOCAL-CUTOVER.md)
 
-Native follow-up, 2026-10-28: the owner enabled virtualization and rebooted; Docker Engine is healthy. Nine native PostgreSQL cases now pass, including four OS workers and two new regressions that exposed and then verified fixes for cancellation/deletion deadlocks. See ADR 0006 and operations/2026-10-28-NATIVE-VERIFICATION.md. Existing application data still uses the local PGlite runtime; production Supabase/JWT and provider/legal gates remain open.
+## Current implementation
 
-## Suggested first Codex task
-
-Local runtime follow-up, 2026-10-28: the owner authorized persistent Docker PostgreSQL and safe migration of existing fixture data. ADR 0007 and operations/2026-10-28-LOCAL-CUTOVER.md record the completed cutover, exact table hashes/counts, actual native M1 browser tests, import rollback/idempotency tests and container restart persistence. The old PGlite source and private backups remain intact. See operations/LOCAL_DEVELOPMENT.md for Docker/VS Code inspection. No real API, production identity or public deployment is enabled.
-Read AGENTS.md and all docs. Inspect repository. Without writing application features, propose a concrete monorepo skeleton, initial relational schema, research pipeline state machine and Phase 1 acceptance criteria. Highlight ambiguities and provider-licensing risks. Only scaffold once owner approves plan.
+Local Supabase Auth is the everyday development entry point. The Validate preview creates private, versioned reports and can use the explicitly enabled ABS development comparison. Grow, paid research, publishing and production deployment are future work. The original fixture database remains available separately. [Local Auth](operations/LOCAL_SUPABASE_AUTH.md) · [Provider register](providers/LICENSE_REGISTER.md)

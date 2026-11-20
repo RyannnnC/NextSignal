@@ -49,9 +49,9 @@ it('imports nonempty versioned fixture data atomically, verifies every table and
   const altered=structuredClone(snapshot);altered.tables['public.projects'][0]!.idea='A changed source idea requiring explicit merge approval';
   await expect(importSnapshot(target,altered)).rejects.toThrow('different source');
   const connection={host:'127.0.0.1',port,database:'next_signal_local',max:4};
-  const backend=new Pool({...connection,user:'kyb_local_backend',password:config.backendPassword});
-  const queue=new Pool({...connection,user:'kyb_local_queue',password:config.queuePassword});
-  const identity=new Pool({...connection,user:'kyb_local_identity',password:config.identityPassword});
+  const backend=new Pool({...connection,user:'nextsignal_local_backend',password:config.backendPassword});
+  const queue=new Pool({...connection,user:'nextsignal_local_queue',password:config.queuePassword});
+  const identity=new Pool({...connection,user:'nextsignal_local_identity',password:config.identityPassword});
   const db=new PostgresDatabase(backend,queue);
   const local={db,sessions:new PostgresFixtureSessions(identity),close:async()=>{await db.close();await identity.end();}};
   try{
@@ -64,7 +64,7 @@ it('imports nonempty versioned fixture data atomically, verifies every table and
     await local.sessions.revoke(session.token);expect(await local.sessions.resolve(session.token)).toBeNull();
     await expect(local.db.asUser(actor.userId,tx=>tx.query('select * from local_fixture.sessions'))).rejects.toThrow('permission denied');
   }finally{await local.close();}
-  const inspector=new Pool({host:'127.0.0.1',port,database:'next_signal_local',user:'kyb_local_inspector',password:inspectorPassword});
+  const inspector=new Pool({host:'127.0.0.1',port,database:'next_signal_local',user:'nextsignal_local_inspector',password:inspectorPassword});
   try{
     expect((await inspector.query("select column_name from information_schema.columns where table_schema='public' and table_name='projects'")).rows.length).toBeGreaterThan(0);
     expect((await inspector.query('select * from public.projects')).rows).toHaveLength(0);

@@ -6,6 +6,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider, LOCAL_ACCOUNTS } from '@nextsignal/adapters';
+import { PostgresAbsCache } from '@nextsignal/adapters/abs-provider';
 import type { Database, ResearchProvider } from '@nextsignal/application';
 import { admin, bootstrap, database, migrations, pool } from './setup.js';
 import { createInput, prepared } from '../helpers.js';
@@ -25,7 +26,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect(version.rows[0]?.version).toContain('PostgreSQL 17.');
     console.info('Native PostgreSQL:', version.rows[0]?.version);
     const identity = await db.asUser(alice.userId, tx => tx.query('select current_user as name,rolsuper,rolbypassrls from pg_roles where rolname=current_user'));
-    expect(identity.rows).toEqual([{ name: 'kyb_app', rolsuper: false, rolbypassrls: false }]);
+    expect(identity.rows).toEqual([{ name: 'nextsignal_app', rolsuper: false, rolbypassrls: false }]);
     const tables = await root.query("select relname,relrowsecurity,relforcerowsecurity from pg_class where relnamespace='public'::regnamespace and relkind='r' and relname<>'provider_licenses'");
     expect(tables.rows.length).toBeGreaterThan(10);
     for (const row of tables.rows) expect(row).toMatchObject({ relrowsecurity: true, relforcerowsecurity: true });
@@ -47,15 +48,33 @@ describe('native PostgreSQL migration, roles and workers', () => {
         and has_table_privilege(rolname, pg_class.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')`);
       expect(leaked.rows).toEqual([]);
       const claims = await client.query(`select rolname from pg_roles
-        where rolname in ('anon', 'authenticated', 'service_role', 'kyb_app', 'kyb_worker')
+        where rolname in ('anon', 'authenticated', 'service_role', 'nextsignal_app', 'nextsignal_worker')
         and has_function_privilege(rolname, 'public.claim_fixture_job()', 'EXECUTE')`);
-      expect(claims.rows).toEqual([{ rolname: 'kyb_worker' }]);
-      const application = await client.query("select has_table_privilege('kyb_app', 'public.projects', 'INSERT') as can_insert");
+      expect(claims.rows).toEqual([{ rolname: 'nextsignal_worker' }]);
+      const application = await client.query("select has_table_privilege('nextsignal_app', 'public.projects', 'INSERT') as can_insert");
       expect(application.rows).toEqual([{ can_insert: true }]);
     } finally {
       await client.query('rollback');
       client.release();
     }
+  });
+  it('reads and writes the private ABS cache via the worker without granting access to tenants', async () => {
+    const cache = new PostgresAbsCache(work => db.asWorker(work));
+    const key = 'abs:census_total_persons:C21_G01_SAL:1.0.0:1.0.0:2021:11884';
+    const fresh = {
+      dataflowVersion: '1.0.0', structureVersion: '1.0.0', collectedAt: new Date().toISOString(),
+      sourceUrl: 'https://data.api.abs.gov.au/rest/data/ABS,C21_G01_SAL,1.0.0/3.P_1.11884.SAL.1',
+      observations: [{ region: '11884', value: 8305 }],
+    };
+    const expired = { ...fresh, collectedAt: '2025-01-01T00:00:00.000Z' };
+    try {
+      await cache.write(key, expired);
+      expect(await cache.read(key)).toBeUndefined();
+      await cache.write(key, fresh);
+      await cache.write(key, expired);
+      expect(await cache.read(key)).toEqual(fresh);
+      await expect(db.asUser(alice.userId, tx => tx.query('select * from nextsignal_private.abs_observation_cache'))).rejects.toThrow('permission denied');
+    } finally { await root.query('delete from nextsignal_private.abs_observation_cache where cache_key=$1', [key]); }
   });
   it('denies cross-tenant reads, writes, job access and report mutation using real SQL roles', async () => {
     const { id, runId } = await prepared(projects, alice); await runner.processOne();
@@ -183,7 +202,7 @@ describe('native PostgreSQL migration, roles and workers', () => {
     expect((await root.query("select to_regclass('public.projects') as table_name")).rows[0]?.table_name).toBeNull();
     await migrations(root);
     // Recreate harness-only memberships/seed rows lost when the application schema/roles were dropped.
-    await root.query('grant kyb_app to nextsignal_test_backend; grant kyb_worker to nextsignal_test_queue');
+    await root.query('grant nextsignal_app to nextsignal_test_backend; grant nextsignal_worker to nextsignal_test_queue');
     for(const actor of [alice,bob]) await root.query('insert into public.workspaces(id,owner_id) values($1,$2)',[actor.workspaceId,actor.userId]);
     const {id}=await prepared(projects,alice);
     await runner.processOne();

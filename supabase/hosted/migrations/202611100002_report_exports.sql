@@ -17,7 +17,7 @@ create index report_files_report on public.report_files(workspace_id, project_id
 
 alter table public.report_files enable row level security;
 alter table public.report_files force row level security;
-create policy report_file_owner on public.report_files for select to kyb_app
+create policy report_file_owner on public.report_files for select to nextsignal_app
   using (workspace_id in (select id from public.workspaces where owner_id = auth.uid()));
 revoke all privileges on public.report_files from public, anon, authenticated, service_role;
-grant select on public.report_files to kyb_app;
+grant select on public.report_files to nextsignal_app;

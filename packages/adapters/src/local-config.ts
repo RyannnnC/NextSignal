@@ -1,13 +1,14 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { z } from 'zod';
 
 const Password=z.string().regex(/^[a-f0-9]{64}$/);
 const Connection={host:z.literal('127.0.0.1'),port:z.literal(54328),database:z.literal('next_signal_local')};
+const inspectorUser = 'nextsignal_local_inspector';
 export const AdminConfig=z.object({...Connection,password:Password}).strict();
 export const RuntimeConfig=z.object({...Connection,backendPassword:Password,queuePassword:Password,identityPassword:Password}).strict();
-export const InspectorConfig=z.object({...Connection,user:z.literal('kyb_local_inspector'),password:Password}).strict();
+export const InspectorConfig=z.object({...Connection,user:z.string().min(1),password:Password}).strict();
 export type RuntimeConfig=z.infer<typeof RuntimeConfig>;
 /** 定位存放本地 PostgreSQL 配置的目录。 */
 export const localDirectory=(root:string)=>resolve(root,'.local/postgres');
@@ -21,7 +22,8 @@ export async function readAdminConfig(root:string) {
 }
 /** 读取本地只读数据库检查账号。 */
 export async function readInspectorConfig(root:string) {
-  return InspectorConfig.parse(JSON.parse(await readFile(resolve(localDirectory(root),'inspector.json'),'utf8')));
+  const config = InspectorConfig.parse(JSON.parse(await readFile(resolve(localDirectory(root),'inspector.json'),'utf8')));
+  return { ...config, user: inspectorUser };
 }
 /** 生成缺失的本地配置并保留已有凭据。 */
 export async function ensureLocalConfig(root:string) {
@@ -33,7 +35,7 @@ export async function ensureLocalConfig(root:string) {
   const files:[string,unknown][]=[
     ['admin.json',{...connection,password:secret()}],
     ['runtime.json',{...connection,backendPassword:secret(),queuePassword:secret(),identityPassword:secret()}],
-    ['inspector.json',{...connection,user:'kyb_local_inspector',password:secret()}]
+    ['inspector.json',{...connection,user:inspectorUser,password:secret()}]
   ];
   for(const [name,value] of files) {
     try {await writeFile(resolve(directory,name),JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});}
@@ -42,6 +44,12 @@ export async function ensureLocalConfig(root:string) {
   const admin=await readAdminConfig(root);
   const runtime=await readRuntimeConfig(root);
   const inspector=await readInspectorConfig(root);
+  const inspectorPath = resolve(directory, 'inspector.json');
+  if (JSON.parse(await readFile(inspectorPath, 'utf8')).user !== inspectorUser) {
+    const temporary = `${inspectorPath}.${randomBytes(8).toString('hex')}.tmp`;
+    await writeFile(temporary, JSON.stringify(inspector, null, 2)+'\n', { flag: 'wx', mode: 0o600 });
+    await rename(temporary, inspectorPath);
+  }
   await writeFile(resolve(directory,'docker.env'),`NEXTSIGNAL_LOCAL_PG_PASSWORD=${admin.password}\n`,{mode:0o600});
   return {admin,runtime,inspector};
 }

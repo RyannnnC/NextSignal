@@ -95,7 +95,6 @@ Ignored runtime artifacts include .local database/session/capability files, .nex
 
 ## Remaining owner inputs and gates
 
-- Confirm Know Your Business versus NextSignal before branded UI work.
 - Supply the intended existing UI library/source/version and commercial licence.
 - Supply licensed font assets and clean SVG/vector/transparent logo exports if exact typography and brand use are required.
 - Review the local functional slice; later review the actual branded UI.

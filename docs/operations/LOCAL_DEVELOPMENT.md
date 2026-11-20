@@ -6,7 +6,7 @@ The PostgreSQL engine and data live in Docker. The TypeScript application code r
 
 | Item | Location |
 | --- | --- |
-| Browser preview | http://127.0.0.1:3000 |
+| Browser preview | http://127.0.0.1:3001 |
 | Local worker host | 127.0.0.1:4311 |
 | PostgreSQL | 127.0.0.1:54328 / next_signal_local |
 | Compose project/service | next-signal-local / postgres |
@@ -25,10 +25,10 @@ Requires Docker Desktop's healthy Linux engine and Node.js 24. Run from the repo
 
 ```sh
 npm ci
-npm run dev
+npm run dev:fixture
 ```
 
-The command starts/verifies the Docker database, checks schema history and cutover readiness, then starts web and worker. Existing PGlite data requires explicit `npm run db:migrate` while both web/worker are stopped. Fresh checkouts without legacy data initialize a fresh local database. The default runtime uses fixtures. Set `NEXTSIGNAL_ABS_ENABLED=1` in the shell running `npm run dev` only for the documented [ABS development workflow](../ABS_DATA_INTEGRATION_PLAN.md). Paid providers, LLM processing, crawling, payments and public deployment are disabled in this runtime.
+The command starts/verifies the Docker database, checks schema history and cutover readiness, then starts web and worker. Existing PGlite data requires explicit `npm run db:migrate` while both web/worker are stopped. Fresh checkouts without legacy data initialize a fresh local database. This explicit fixture mode is separate from the default local Supabase Auth application. Set `NEXTSIGNAL_ABS_ENABLED=1` in the shell running `npm run dev:fixture` only for the documented [ABS development workflow](../ABS_DATA_INTEGRATION_PLAN.md). Paid providers, LLM processing, crawling, payments and public deployment are disabled in this runtime.
 
 Ctrl+C stops web/worker. PostgreSQL stays available for inspection. To stop PostgreSQL without deleting its data:
 
@@ -64,7 +64,7 @@ One-shot PowerShell equivalent:
 npm run db:shell -- --command '\d public.projects'
 ```
 
-The shell uses kyb_local_inspector. It can list columns, types, foreign keys, indexes and RLS definitions. Customer tables return no rows because the inspection role has no tenant RLS policy; that is intentional, not a migration failure. It cannot INSERT/UPDATE/DELETE. Use the normal Alice/Bob application session for tenant-scoped data. Global provider policy metadata is readable.
+The shell uses nextsignal_local_inspector. It can list columns, types, foreign keys, indexes and RLS definitions. Customer tables return no rows because the inspection role has no tenant RLS policy; that is intentional, not a migration failure. It cannot INSERT/UPDATE/DELETE. Use the normal Alice/Bob application session for tenant-scoped data. Global provider policy metadata is readable.
 
 `npm run db:schema -- --write` regenerates [the public field reference](../database/SCHEMA.md) from the running database without exporting customer values.
 
@@ -73,18 +73,14 @@ The shell uses kyb_local_inspector. It can list columns, types, foreign keys, in
 Open Docker Desktop -> Containers -> next-signal-local -> postgres. Logs show the database process, not business ideas. In the container's Exec terminal, run:
 
 ```sh
-psql -U kyb_local_inspector -d next_signal_local
+psql -U nextsignal_local_inspector -d next_signal_local
 ```
 
 Then use the same psql commands above. Volumes shows next-signal-local_pgdata. Its contents are PostgreSQL's binary storage, not editable TypeScript or a substitute for SQL migrations. Do not edit database storage files directly.
 
 ## VS Code path
 
-VS Code is installed at the inspected user-profile installation, although its `code` CLI was not on the current shell PATH. Open VS Code -> File -> Open Folder, and select:
-
-```text
-C:\Users\Admin\Desktop\Github Work\KnowYourBusiness
-```
+VS Code is installed at the inspected user-profile installation, although its `code` CLI was not on the current shell PATH. Open VS Code -> File -> Open Folder, and select this repository.
 
 Use Terminal -> New Terminal to run db:shell/db:schema. Use Ctrl+P to open code files:
 
@@ -106,7 +102,7 @@ Use Terminal -> New Terminal to run db:shell/db:schema. Use Ctrl+P to open code 
 
 For example, profile_versions.content is JSONB with summary/customer/problem/geography/assumptions defined by Profile; report_versions.payload is the versioned Report object. They are not separate SQL columns for every JSON key.
 
-If you already have a PostgreSQL extension/client, connect with host 127.0.0.1, port 54328, database next_signal_local, user kyb_local_inspector. Read only that user's password from the local inspector.json file; do not paste it into Git, chat or screenshots. No extension was installed by this task. A GUI extension is optional; the terminal workflow above is complete.
+If you already have a PostgreSQL extension/client, connect with host 127.0.0.1, port 54328, database next_signal_local, user nextsignal_local_inspector. Read only that user's password from the local inspector.json file; do not paste it into Git, chat or screenshots. No extension was installed by this task. A GUI extension is optional; the terminal workflow above is complete.
 
 ## Migration checks and recovery
 

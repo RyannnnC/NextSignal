@@ -18,12 +18,12 @@ The Compose service exposes only 127.0.0.1:54329 and uses tmpfs. It does not tou
 
 `npm run check:all` combines base checks, native concurrency/RLS, isolated import tests, PostgreSQL-backed browser checks and persistent-container restart checks. GitHub CI has a separate native-postgres job; configuration is not evidence that it has passed remotely.
 
-## Current workstation result — 2026-10-28
+## Historical workstation result — 2026-10-28
 
 Native execution is now **PASSED** after the owner enabled virtualization and rebooted. Docker Linux Engine 29.9.2/Compose v5.6.1 responded normally; PostgreSQL 17.11 ran all nine native cases successfully. Controlled cancellation/deletion regressions first reproduced SQLSTATE 40P01, then passed after compatible project locks and consistent job/run ordering were implemented. All four OS worker processes performed work; eight runs produced eight reports and eight provider-call records. Rollback/reapplication was followed by a successful private pipeline and tenant-isolation assertion. Test containers were cleaned up.
 
 The earlier firmware/engine failure remains historical evidence in the previous verification record. See [the native follow-up](2026-10-28-NATIVE-VERIFICATION.md) for that test stage. A subsequent owner-authorized [local cutover](2026-10-28-LOCAL-CUTOVER.md) migrated PGlite data and changed the actual runtime to persistent Docker PostgreSQL. Neither stage asserts production Supabase/JWT readiness.
 
-## Bilingual M1 preview
+## Current browser verification
 
-The local page remains at http://127.0.0.1:3000. Upper-right English/中文 buttons switch UI and fixed fixture report templates without changing stored data. A locale preference is stored locally; no idea text goes to translation providers. Fontsource packages self-host DM Sans/IBM Plex Mono; complete OFL notices are in apps/web/public/licenses. The Chinese system fallback varies by OS. Owner review remains necessary for final Chinese copy and visual polish.
+Use the [local verification matrix](VERIFICATION.md) for fixture, real Auth and optional design review. The locale preference is stored locally, and switching language preserves stored report data. Fontsource packages self-host DM Sans and IBM Plex Mono with OFL notices under `apps/web/public/licenses/`.

@@ -23,8 +23,8 @@ await mkdir(local,{recursive:true,mode:0o700});
 const lock=await open(resolve(local,'migration.lock'),'wx',0o600);
 try{
   await lock.writeFile(String(process.pid));
-  if(await listening(4311)||await listening(3000))throw new Error('Stop the local web and worker before migrating. No files were copied.');
-  if(!await exists(resolve(source,'PG_VERSION')))throw new Error('No existing PGlite database found. Use npm run dev for a fresh database.');
+  if(await listening(4311)||await listening(3000)||await listening(3001))throw new Error('Stop the local web and worker before migrating. No files were copied.');
+  if(!await exists(resolve(source,'PG_VERSION')))throw new Error('No existing PGlite database found. Use npm run dev:fixture for a fresh database.');
   const id=`pglite-${new Date().toISOString().replace(/[:.]/g,'-')}-${randomUUID().slice(0,8)}`;
   const backup=resolve(local,'backups',id),working=resolve(backup,'export-work');
   await mkdir(backup,{recursive:true,mode:0o700});

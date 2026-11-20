@@ -33,17 +33,17 @@ export class PostgresAbsCache implements AbsCache {
   /** 过期记录视同未命中。 */
   async read(key: string): Promise<unknown> {
     return this.run(async tx => (await tx.query<{ payload: unknown }>(
-      'select payload from kyb_private.abs_observation_cache where cache_key=$1 and expires_at > now()', [key]
+      'select payload from nextsignal_private.abs_observation_cache where cache_key=$1 and expires_at > now()', [key]
     )).rows[0]?.payload);
   }
 
   /** 缓存保留七天。旧请求即使稍晚写入也不会覆盖新快照。 */
   async write(key: string, value: Snapshot): Promise<void> {
     await this.run(async tx => {
-      await tx.query(`insert into kyb_private.abs_observation_cache(cache_key,payload,collected_at,expires_at)
+      await tx.query(`insert into nextsignal_private.abs_observation_cache(cache_key,payload,collected_at,expires_at)
         values($1,$2,$3::timestamptz,$3::timestamptz + interval '7 days')
         on conflict(cache_key) do update set payload=excluded.payload,collected_at=excluded.collected_at,expires_at=excluded.expires_at
-        where kyb_private.abs_observation_cache.collected_at <= excluded.collected_at`, [key, value, value.collectedAt]);
+        where nextsignal_private.abs_observation_cache.collected_at <= excluded.collected_at`, [key, value, value.collectedAt]);
     });
   }
 }

@@ -1,16 +1,16 @@
 # ADR 0003: Received design assets, deferred brand and UI library selection
 
 - Date: 2026-10-27
-- Status: Received; brand identity and component-library choice pending owner confirmation
+- Status: Historical handoff. Naming is recorded in ADR 0004 and full UI framework adoption remains deferred.
 - Owner: Project owner
 
 ## Context
 
-The owner added root DESIGN.md, AGENTS.md UI instructions and assets/Logo.png, BigLogo.png, BigLogoWhite.png. DESIGN.md and supplied wordmarks use NextSignal, while the product specifications and owner request still use Know Your Business. The latest owner instruction explicitly defers selection of a UI design system.
+The owner added root DESIGN.md, AGENTS.md UI instructions and assets/Logo.png, BigLogo.png, BigLogoWhite.png. DESIGN.md and supplied wordmarks use NextSignal, while naming was still under review. The latest owner instruction explicitly defers selection of a UI design system.
 
 ## Decision
 
-Preserve all supplied assets and DESIGN.md without edits. Keep Know Your Business as the application title until naming is confirmed. Do not publish or embed conflicting wordmarks. The M1 functional form uses native semantic controls and a small subset of existing DESIGN.md tokens for readable layouts, 12px cards, 8px fields, pill buttons and focus states. This is not a new UI framework or brand decision. No component library or font files are installed. The declared font stack falls back to system Arial when DM Sans is absent; no remote font request is made.
+Preserve all supplied assets and DESIGN.md without edits. The naming decision in ADR 0004 supersedes the interim title. Do not publish or embed conflicting wordmarks. The M1 functional form uses native semantic controls and a small subset of existing DESIGN.md tokens for readable layouts, 12px cards, 8px fields, pill buttons and focus states. This is not a new UI framework or brand decision. No component library or font files are installed. The declared font stack falls back to system Arial when DM Sans is absent; no remote font request is made.
 
 Root DESIGN.md is the received design reference; the older docs/design.md placeholder is not the actual path. Broad marketing pages, chart components, logo processing and a full design system are deferred.
 

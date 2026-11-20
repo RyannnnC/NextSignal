@@ -77,12 +77,11 @@ Where conflicts occur, STOP and flag them; never silently override a higher-prio
 - **MUST** stop billing and/or provide appropriate remedy where service cannot be delivered as agreed.
 - **MUST** show a clear way to request help, corrections and refunds.
 
-## Testing: no merge without
-- Unit tests for evidence normalization, scoring/priority, keyword deduplication, permissions and budgets.
-- Provider adapter contract tests with live-safe fixtures and failure cases (timeouts, missing data, exceeded quota, malformed response).
-- Integration tests for stage transitions, duplicate webhook, payment failure, project isolation, report export.
-- Security tests for SSRF, redirect loops, DNS rebinding, HTML prompt injection, role bypass and anonymous abuse.
-- End-to-end tests for Idea → Snapshot, URL → Snapshot, paid unlock and delete request.
+## Required verification
+- Cover the active idea-to-snapshot lifecycle, immutable reports, permissions, provider failure handling, tenant isolation and deletion at the layer where each invariant is enforced.
+- For active providers, validate normalization, budgets, missing data, malformed responses, quota and timeout handling with live-safe fixtures and contract tests.
+- Add keyword deduplication and scoring checks alongside those capabilities. Add checkout, payment failure, duplicate webhook and paid-unlock tests when payment is enabled. Add export tests when report export is enabled.
+- Require SSRF, redirect, DNS rebinding and HTML prompt-injection tests before enabling URL fetching. Keep role bypass and anonymous abuse checks for current endpoints.
 - Automated checks: lint, typecheck, test, build, dependency/secrets scanning.
 - Human report QA: no ungrounded statistics; provenance and limitations visible.
 

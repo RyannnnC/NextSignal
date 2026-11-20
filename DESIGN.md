@@ -104,7 +104,7 @@ These geometry decisions are drawn from the **MongoDB reference** as requested.
 | `radius.pill` | 9999px | CTA buttons, filter pills, small status chips |
 
 - Spacing scale: `4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96px`.
-- The shared page shell and homepage content use a **1400px** maximum width. Home background bands span the viewport. Report main content is **960px**, with a **720px** reading column.
+- The shared page shell and homepage content use a **1440px** border-box maximum width, including gutters. Home background bands span the viewport. Reports use a sidebar and a wider evidence column; form panels stay readable at up to 760px.
 - Desktop page gutters: 32px; tablet 24px; mobile 16px.
 - Base card padding 24px; dense table/card 16px; feature card 32px; mobile cards 16–20px.
 - Standard sections 80px vertical; mobile 48px. Dark hero 96–112px top/bottom; mobile 64px.
@@ -127,6 +127,8 @@ These geometry decisions are drawn from the **MongoDB reference** as requested.
 - **Tertiary:** text link with visible hover and focus affordance.
 - One primary CTA per local decision area; disabled controls must explain why if needed.
 - Loading buttons preserve width, announce progress and prevent accidental double submission.
+
+**Homepage and private report actions.** Use a paired action row with one filled primary and one outlined secondary control. Use 48px height on desktop and at least 44px on mobile. The row may wrap with long translations. Use Ant Design line icons after the text label to indicate direction or destination. Give hover and pressed states distinct token colors and keep the keyboard focus ring visible on both dark and light surfaces. Directional icons may translate 2px over 160ms on hover.
 
 ### 3.2 Input controls
 
@@ -159,6 +161,8 @@ Every important measurable claim must support:
 No generic accuracy score, fabricated forecast, or unverifiable competitive claim. Do not present Google Ads competition as SEO ranking difficulty or Google Trends relative index as absolute volume.
 
 **Evidence states:** use explicit text labels + icons: `Observed`, `Third-party estimate`, `Hypothesis`, `Not enough data`. No decorative rainbow of badges. Review and correction controls belong near the claim.
+
+**Evidence preview row.** Use a square 34px icon tile, 29px on mobile, an explicit kind label, a short evidence summary and a fine divider between rows. Use the existing info tokens for published evidence, warning tokens for hypotheses and neutral tokens for user statements, simulations and unavailable evidence. The homepage reads as a static excerpt; on private reports use a native disclosure with a minimum 44px hit area for provenance, caveats and a link to the detailed record. Rotate the chevron over 160ms. Keep evidence IDs in the detailed record. When a value is unavailable, show its state in text and preserve the source failure or coverage reason in the details. Show the published reference period and source or the public example link alongside each numeric preview.
 
 ### 3.5 Research steps / progress
 
@@ -195,13 +199,12 @@ Only show completed when the server confirms it. API unavailable/insufficient da
 
 ### 4.1 Home `/`
 
-1. Full-width deep-teal hero with a plain-language value statement, a bright primary action, and a short example.
-2. Validate My Idea and Grow My Business entry points in a light grey band, with accurate availability.
-3. Three steps in a white band.
-4. A sample report in a pale green band. Public editorial case studies require human review before publication.
-5. Pricing and service availability in four rounded cards within the final white band before the footer.
+1. Full-width deep-teal hero. Center a 1280px maximum inner grid with the value statement and action pair on the left and a light, read-only report preview on the right. Show a published statistic, a hypothesis and a suggested test drawn from the approved public example. On mobile stack copy, actions and preview. The preview enters once over 220ms with a slight vertical shift from an already visible state.
+2. Give Validate My Idea and Grow My Business the same card dimensions and heading weight. Pair their distinct icons with the current availability and a real navigation target.
+3. Present the three validation steps as an ordered list on white.
+4. Summarize current availability in a mint pricing band. Place proposed service details behind a labelled disclosure. Grow and paid services remain planned.
 
-Avoid stacked enormous gradients or an 8-feature dashboard preview above the fold.
+Keep the shared sticky navigation on both surfaces. On mobile show the wordmark, labelled menu and compact language controls in one row in keyboard order. Account and sign-in links are available in the expanded menu. Suppress movement when reduced motion is requested.
 
 ### 4.2 Validate My Idea `/validate`
 
@@ -210,6 +213,8 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 - Snapshot: idea structure, 3–5 keyword seeds, limited evidence preview, first red-team question, next validation experiment.
 - Paid: deeper queries, verified Australia-relevant competitors, risk/contradictory evidence, full validation roadmap.
 
+The idea form, review, research progress, sign-in, and account history use dedicated routes. The report detail shows one immutable case.
+
 ### 4.3 Grow My Business `/grow`
 
 - URL input + market + goal; explain public-page-only crawl and data use.
@@ -217,12 +222,13 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 - Report: technical SEO observations → search intent gaps → competitor evidence → ranked actions → measure plan.
 - Distinguish observed page defects from hypothesized traffic/marketing impact; no ranking guarantees.
 
-### 4.4 Reports `/reports/[id]`
+### 4.4 Private reports `/projects/[projectId]/reports/[reportId]`
 
 - Report is private and access-controlled. `noindex` does not substitute authentication.
-- Heading: subject, type, date, geography, methods, coverage limitations.
-- Sticky table of contents on large screens: Summary / Evidence / Competitors / Risk or SEO Gaps / Actions / Methodology.
-- Details use `EvidenceCard`, `ResearchTable`, `RiskPanel`, `ActionItem`.
+- Put the report's saved project subject in the main heading and show preview scope, geography, report version, generation date and review state beside it. Preserve the full saved profile in the business overview.
+- Use a sticky desktop table of contents and a native mobile disclosure with the same four destinations: Summary, Business overview, Evidence and gaps, Validation plan. Indicate the current fragment and keep the anchor destination clear of the sticky header.
+- Lead with the first saved experiment and its supporting finding or rationale. Use an explicit template label for general fixture experiments. The primary action jumps to that experiment; the secondary action jumps to the evidence preview.
+- Follow with the evidence preview, saved business overview, detailed findings with readable evidence links, source records and the ranked validation plan. Keep metadata, limitations and contrary evidence accessible. Show a chart only when the report contains suitable observations and keep the accompanying table or text alternative.
 - Locked sections must explain what a paid report contains before checkout; avoid deceptive blurred mock data.
 - Include *Report a problem / Request correction*.
 
@@ -244,7 +250,7 @@ Avoid stacked enormous gradients or an 8-feature dashboard preview above the fol
 |---|---|
 | < 640px | Single-column, 16px gutters, full-width forms/buttons, stacked chart legend and cards |
 | 640–1023px | Two-column where useful, 24px gutters, compact nav |
-| ≥ 1024px | Up to 1400px of page content, two-column hero, report TOC + content |
+| ≥ 1024px | Up to 1440px of page content, two-column hero, report TOC + content |
 
 - WCAG 2.2 AA target. Text ≥4.5:1 contrast; large text ≥3:1; non-text essential controls ≥3:1. Validate actual rendered combinations, not tokens alone.
 - Interactive targets ideally ≥44×44px. Keyboard focus visible and never hidden by sticky headers.
@@ -260,7 +266,7 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 
 ```css
 :root {
-  --ns-page-max-width: 1400px;
+  --ns-page-max-width: 1440px;
   --ns-brand-ink: #092e2a;
   --ns-brand-ink-raised: #124239;
   --ns-primary: #087f5b;
@@ -301,5 +307,5 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 
 - Inspiration: [VoltAgent's MongoDB DESIGN.md](https://github.com/voltagent/awesome-design-md/blob/main/design-md/mongodb/DESIGN.md) for visual rhythm: deep-teal hero, bright green contrast, **12px card corners**, pill buttons, 8px controls, white research surfaces.
 - This is an **original NextSignal specification**, not MongoDB's design system and not an endorsement or affiliation.
-- The name **NextSignal** is a working selection, pending full Australian trade mark clearance and final asset checks.
+- **NextSignal** is the confirmed product name. Australian trade mark clearance and release asset checks are pre-launch tasks.
 - Amend this file when visual decisions change; record major changes in `docs/adr/` and update `AGENTS.md` to require the root `DESIGN.md`.

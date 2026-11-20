@@ -13,6 +13,7 @@ export function isFixtureRoute(path: string, method: string): boolean {
 }
 
 export const FIXTURE_NOTICE = 'Local fixture mode: your idea and reports stay in this local database. No external AI, search provider or marketing service receives them. Profile preparation is a deterministic placeholder, not AI research. Use test ideas only. Delete a project to remove its input, versions, runs and reports. Local fixture accounts are not production authentication.';
+export const LOCAL_AUTH_NOTICE = 'Local preview: your email, ideas and private reports stay in the local Supabase stack. We use templates to prepare profiles and reports. If enabled, the ABS comparison requests public Census data using selected locality codes. Your email and idea text stay local. Use test ideas only. Deleting a project removes its input, versions, runs and reports.';
 
 export const Id = z.uuid();
 export const Timestamp = z.iso.datetime();
@@ -42,7 +43,7 @@ export const CreateProject = z.object({
   idea: z.string().trim().min(10).max(3000),
   geography: Geography,
   processingConsent: z.literal(true),
-  noticeVersion: z.literal('local-fixture-v1'),
+  noticeVersion: z.enum(['local-fixture-v1', 'local-auth-preview-v1']),
   marketingOptIn: z.boolean().default(false),
   scenario: Scenario.default('normal'),
   requestKey: Id,
@@ -135,7 +136,7 @@ export const ProjectView = z.object({
   id: Id, stage: z.enum(['idea', 'launch', 'growth']), scenario: Scenario,
   profiles: z.array(ProfileVersion), runs: z.array(Run), reports: z.array(Report)
 }).strict();
-export const SessionView = z.object({ account: z.enum(['alice', 'bob']), workspaceId: Id }).strict();
+export const SessionView = z.object({ account: z.string().min(1).max(320), workspaceId: Id, email: z.email().optional(), verified: z.boolean().optional() }).strict();
 export const ApiError = z.object({ error: z.string(), code: z.string() }).strict();
 
 export type Geography = z.infer<typeof Geography>;

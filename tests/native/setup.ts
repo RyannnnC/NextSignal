@@ -32,7 +32,7 @@ export async function bootstrap(db: Pool) {
   if (!password || !/^[a-f0-9]{64}$/.test(password)) throw new Error('Missing generated test role password');
   await db.query(`create role nextsignal_test_backend login password '${password}' nosuperuser nobypassrls;
     create role nextsignal_test_queue login password '${password}' nosuperuser nobypassrls;
-    grant kyb_app to nextsignal_test_backend; grant kyb_worker to nextsignal_test_queue;`);
+    grant nextsignal_app to nextsignal_test_backend; grant nextsignal_worker to nextsignal_test_queue;`);
   for (const actor of Object.values(LOCAL_ACCOUNTS)) {
     await db.query('insert into auth.users(id) values($1)', [actor.userId]);
     await db.query('insert into public.workspaces(id,owner_id) values($1,$2)', [actor.workspaceId, actor.userId]);

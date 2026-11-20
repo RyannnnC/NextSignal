@@ -1,6 +1,8 @@
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
+  devIndicators: false,
+  logging: { incomingRequests: { ignore: [/\/auth\//] } },
   transpilePackages: ['@nextsignal/contracts'],
   poweredByHeader: false,
   /** 配置 Next.js 路由响应的安全标头。 */
