@@ -2,6 +2,7 @@
 
 import { ArrowRightOutlined, BulbOutlined, FileTextOutlined, RiseOutlined } from '@ant-design/icons';
 import Link from 'next/link';
+import { homeHeadline } from '../../lib/i18n';
 import { publicExample } from '../../lib/public-example';
 import { services } from '../../lib/services';
 import { EvidencePreview } from './evidence-preview';
@@ -27,7 +28,7 @@ export function MarketingHome() {
     <div className={styles.hero}>
       <div className={styles.heroInner}>
         <div>
-          <h1>{t('Know what to')} <span>{t('test next.')}</span></h1>
+          <h1>{t(homeHeadline[0])} <span>{t(homeHeadline[1])}</span></h1>
           <p className={styles.lead}>{t('Practical research for Australian founders and small businesses. See what the evidence supports and what to check next.')}</p>
           <div className={styles.actions}>
             <Link className="button bright" href="/validate">{t('Validate my idea')} <ArrowRightOutlined aria-hidden="true" /></Link>
@@ -38,7 +39,6 @@ export function MarketingHome() {
         <aside id="research" className={styles.preview} aria-labelledby="hero-example">
           <div className={styles.previewHeader}>
             <strong><FileTextOutlined aria-hidden="true" /> {t('Example report')}</strong>
-            <span>{t('Read only')}</span>
           </div>
           <div className={styles.previewBody}>
             <h2 id="hero-example">{t(publicExample.title)}</h2>
@@ -81,23 +81,35 @@ export function MarketingHome() {
 
     <section id="pricing" className={styles.pricingBand} aria-labelledby="pricing-heading">
       <div className={styles.inner}>
-        <div className={styles.pricingSummary}>
-          <div><h2 id="pricing-heading">{t('Pricing & Services')}</h2><p>{t('The local preview is free. Paid reports and checkout are planned.')}</p></div>
-          <Link className={styles.textLink} href="/validate">{t('Try the free preview')} <ArrowRightOutlined aria-hidden="true" /></Link>
+        <div className={styles.pricingIntro}>
+          <h2 id="pricing-heading">{t('Pricing & Services')}</h2>
+          <p>{t('The local preview is free. Prices shown are proposals for planned services.')}</p>
         </div>
-        <details id="service-plans" className={styles.servicePlans}>
-          <summary>{t('View planned services and proposed prices')}</summary>
-          <div className={styles.pricing}>{services.map(service => <article className={styles.service} key={service.id} aria-labelledby={`service-${service.id}`}>
-            <p>{t(service.status === 'planned' ? 'Planned — not available' : 'Free preview')}</p>
+        <div id="service-plans" className={styles.pricing}>
+          {services.map(service => <article className={`${styles.service} ${service.status === 'fixture' ? styles.featuredService : ''}`} key={service.id} aria-labelledby={`service-${service.id}`}>
             <h3 id={`service-${service.id}`}>{t(service.name)}</h3>
-            <strong>{service.amount === null ? t('Quote planned') : <>A${numbers.format(service.amount)}{service.perReport && <small> {t('/ report')}</small>}</>}</strong>
+            <p className={styles.serviceStatus}>{t(service.status === 'planned' ? 'Planned — not available' : 'Free preview')}</p>
+            <p className={styles.price}>
+              {service.amount === null ? <strong className={styles.quote}>{t('Quote planned')}</strong> :
+                <><strong>A${numbers.format(service.amount)}</strong>{service.perReport && <small>{t('/ report')}</small>}</>}
+            </p>
             <ul>{service.features.map(feature => <li key={feature}>{t(feature)}</li>)}</ul>
-            {service.href.startsWith('/#') ? <a href={service.href.slice(1)}>{t(service.id === 'expert' ? 'View service status' : 'See what’s planned')}</a>
-              : <Link href={service.href}>{t(service.id === 'free' ? 'Try the free preview' : 'See what’s planned')}</Link>}
-          </article>)}</div>
-          <details id="idea-scope"><summary>{t('What the idea report would cover')}</summary><p>{t('We plan to add search data and business comparisons. You can try the sample report today.')}</p></details>
-          <details id="expert-status"><summary>{t('Expert service status')}</summary><p>{t('Expert help is planned. Bookings are closed.')}</p></details>
-        </details>
+            <Link className={service.status === 'fixture' ? `button ${styles.serviceAction}` : `${styles.textLink} ${styles.serviceAction}`} href={service.href}>
+              {t(service.id === 'free' ? 'Try the free preview' : service.id === 'expert' ? 'View service status' : 'See what’s planned')}
+              <ArrowRightOutlined aria-hidden="true" />
+            </Link>
+          </article>)}
+        </div>
+        <div className={styles.serviceNotes}>
+          <div id="idea-scope">
+            <h3>{t('What the idea report would cover')}</h3>
+            <p>{t('We plan to add search data and business comparisons. You can try the sample report today.')}</p>
+          </div>
+          <div id="expert-status">
+            <h3>{t('Expert service status')}</h3>
+            <p>{t('Expert help is planned. Bookings are closed.')}</p>
+          </div>
+        </div>
       </div>
     </section>
   </>;

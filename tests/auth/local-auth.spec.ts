@@ -117,7 +117,7 @@ test('opted-in draft survives reload and verification in another tab, then clear
   const idea = 'Synthetic idea for testing a local repair service draft';
   const field = page.getByLabel('Test business idea', { exact: true });
   await page.goto('/validate');
-  await expect(page.getByText('Sign in to save your idea as a private project.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Validate My Idea', exact: true })).toBeVisible();
   await field.fill(idea);
   await page.reload();
   await expect(field).toHaveValue('');

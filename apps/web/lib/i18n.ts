@@ -3,6 +3,7 @@ import { FIXTURE_NOTICE, LOCAL_AUTH_NOTICE } from '@nextsignal/contracts';
 
 export const Locale = z.enum(['en', 'zh-CN']);
 export type Locale = z.infer<typeof Locale>;
+export const homeHeadline = ['Test your idea.', 'Start with evidence.'] as const;
 const zh: Record<string, string> = {
   'Skip to content': '跳到主要内容',
   'Local fixture workspace': '本地测试工作区',
@@ -99,13 +100,12 @@ const zh: Record<string, string> = {
   'interest reported': '报告有兴趣（模拟）', 'interest disputed': '兴趣受到质疑（模拟）'
 };
 const webZh: Record<string,string> = {
-  'Know what to test next.':'知道下一步该验证什么。',
-  'Know what to':'明确下一步，',
-  'test next.':'先验证关键假设。',
+  [homeHeadline[0]]:'验证你的创意。',
+  [homeHeadline[1]]:'从证据出发。',
   'Practical research for Australian founders and small businesses. See what the evidence supports and what to check next.':'为澳洲创业者和小型企业提供实用调研。了解证据支持什么，接下来该验证什么。',
   'Validate my idea':'验证我的想法', 'See example report':'查看示例报告',
   'Free local preview · Research is simulated':'免费本地预览 · 调研结果为模拟',
-  'Read only':'只读', 'residents · Haymarket, NSW · ABS 2021 Census':'名居民 · 新州 Haymarket · ABS 2021 年人口普查',
+  'residents · Haymarket, NSW · ABS 2021 Census':'名居民 · 新州 Haymarket · ABS 2021 年人口普查',
   'Will students pay for a faster repair?':'学生愿意为更快的维修付费吗？',
   'Suggested first test':'建议先做的验证',
   'Interview students about their last repair and offer an opt-in booking.':'询问学生上一次维修的经历，并提供自愿预约选项。',
@@ -118,8 +118,6 @@ const webZh: Record<string,string> = {
   'Review your profile':'核对业务资料',
   'Confirm the customer, problem and market before generating a report.':'生成报告前，确认目标客户、问题和市场范围。',
   'Use the report to pick a practical validation experiment.':'根据报告选一项可实际开展的验证实验。',
-  'The local preview is free. Paid reports and checkout are planned.':'本地预览免费。付费报告和结账功能仍在规划中。',
-  'View planned services and proposed prices':'查看规划服务及拟议价格',
   'Includes simulated content':'包含模拟内容', 'Sydney, NSW':'新州悉尼', 'Report version':'报告版本', 'Australia':'澳大利亚',
   'Jump to a section':'跳转到章节', 'On this page':'本页目录', 'Evidence and gaps':'证据与缺口', 'Validation plan':'验证计划',
   'Recommended next step':'建议下一步', 'Suggested experiment template':'建议实验模板',
@@ -147,7 +145,6 @@ const webZh: Record<string,string> = {
   'Open the verification link in the same browser.':'请在同一浏览器打开验证链接。',
   'If you verify in another tab, come back here and continue in this tab to reopen your saved draft.':'若在另一个标签页完成验证，请回到此处并在本标签页继续，以打开已保存的草稿。',
   'Continue to your idea':'继续填写创意',
-  'Sign in to save your idea as a private project.':'登录后可将创意保存为私有项目。',
   'Market: Australia. The preview does not measure local demand.':'市场：澳大利亚。预览版不衡量当地需求。',
   'Use an example':'使用示例', 'Sydney repair comparison options':'悉尼维修地点比较选项',
   'Keep this draft in this tab for 15 minutes.':'在此标签页保留草稿 15 分钟。',
@@ -193,7 +190,6 @@ const webZh: Record<string,string> = {
   'The report is ready.':'报告已就绪。',
   'This run was cancelled.':'本次研究已取消。',
   'This run could not produce a report.':'本次研究未能生成报告。',
-  'Describe what you want to test and where you plan to start.':'描述你想验证的创意，以及计划从哪里开始。',
   'Keep this draft in this tab for 15 minutes if sign-in is needed.':'如需登录，在此标签页保留草稿 15 分钟。',
   'Could not keep this draft.':'无法保留草稿。',
   'Could not prepare your idea. Check the form and try again.':'无法生成创意资料，请检查表单后重试。',

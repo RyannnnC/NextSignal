@@ -202,13 +202,13 @@ Only show completed when the server confirms it. API unavailable/insufficient da
 1. Full-width deep-teal hero. Center a 1280px maximum inner grid with the value statement and action pair on the left and a light, read-only report preview on the right. Show a published statistic, a hypothesis and a suggested test drawn from the approved public example. On mobile stack copy, actions and preview. The preview enters once over 220ms with a slight vertical shift from an already visible state.
 2. Give Validate My Idea and Grow My Business the same card dimensions and heading weight. Pair their distinct icons with the current availability and a real navigation target.
 3. Present the three validation steps as an ordered list on white.
-4. Summarize current availability in a mint pricing band. Place proposed service details behind a labelled disclosure. Grow and paid services remain planned.
+4. Show pricing and service details in an always-visible comparison. Highlight the free preview, display prices prominently, and label Grow and paid services as planned.
 
-Keep the shared sticky navigation on both surfaces. On mobile show the wordmark, labelled menu and compact language controls in one row in keyboard order. Account and sign-in links are available in the expanded menu. Suppress movement when reduced motion is requested.
+Keep the shared sticky navigation. On desktop, align the wordmark left, center the menu links, and align the language and account controls right. Use one flag button for language switching with an accessible name that states the destination language. On mobile show the wordmark, labelled menu and flag in one row in keyboard order, with account and sign-in links in the expanded menu. Suppress movement when reduced motion is requested.
 
 ### 4.2 Validate My Idea `/validate`
 
-- Short prompt + optional market and customer fields; example idea input.
+- Place the heading and idea form in a single centered column. Keep market limits with the idea field, example and comparison options in compact disclosures, and the processing notice with consent.
 - AI displays inferred business model/target customer and **asks user to correct it** before paid API research where possible.
 - Snapshot: idea structure, 3–5 keyword seeds, limited evidence preview, first red-team question, next validation experiment.
 - Paid: deeper queries, verified Australia-relevant competitors, risk/contradictory evidence, full validation roadmap.

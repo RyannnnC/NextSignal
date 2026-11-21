@@ -1,0 +1,31 @@
+.entry {
+  max-width: 760px;
+  margin-inline: auto;
+  padding-block: clamp(24px, 4vw, 56px);
+}
+
+.entry h1 {
+  margin: 0 0 20px;
+  font-size: clamp(32px, 4vw, 44px);
+  line-height: 1.14;
+}
+
+.panel {
+  margin: 0;
+  padding: clamp(16px, 3vw, 28px);
+}
+
+.ideaLabel { margin: 0 0 8px; font-weight: 600; }
+.market { margin: 8px 0 12px; color: var(--ns-text-secondary); font-size: 14px; }
+.options { border-block: 1px solid var(--ns-border); }
+.options details, .notice { margin-block: 0; }
+.options details + details { border-top: 1px solid var(--ns-border); }
+.options summary, .notice summary { font-size: 14px; }
+.options summary:hover, .notice summary:hover { color: var(--ns-primary-hover); }
+.examples, .comparison { padding-bottom: 12px; }
+.examples button { margin-top: 4px; }
+.consent { margin-top: 8px; }
+.consent label { margin-block: 0; font-size: 14px; }
+.notice p { margin: 0 0 8px; color: var(--ns-text-secondary); font-size: 14px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.actions button { margin: 0; }

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
 import { api, ClientApiError } from '../lib/client-api';
 import { LocalOpportunityFields } from './components/local-opportunity-fields';
+import styles from './idea-entry.module.css';
 
 const IdResponse = z.object({ id: Id }).strict();
 const defaultOpportunity: LocalOpportunityInput = { category: 'computer_repair', primaryMarket: 'sydney-nsw', areaIds: ['haymarket'] };
@@ -123,48 +124,58 @@ export function IdeaEntry() {
     finally { setBusy(false); }
   }
 
-  return <div className="flow-layout">
-    <div><h1>{t('Validate My Idea')}</h1><p>{t('Describe what you want to test and where you plan to start.')}</p>
-      <p>{t('Sign in to save your idea as a private project.')}</p>
-    </div>
-    <section className="flow-form" aria-label={t('Describe')}>
+  return <div className={styles.entry}>
+    <h1>{t('Validate My Idea')}</h1>
+    <section className={styles.panel} aria-label={t('Describe')}>
       {error && <p className="error-banner" role="alert">{t(error)}</p>}
-      {ready && <>
-        <p className="metadata" id="idea-market">{t('Market: Australia. The preview does not measure local demand.')}</p>
-        <form onSubmit={create} aria-busy={busy}>
-          <label htmlFor="idea">{t('Test business idea')}</label><textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required value={idea} onChange={event => setIdea(event.target.value)} aria-describedby="idea-market" />
-          <details className="processing-notice"><summary>{t('Use an example')}</summary>
-          <div className="button-row">
-          <button type="button" className="secondary" disabled={busy} onClick={() => {
-            setIdea(SYDNEY_REFERENCE_IDEA);
-            setOpportunity(null);
-            ideaInput.current?.focus();
-          }}>{t('Load Sydney repair example')}</button>
-          <button type="button" className="secondary" disabled={busy} onClick={() => {
-            setIdea(LOCAL_OPPORTUNITY_EXAMPLE);
-            setOpportunity({ ...defaultOpportunity, areaIds: [...SydneyAreaId.options] });
-            setTargetCustomer('Students and young professionals');
-            setComparisonOpen(true);
-            ideaInput.current?.focus();
-          }}>{t('Load three-area comparison example')}</button>
-          </div>
+      {ready && <form onSubmit={create} aria-busy={busy}>
+        <label className={styles.ideaLabel} htmlFor="idea">{t('Test business idea')}</label>
+        <textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required value={idea} onChange={event => setIdea(event.target.value)} aria-describedby="idea-market" />
+        <p className={styles.market} id="idea-market">{t('Market: Australia. The preview does not measure local demand.')}</p>
+        <div className={styles.options}>
+          <details>
+            <summary>{t('Use an example')}</summary>
+            <div className={`button-row ${styles.examples}`}>
+              <button type="button" className="secondary" disabled={busy} onClick={() => {
+                setIdea(SYDNEY_REFERENCE_IDEA);
+                setOpportunity(null);
+                ideaInput.current?.focus();
+              }}>{t('Load Sydney repair example')}</button>
+              <button type="button" className="secondary" disabled={busy} onClick={() => {
+                setIdea(LOCAL_OPPORTUNITY_EXAMPLE);
+                setOpportunity({ ...defaultOpportunity, areaIds: [...SydneyAreaId.options] });
+                setTargetCustomer('Students and young professionals');
+                setComparisonOpen(true);
+                ideaInput.current?.focus();
+              }}>{t('Load three-area comparison example')}</button>
+            </div>
           </details>
-          <details className="processing-notice" open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}><summary>{t('Sydney repair comparison options')}</summary>
-          <label className="checkbox-label"><input type="checkbox" checked={opportunity !== null} onChange={event => setOpportunity(event.target.checked ? defaultOpportunity : null)} /> {t('Compare Sydney repair locations')}</label>
-          {opportunity && <>
-            <label htmlFor="comparison-customer">{t('Target customer hypothesis')}</label>
-            <input id="comparison-customer" value={targetCustomer} onChange={event => setTargetCustomer(event.target.value)} maxLength={500} />
-            <LocalOpportunityFields value={opportunity} onChange={setOpportunity} prefix="draft" />
-          </>}
+          <details open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}>
+            <summary>{t('Sydney repair comparison options')}</summary>
+            <div className={styles.comparison}>
+              <label className="checkbox-label"><input type="checkbox" checked={opportunity !== null} onChange={event => setOpportunity(event.target.checked ? defaultOpportunity : null)} /> {t('Compare Sydney repair locations')}</label>
+              {opportunity && <>
+                <label htmlFor="comparison-customer">{t('Target customer hypothesis')}</label>
+                <input id="comparison-customer" value={targetCustomer} onChange={event => setTargetCustomer(event.target.value)} maxLength={500} />
+                <LocalOpportunityFields value={opportunity} onChange={setOpportunity} prefix="draft" />
+              </>}
+            </div>
           </details>
-          <details className="processing-notice"><summary>{t('Processing notice')}</summary><p id="processing-notice">{t(realAuth ? LOCAL_AUTH_NOTICE : FIXTURE_NOTICE)}</p></details>
+        </div>
+        <div className={styles.consent}>
+          <details className={styles.notice}>
+            <summary>{t('Processing notice')}</summary>
+            <p id="processing-notice">{t(realAuth ? LOCAL_AUTH_NOTICE : FIXTURE_NOTICE)}</p>
+          </details>
           <label className="checkbox-label"><input type="checkbox" name="consent" required checked={consent} onChange={event => setConsent(event.target.checked)} /> {t('I understand the local processing notice.')}</label>
           <label className="checkbox-label"><input type="checkbox" name="marketing" checked={marketing} onChange={event => setMarketing(event.target.checked)} /> {t('Record optional marketing interest (no messages are sent).')}</label>
           <label className="checkbox-label"><input type="checkbox" name="saveDraft" checked={Boolean(expires)} onChange={event => setExpires(event.target.checked ? Date.now() + draftLifetime : undefined)} /> {t('Keep this draft in this tab for 15 minutes.')}</label>
+        </div>
+        <div className={styles.actions}>
           <button disabled={busy || opportunity?.areaIds.length === 0}>{t(busy ? 'Creating project…' : 'Create project and review idea')}</button>
           {expires && <button type="button" className="secondary" onClick={discard} disabled={busy}>{t('Discard draft')}</button>}
-        </form>
-      </>}
+        </div>
+      </form>}
     </section>
   </div>;
 }

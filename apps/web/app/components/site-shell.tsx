@@ -1,12 +1,14 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MenuOutlined } from '@ant-design/icons';
 import { SessionView } from '@nextsignal/contracts';
+import brandLogo from '../../../../assets/BigLogoWhite.png';
 import { api } from '../../lib/client-api';
-import { Locale, translate } from '../../lib/i18n';
+import { homeHeadline, Locale, translate } from '../../lib/i18n';
 import { LanguageSwitch } from '../language-switch';
 import styles from './site-shell.module.css';
 
@@ -26,7 +28,8 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
   const [locale, setLocale] = useState<Locale>('en');
   const pathname = usePathname();
   const reportPage = pathname.startsWith('/projects/');
-  const focusedLayout = pathname === '/' || reportPage;
+  const home = pathname === '/';
+  const focusedLayout = home || reportPage;
   const [session, setSession] = useState(false);
   const [menu, setMenu] = useState(false);
   useEffect(() => {
@@ -45,8 +48,8 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    if (pathname === '/') {
-      document.title = `${translate(locale, 'Know what to test next.')} | NextSignal`;
+    if (home) {
+      document.title = `${homeHeadline.map(line => translate(locale, line)).join(' ')} | NextSignal`;
     } else {
       const title = pathname.startsWith('/projects/') ? 'Private preview report'
         : pathname.endsWith('/review') ? 'Review business profile' : pathname.endsWith('/progress') ? 'Research runs'
@@ -55,7 +58,7 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
         : pathname === '/account/reports' ? 'My reports' : pathname === '/account' ? 'Account' : 'Grow My Business';
       document.title = `NextSignal — ${translate(locale, title)}`;
     }
-  }, [locale, pathname, realAuth]);
+  }, [home, locale, pathname, realAuth]);
   /** 更新语言状态，并尽可能保存到本地。 */
   function changeLocale(value: Locale) {
     setLocale(value);
@@ -65,7 +68,9 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
     <a className="skip" href="#main">{t('Skip to content')}</a>
     <header className={`${styles.header} ${focusedLayout ? styles.focused : ''}`}>
       <div className={`site-header ${styles.headerInner}`}>
-      <Link className="wordmark" href="/" aria-label="NextSignal">Next<span>Signal</span><span className="brand-dot" aria-hidden="true"/></Link>
+      <Link className={styles.brandLink} href="/" aria-label="NextSignal">
+        <Image className={styles.brandImage} src={brandLogo} alt="" sizes="160px" loading="eager" />
+      </Link>
       <button type="button" className={`secondary ${styles.menuToggle}`} aria-controls="site-navigation" aria-expanded={menu} onClick={() => setMenu(!menu)} onKeyDown={event => {
         if (event.key === 'Escape') setMenu(false);
       }}>
@@ -80,10 +85,10 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
         <Link onClick={() => setMenu(false)} href="/validate" aria-current={pathname.startsWith('/validate') ? 'page' : undefined}>{t('Validate My Idea')}</Link>
         <Link onClick={() => setMenu(false)} href="/grow" aria-current={pathname === '/grow' ? 'page' : undefined}>{t('Grow My Business')}</Link>
         <Link onClick={() => setMenu(false)} href="/example-report" aria-current={pathname === '/example-report' ? 'page' : undefined}>{t('Example report')}</Link><Link onClick={() => setMenu(false)} href="/#pricing">{t('Pricing & Services')}</Link>
-        {focusedLayout && <div className={styles.mobileAccount}>
+        <div className={styles.mobileAccount}>
           <Link onClick={() => setMenu(false)} href={session ? '/account' : '/auth/sign-in'}>{t(session ? 'Account' : 'Sign In')}</Link>
           {session && <Link onClick={() => setMenu(false)} href="/account/reports">{t('My reports')}</Link>}
-        </div>}
+        </div>
       </nav>
       <div className={styles.controls}>
         <LanguageSwitch locale={locale} onChange={changeLocale}/>
@@ -94,11 +99,20 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
       </div>
       </div>
     </header>
-    <main id="main" className={pathname === '/' ? styles.homeMain : undefined}>{children}
-    </main>
-      <footer className={`${styles.footer} ${pathname === '/' ? styles.homeFooter : ''}`}><strong>NextSignal</strong><p>{t(pathname === '/' ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
-        {pathname !== '/' && <div className="trust-strip"><span>✓ {t('Idea text stays local')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
-        <nav aria-label={t('Footer navigation')} className={styles.footerNav}><Link href="/validate">{t('Try the free preview')}</Link><Link href="/example-report">{t('Example report')}</Link><Link href="/#pricing">{t('Pricing & Services')}</Link></nav>
-      </footer>
+    <main id="main" className={home ? styles.homeMain : undefined}>{children}</main>
+    <footer className={`${styles.footer} ${home ? styles.homeFooter : ''}`}>
+      <div className={styles.footerInner}>
+        <div className={styles.footerBrand}>
+          <Image className={styles.brandImage} src={brandLogo} alt="NextSignal" sizes="160px" />
+          <p>{t(home ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
+        </div>
+        {!home && <div className="trust-strip"><span>✓ {t('Idea text stays local')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
+        <nav aria-label={t('Footer navigation')} className={styles.footerNav}>
+          <Link href="/validate">{t('Try the free preview')}</Link>
+          <Link href="/example-report">{t('Example report')}</Link>
+          <Link href="/#pricing">{t('Pricing & Services')}</Link>
+        </nav>
+      </div>
+    </footer>
   </Language.Provider>;
 }

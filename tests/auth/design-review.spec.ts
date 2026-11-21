@@ -4,12 +4,11 @@ import { origin, register } from './helpers';
 
 /** 捕获桌面英文和移动中文布局，并检查外框与页面横向溢出。 */
 async function capture(page: Page, name: string, mask: Locator[] = []) {
-  for (const variant of [
-    { width: 1440, language: 'English (Australia)', html: 'en' },
-    { width: 375, language: '简体中文', html: 'zh-CN' },
-  ]) {
+  for (const variant of [{ width: 1440, html: 'en' }, { width: 375, html: 'zh-CN' }]) {
     await page.setViewportSize({ width: variant.width, height: 960 });
-    await page.getByRole('button', { name: variant.language, exact: true }).click();
+    if (await page.locator('html').getAttribute('lang') !== variant.html) {
+      await page.getByRole('button', { name: variant.html === 'en' ? '切换到英语（澳大利亚）' : 'Switch to Simplified Chinese', exact: true }).click();
+    }
     await expect(page.locator('html')).toHaveAttribute('lang', variant.html);
     await page.evaluate(async () => { window.scrollTo(0, 0); await document.fonts.ready; });
     await expect(page.locator('.site-header')).toHaveCSS('width', variant.width + 'px');
@@ -21,7 +20,7 @@ async function capture(page: Page, name: string, mask: Locator[] = []) {
         animations: 'disabled', clip: { x: 0, y: 0, width: variant.width, height }, mask });
     }
   }
-  await page.getByRole('button', { name: 'English (Australia)', exact: true }).click();
+  await page.getByRole('button', { name: '切换到英语（澳大利亚）', exact: true }).click();
 }
 
 /** 核对菜单在断点两侧的可见性和键盘焦点。 */
@@ -42,13 +41,21 @@ async function checkMenu(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
   const rows = await navigation.getByRole('link').evaluateAll(links => links.map(link => link.getBoundingClientRect().top));
   expect(new Set(rows).size).toBe(1);
+  const bounds = await navigation.boundingBox();
+  expect(bounds!.x + bounds!.width / 2).toBeCloseTo(512, 0);
 }
 
 test('real local account and report layouts @design', async ({ page }) => {
   test.setTimeout(180_000);
   await page.goto('/');
   await checkMenu(page);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Know what to test next.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Test your idea. Start with evidence.');
+  await page.setViewportSize({ width: 1920, height: 960 });
+  const logo = await page.getByRole('link', { name: 'NextSignal', exact: true }).boundingBox();
+  const headline = await page.getByRole('heading', { level: 1 }).boundingBox();
+  expect(logo!.x).toBeCloseTo(headline!.x, 0);
+  const nav = await page.getByRole('navigation', { name: 'Main navigation' }).boundingBox();
+  expect(nav!.x + nav!.width / 2).toBeCloseTo(960, 0);
   await expect(page.getByRole('link', { name: 'See example report', exact: true })).toHaveAttribute('href', '/example-report');
   await capture(page, 'home');
   await page.goto('/example-report');
@@ -57,6 +64,9 @@ test('real local account and report layouts @design', async ({ page }) => {
   await expect(page).toHaveURL('http://127.0.0.1:3000/');
   await page.goto('/validate');
   await expect(page.getByLabel('Test business idea')).toBeVisible();
+  expect(await page.getByRole('heading', { name: 'Validate My Idea', exact: true }).evaluate(heading =>
+    heading.getBoundingClientRect().height <= parseFloat(getComputedStyle(heading).lineHeight) + 1
+  )).toBe(true);
   await capture(page, 'validate');
 
   for (const [route, title] of [
