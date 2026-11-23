@@ -2,6 +2,8 @@
 
 Run the fixture and Auth browser suites one at a time on the same workstation. They use separate web ports and share the local worker port. CI uses independent runners. Browser credentials, callback codes, private reports and local backups stay on the local machine or the ephemeral CI runner.
 
+Run the fixture browser suite through `npm run test:e2e`. It starts a temporary, loopback-only project with the pinned PostgreSQL image, initializes it from the current migrations, and removes its container and volume when Playwright exits. The separate persistence check initializes and exercises the regular fixture volume.
+
 | Scenario | Where it runs | Regression it prevents |
 | --- | --- | --- |
 | Fixture lifecycle, Sydney evidence, three-area comparison, bounded API and keyboard-safe user input | `npm run test:e2e`, fixture suite | Broken saved reports, missing provenance, unsafe rendering or acceptance of unsupported or unauthorized fixture requests |

@@ -7,14 +7,14 @@ const Password=z.string().regex(/^[a-f0-9]{64}$/);
 const Connection={host:z.literal('127.0.0.1'),port:z.literal(54328),database:z.literal('next_signal_local')};
 const inspectorUser = 'nextsignal_local_inspector';
 export const AdminConfig=z.object({...Connection,password:Password}).strict();
-export const RuntimeConfig=z.object({...Connection,backendPassword:Password,queuePassword:Password,identityPassword:Password}).strict();
+export const RuntimeConfig=z.object({...Connection,port:z.number().int().min(1).max(65535),backendPassword:Password,queuePassword:Password,identityPassword:Password}).strict();
 export const InspectorConfig=z.object({...Connection,user:z.string().min(1),password:Password}).strict();
 export type RuntimeConfig=z.infer<typeof RuntimeConfig>;
 /** 定位存放本地 PostgreSQL 配置的目录。 */
 export const localDirectory=(root:string)=>resolve(root,'.local/postgres');
 /** 加载并校验应用与 worker 的本地连接配置。 */
-export async function readRuntimeConfig(root:string):Promise<RuntimeConfig> {
-  return RuntimeConfig.parse(JSON.parse(await readFile(resolve(localDirectory(root),'runtime.json'),'utf8')));
+export async function readRuntimeConfig(root:string, port:number=Connection.port.value):Promise<RuntimeConfig> {
+  return RuntimeConfig.extend({port:z.literal(port)}).parse(JSON.parse(await readFile(resolve(localDirectory(root),'runtime.json'),'utf8')));
 }
 /** 读取迁移和启动使用的本地管理连接。 */
 export async function readAdminConfig(root:string) {

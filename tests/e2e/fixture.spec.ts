@@ -55,7 +55,7 @@ test('idea → correction → private fixture report → new version → deletio
     const after = await (await page.request.get(`/api/projects/${id}`)).json() as { reports: unknown[] };
     expect(after.reports[0]).toEqual(before.reports[0]);
     await page.goto(firstReportPath!);
-    await expect(page.getByText('Australian independent software founders', { exact: true })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Business Overview' }).getByText('Australian independent software founders', { exact: true })).toBeVisible();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.setViewportSize({ width: 375, height: 812 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
@@ -127,8 +127,8 @@ test('local opportunity brief saves three locations and survives refresh with ow
     const before = await (await page.request.get(`/api/projects/${id}`)).json();
     await page.reload();
     for (const name of ['Haymarket', 'Burwood (NSW)', 'Chatswood']) await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
-    await expect(page.getByText('Overall score: insufficient evidence', { exact: true })).toBeVisible();
-    await expect(page.locator('.decision-dimensions dt .anticon[aria-hidden="true"]')).toHaveCount(4);
+    await expect(page.getByText('Demand, competitor coverage, setup costs and willingness to pay remain unverified.', { exact: true })).toBeVisible();
+    await expect(page.getByText('Candidate locations are illustrative. No profit forecast or area ranking was produced.', { exact: true })).toBeVisible();
     const chart = page.locator('figure').filter({ hasText: 'Census population by locality' });
     await expect(chart.getByText('8,305 people', { exact: true })).toBeVisible();
     await expect(chart.locator('svg.recharts-surface')).toBeVisible();

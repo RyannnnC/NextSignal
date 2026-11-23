@@ -6,11 +6,12 @@ import { canonical } from '@nextsignal/adapters/local-import';
 import { Projects } from '@nextsignal/application/projects';
 import { ResearchRunner } from '@nextsignal/application/runner';
 import { FixtureProvider, LOCAL_ACCOUNTS } from '@nextsignal/adapters';
-import { composeArguments, docker, startLocalPostgres } from './lib/local-postgres.js';
+import { composeArguments, docker, prepareLocalRuntime, startLocalPostgres } from './lib/local-postgres.js';
 
 const root=process.cwd(),actor=LOCAL_ACCOUNTS.alice;
 const active=await new Promise<boolean>(done=>{const socket=createConnection({host:'127.0.0.1',port:4311});socket.once('connect',()=>{socket.destroy();done(true);});socket.once('error',()=>done(false));socket.setTimeout(1000,()=>{socket.destroy();done(true);});});
 if(active)throw new Error('Stop the local worker before the controlled container persistence check.');
+await prepareLocalRuntime(root);
 let runtime:ReturnType<typeof openLocalRuntime>|undefined=openLocalRuntime(await readRuntimeConfig(root));
 let id:string|undefined;
 try{

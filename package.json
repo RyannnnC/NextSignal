@@ -31,7 +31,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test",
+    "test:e2e": "tsx scripts/test-e2e.ts",
     "test:postgres": "tsx scripts/test-postgres.ts",
     "test:import": "tsx scripts/test-postgres.ts import",
     "test:local-persistence": "tsx scripts/verify-local-persistence.ts",

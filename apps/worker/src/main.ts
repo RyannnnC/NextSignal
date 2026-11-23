@@ -14,7 +14,8 @@ await mkdir(resolve(root, '.local'), { recursive: true });
 try { await access(resolve(root,'.local/migration.lock')); throw new Error('Data migration is running; worker must remain stopped.'); }
 catch(error) { if(!(typeof error==='object'&&error&&'code' in error&&error.code==='ENOENT'))throw error; }
 const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';
-const local = realAuth ? openAuthRuntime(await readLocalAuth(root)) : openLocalRuntime(await readRuntimeConfig(root));
+const testPort = process.env.NEXTSIGNAL_E2E_PG_PORT;
+const local = realAuth ? openAuthRuntime(await readLocalAuth(root)) : openLocalRuntime(await readRuntimeConfig(root, testPort ? Number(testPort) : undefined));
 const ready=await local.db.asUser('00000000-0000-4000-8000-000000000001',tx=>tx.query('select id from public.workspaces limit 1'));
 if(!ready.rows.length && !realAuth){await local.close();throw new Error('Native local database is not initialized/migrated. Run db:migrate or npm run dev:fixture first.');}
 const key = randomBytes(32).toString('hex');

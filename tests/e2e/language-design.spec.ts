@@ -43,7 +43,7 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
     await expect(page.getByRole('heading',{name:'客户需求和付费意愿仍然未知。',exact:true})).toBeVisible();
     const before=await (await page.request.get(`/api/projects/${id}`)).json() as {reports:unknown[]};
     await page.getByRole('button',{name:'切换到英语（澳大利亚）',exact:true}).click();
-    await expect(page.getByText('澳大利亚的独立创业者',{exact:true})).toBeVisible();
+    await expect(page.getByRole('region',{name:'Business Overview'}).getByText('澳大利亚的独立创业者',{exact:true})).toBeVisible();
     await expect(page.getByRole('heading',{name:'Customer demand and willingness to pay remain unknown.',exact:true})).toBeVisible();
     const after=await (await page.request.get(`/api/projects/${id}`)).json() as {reports:unknown[]};
     expect(after.reports).toEqual(before.reports);

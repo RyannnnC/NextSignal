@@ -10,8 +10,8 @@ export async function exists(path:string){try{await access(path);return true;}ca
 /** 构造固定本地数据库项目的 Docker Compose 参数。 */
 export const composeArguments=(root:string)=>['compose','--env-file',resolve(localDirectory(root),'docker.env'),'-p','next-signal-local','-f',resolve(root,'docker/compose.local.yml')];
 /** 执行带超时的 Docker 命令并返回输出。 */
-export function docker(args:string[],root:string,timeout=30000):Promise<string>{
-  return new Promise((done,reject)=>execFile('docker',args,{cwd:root,timeout,windowsHide:true,maxBuffer:1024*1024},(error,stdout,stderr)=>{
+export function docker(args:string[],root:string,timeout=30000,env=process.env):Promise<string>{
+  return new Promise((done,reject)=>execFile('docker',args,{cwd:root,env,timeout,windowsHide:true,maxBuffer:1024*1024},(error,stdout,stderr)=>{
     if(error)reject(new Error(`Docker operation failed: ${stderr||error.message}`));else done(stdout);
   }));
 }
