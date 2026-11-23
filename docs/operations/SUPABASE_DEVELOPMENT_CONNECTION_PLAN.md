@@ -16,9 +16,13 @@ For the optional SQL metadata probe, add the three entries in [the database temp
 | `npm run supabase:preflight -- --apply` | Apply pending migrations in one transaction on the configured Sydney development target. An untracked occupied target or mismatched ledger is rejected. The migration credential remains outside the app. |
 | `npm run supabase:preflight -- --verify` | Exercise existing project and fixture runner services with two synthetic SQL identities. The verification refuses an occupied queue and rolls back rows and temporary role grants. It also checks anonymous project access using the publishable key. |
 
-### Recovering from duplicate role error `42710`
+### Recovering from duplicate relation or role errors
 
-On the Sydney development project, `supabase db push` can try to replay the baseline when `supabase_migrations.schema_migrations` is empty. The established hosted runner uses a separate ledger and checks each recorded migration checksum. An empty CLI ledger may remain in place. Existing historical databases must complete the naming cutover before the current hosted runner can apply a new revision. Review any nonempty CLI ledger before applying migrations. [Supabase migration history](https://supabase.com/docs/guides/deployment/database-migrations)
+If a deployment reports `workspaces already exists` (`42P07`) or a duplicate role (`42710`), run the read-only `npm run supabase:preflight`. Check whether the application tables exist and which ledger tracks them. Supabase CLI reads `supabase_migrations.schema_migrations`. NextSignal's hosted runner checks a separate checksum ledger, so the CLI ledger can be empty even after the baseline has run.
+
+- The root [Supabase configuration](../../supabase/config.toml) disables the GitHub integration's automatic migration step when its working directory is the repository root. Preview branches will not build the application schema from these SQL files automatically. The [local Auth stack](LOCAL_SUPABASE_AUTH.md) uses its own configuration and setup command. [Supabase GitHub integration](https://supabase.com/docs/guides/deployment/branching/github-integration#migrations)
+- A legacy `kyb_private.hosted_migrations` ledger requires a reviewed [naming cutover](DATABASE_NAMING_CUTOVER.md) before applying current migrations. An occupied database without either hosted ledger, or a database with entries in both migration histories, requires reconciliation before any apply.
+- After confirming the target and its history, use the explicit hosted runner for approved Sydney development changes. Preserve the applied SQL and both ledgers during diagnosis. A duplicate table or role alone does not establish which baseline statements ran. [Supabase migration history](https://supabase.com/docs/guides/deployment/database-migrations)
 
 ### Application integration sequence
 

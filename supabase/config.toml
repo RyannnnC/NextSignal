@@ -1,0 +1,6 @@
+project_id = "nextsignal"
+
+[db.migrations]
+# Hosted schema changes use the NextSignal ledger in npm run supabase:preflight.
+# Keep the GitHub integration from replaying the shared baseline via its CLI ledger.
+enabled = false

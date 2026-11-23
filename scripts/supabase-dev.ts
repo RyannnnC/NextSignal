@@ -107,12 +107,18 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
     const result = await client.query(`select current_setting('server_version_num')::integer as version,
       to_regclass('auth.users') is not null and to_regprocedure('auth.uid()') is not null as auth_schema,
       to_regclass('supabase_migrations.schema_migrations') is not null as migration_table,
+      to_regclass('public.workspaces') is not null as workspaces,
       to_regclass('public.projects') is not null as projects,
       to_regclass('storage.buckets') is not null as storage_schema,
       (select count(*)::integer from pg_class where relnamespace = 'public'::regnamespace and relkind in ('r','p','v','m','f')) as public_relations,
       (select count(*)::integer from pg_roles where rolname in ('nextsignal_app','nextsignal_worker')) as application_roles,
-      to_regclass('nextsignal_private.hosted_migrations') is not null as hosted_ledger`);
-    const metadata = z.object({ version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(), application_roles: z.number().int(), hosted_ledger: z.boolean() }).strict().parse(result.rows[0]);
+      to_regclass('nextsignal_private.hosted_migrations') is not null as hosted_ledger,
+      to_regclass('kyb_private.hosted_migrations') is not null as legacy_hosted_ledger`);
+    const metadata = z.object({
+      version: z.number().int(), auth_schema: z.boolean(), migration_table: z.boolean(), workspaces: z.boolean(),
+      projects: z.boolean(), storage_schema: z.boolean(), public_relations: z.number().int(),
+      application_roles: z.number().int(), hosted_ledger: z.boolean(), legacy_hosted_ledger: z.boolean(),
+    }).strict().parse(result.rows[0]);
     let cliVersions = 0;
     if (metadata.migration_table) {
       const history = await client.query('select version from supabase_migrations.schema_migrations order by version');
@@ -122,12 +128,18 @@ async function inspectDatabase(database: ReturnType<typeof databaseConfig>, caFi
     if (metadata.hosted_ledger) {
       const ledger = await client.query('select count(*)::integer as applied from nextsignal_private.hosted_migrations');
       console.log('NextSignal hosted migrations recorded:', z.object({ applied: z.number().int() }).parse(ledger.rows[0]).applied);
-      console.log(cliVersions
-        ? 'Both migration ledgers contain state. Review both histories before applying changes.'
-        : 'This target uses the NextSignal hosted ledger. Use npm run supabase:preflight -- --apply for reviewed Sydney development migrations. Supabase CLI db push will not read this ledger.');
     }
     await client.query('rollback');
     console.log('PostgreSQL metadata over verified TLS:', metadata);
+    if (metadata.legacy_hosted_ledger) {
+      console.log('Legacy hosted ledger detected. Review the database naming cutover runbook before applying migrations. Do not replay the baseline with Supabase CLI.');
+    } else if (metadata.hosted_ledger) {
+      console.log(cliVersions
+        ? 'Both migration ledgers contain state. Review both histories before applying changes.'
+        : 'This target uses the NextSignal hosted ledger. Use npm run supabase:preflight -- --apply for reviewed Sydney development migrations. Supabase CLI db push will not read this ledger.');
+    } else if (metadata.workspaces || metadata.projects) {
+      console.log('Application tables exist without a recognized hosted ledger. Review the database history before applying migrations.');
+    }
     if (!metadata.auth_schema || !metadata.storage_schema) throw new PreflightError('The expected Supabase Auth or Storage schema is missing.');
     if (mode === '--apply') await applyMigrations(client);
     if (mode === '--verify') await verifyHostedPersistence(client);
