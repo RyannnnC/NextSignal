@@ -18,6 +18,26 @@ afterEach(async () => { await db.engine.exec('truncate public.projects cascade; 
 afterAll(async () => { if (db) await db.close(); });
 
 describe('persisted fixture vertical slice', () => {
+  it('preserves optional founder context and adapts immutable experiments after corrections', async () => {
+    const id = await projects.create(alice, { ...createInput(), targetCustomer: 'Students aged 18+', targetRegion: 'Haymarket 2000', budgetAud: 0 });
+    const draft = (await projects.get(alice, id)).profiles[0]!;
+    expect(draft.content).toMatchObject({ customer: 'Students aged 18+', targetRegion: 'Haymarket 2000', budgetAud: 0 });
+    const profileId = await projects.confirm(alice, id, { profileId: draft.id, profile: draft.content, requestKey: randomUUID() });
+    await projects.start(alice, id, { profileId, requestKey: randomUUID() });
+    await runner.processOne();
+    const first = (await projects.get(alice, id)).reports[0]!;
+    expect(first.referenceProfile).toMatchObject({ customer: 'Students aged 18+', targetRegion: 'Haymarket 2000', budgetAud: 0 });
+    expect(first.actions[0]?.steps).toContain('within your stated target region');
+    expect(first.actions[2]?.steps).toContain('free recruitment channels');
+    const corrected = await projects.confirm(alice, id, { profileId, profile: { ...draft.content, customer: '', targetRegion: '', budgetAud: undefined }, requestKey: randomUUID() });
+    await projects.start(alice, id, { profileId: corrected, requestKey: randomUUID() });
+    await runner.processOne();
+    const reports = (await projects.get(alice, id)).reports;
+    expect(reports[0]).toEqual(first);
+    expect(reports[1]?.actions[0]?.steps).toContain('First choose a possible customer group');
+    expect(reports[1]?.actions[0]?.steps).toContain('Choose an initial service region');
+    expect(reports[1]?.actions[2]?.steps).toContain('choose an affordable experiment spending cap');
+  });
   it('requires confirmation, preserves corrections and produces a private versioned snapshot', async () => {
     const id = await projects.create(alice, createInput());
     const draft = (await projects.get(alice, id)).profiles[0]!;

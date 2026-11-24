@@ -43,17 +43,19 @@ export class ResearchRunner {
         return run;
       });
       if (!run) return true;
-      const reference = run.scenario === 'normal' && isSydneyReferenceIdea(run.idea) && isSydneyReferenceIdea(run.content.summary) && run.content.geography.state === 'NSW';
+      const reference = run.scenario === 'normal' && isSydneyReferenceIdea(run.idea) && isSydneyReferenceIdea(run.content.summary) && run.content.geography.state === 'NSW' && !run.content.targetRegion?.trim() && run.content.customer === 'International students in Sydney who depend on a laptop for coursework';
       const ids = { workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, profileId: run.profile_id };
-      const local = run.scenario === 'normal' ? run.content.localOpportunity : undefined;
+      const comparison = run.scenario === 'normal' ? run.content.localOpportunity : undefined;
+      const local = comparison ? { ...comparison, budgetAud: run.content.budgetAud ?? comparison.budgetAud } : undefined;
       const abs = local && this.abs ? await (this.abs.regional?.(local.areaIds, AbortSignal.timeout(16_000)) ??
         this.abs.population(local.areaIds, AbortSignal.timeout(16_000)).then(result => ({ C21_G01_SAL: result })))
         .catch(() => ({ C21_G01_SAL: 'invalid_response' } as const)) : undefined;
       const signal = AbortSignal.timeout(1000);
-      const report = local
+      const baseReport = local
         ? createLocalOpportunityReport(ids, run.content, local, abs)
         : reference ? createSydneyReferenceReport(ids, run.content)
         : makeFixtureReport(run, z.array(Evidence).parse(await this.provider.collect({ workspaceId: run.workspace_id, projectId: run.project_id, runId: run.id, scenario: run.scenario, profile: run.content, signal })));
+      const report = contextualiseExperiments(baseReport, run.content);
       signal.throwIfAborted();
       await this.db.asUser(job.userId, async tx => {
         const current = await load(tx, job);
@@ -109,6 +111,31 @@ function makeFixtureReport(run: RunRow, evidence: Evidence[]): Report {
     evidence,
     findings: [{ id: findingId, claimType: 'ai_hypothesis', text: contradictory ? 'Synthetic sources disagree about interest. Real demand remains unknown.' : 'Customer demand and willingness to pay remain unknown.', status: contradictory ? 'contradicted' : 'unknown', evidenceIds: evidence.slice(0, 1).map(e => e.id), counterEvidenceIds: contradictory ? evidence.slice(1).map(e => e.id) : [], validationMethod: 'Seek direct customer evidence that could disprove the business hypothesis.' }],
     actions: actions.map((a, i) => ({ ...a, id: randomUUID(), findingId, priority: i + 1, effort: 'small' })),
-    limitations: ['Synthetic fixture only. No external AI or data provider was called.', 'The actions are fixed development templates, not personalised research.', 'Search demand, competitors and market size have not been established.'], humanReviewed: false
+    limitations: ['Synthetic fixture only. No external AI or data provider was called.', 'Experiment templates use founder-provided context. Their effectiveness has not been researched.', 'Search demand, competitors and market size have not been established.'], humanReviewed: false
+  });
+}
+
+/** Adapt suggested experiments to founder constraints without treating them as evidence. */
+export function contextualiseExperiments(report: Report, profile: Profile): Report {
+  const customerKnown = Boolean(profile.customer.trim()) && !profile.customer.startsWith('Unknown —');
+  const audience = customerKnown
+    ? 'Recruit people matching the target customer in your confirmed profile. Ask about their most recent experience, workaround and actual spending.'
+    : 'First choose a possible customer group and ask about their most recent experience with the problem. Record who experiences it before testing an offer.';
+  const region = profile.targetRegion?.trim()
+    ? 'Recruit within your stated target region and check whether participants can actually access the proposed service.'
+    : 'Ask where participants live or work and where they would use the service. Choose an initial service region from these conversations.';
+  const budget = profile.budgetAud === 0
+    ? 'Use existing tools and free recruitment channels for a manual interest test. Record voluntary commitments before spending on delivery.'
+    : profile.budgetAud !== undefined
+      ? 'Get quotes for a small manual pilot and compare setup costs with your stated startup budget. Set a separate experiment spending cap before committing any funds.'
+      : 'Estimate the resources for a manual pilot and choose an affordable experiment spending cap before committing any funds.';
+  return validateReport({
+    ...report,
+    referenceProfile: profile,
+    actions: report.actions.map((action, index) => ({
+      ...action,
+      steps: index === 0 ? `${audience} ${region}` : index === 2 ? budget : `${action.steps} ${region}`,
+      rationale: index === 0 ? 'Test the customer and location assumptions recorded in your profile before investing in delivery.' : action.rationale,
+    })),
   });
 }

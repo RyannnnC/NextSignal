@@ -10,7 +10,10 @@ export function ReportSummary({ report, profile, locale }: {
   profile: Profile | null;
   locale: Locale;
 }) {
-  const t = (text: string) => translate(locale, text);
+  const t = (text: string) => {
+    const translated = translate(locale, text);
+    return translated === text ? text.split(/(?<=\.) /).map(sentence => translate(locale, sentence)).join(' ') : translated;
+  };
   const recommendation = report.actions.reduce((first, action) => action.priority < first.priority ? action : first);
   const finding = report.findings.find(item => item.id === recommendation.findingId);
   const hypothesis = report.findings.find(item => item.status === 'hypothesis');
@@ -26,6 +29,11 @@ export function ReportSummary({ report, profile, locale }: {
       <h2 id="decision-summary" tabIndex={-1}><AimOutlined aria-hidden="true" />{t(report.referenceProfile ? 'Recommended next step' : 'Suggested experiment template')}</h2>
       <p className={styles.recommendationTitle}>{t(recommendation.title)}</p>
       <p className={styles.recommendationWhy}>{t(reason)}</p>
+      {profile && <dl aria-label={t('Shape your research')}>
+        <div><dt>{t('Target customers')}</dt><dd>{profile.customer || t('Not decided yet')}</dd></div>
+        <div><dt>{t('Target region')}</dt><dd>{profile.targetRegion || t('Not decided yet')}</dd></div>
+        <div><dt>{t('Project budget (AUD)')}</dt><dd>{profile.budgetAud === undefined ? t('Not decided yet') : new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN', { style: 'currency', currency: 'AUD' }).format(profile.budgetAud)}</dd></div>
+      </dl>}
       <div className={styles.actions}>
         <a className="button" href={`#action-${recommendation.id}`}>{t('First experiment')} <ArrowDownOutlined aria-hidden="true" /></a>
         <a className="button secondary" href="#evidence-preview">{t('View evidence')} <FolderOpenOutlined aria-hidden="true" /></a>
@@ -49,7 +57,7 @@ export function ReportSummary({ report, profile, locale }: {
           <a href="#report-evidence">{t('View coverage and sources')}</a>
         </EvidencePreview>}
         {profile && <EvidencePreview kind="statement" label={t('Founder statement')} summary={
-          profile.customer === report.referenceProfile?.customer ? t(profile.customer) : profile.customer
+          profile.customer ? (profile.customer === report.referenceProfile?.customer ? t(profile.customer) : profile.customer) : t('Not decided yet')
         }>
           <a href="#overview">{t('View saved business profile')}</a>
         </EvidencePreview>}

@@ -66,7 +66,7 @@ export function ReportDetail({projectId,reportId}: {projectId: string;reportId: 
   const summary = Array.from((profile ?? report.referenceProfile)?.summary.replace(/\s+/g, ' ') ?? '');
   const title = summary.length > 92 ? summary.slice(0, 92).join('').trimEnd() + '…' : summary.join('');
   const date = new Intl.DateTimeFormat(locale === 'en' ? 'en-AU' : 'zh-CN', { dateStyle: 'medium' });
-  const geography = report.referenceProfile ? t('Sydney, NSW') : [report.geography.state, t('Australia')].filter(Boolean).join(', ');
+  const geography = profile?.targetRegion || report.referenceProfile?.targetRegion || [report.geography.state, t('Australia')].filter(Boolean).join(', ');
 
   return <div className={styles.layout}>
     {back}

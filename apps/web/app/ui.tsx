@@ -16,6 +16,7 @@ const Draft = z.object({
   expires: z.number(), idea: z.string().max(3000), consent: z.boolean(), marketing: z.boolean(),
   opportunity: LocalOpportunityInput.extend({ areaIds: z.array(SydneyAreaId).max(3), budgetAud: z.number().optional() }).nullable(),
   targetCustomer: z.string().max(500),
+  targetRegion: z.string().max(300).default(''), budgetAud: z.string().default(''),
 });
 const SubmittedDraft = z.object({ expires: z.number(), input: CreateProject });
 const draftKey = 'nextsignal-fixture-draft';
@@ -31,6 +32,8 @@ export function IdeaEntry() {
   const [marketing, setMarketing] = useState(false);
   const [opportunity, setOpportunity] = useState<LocalOpportunityInput | null>(null);
   const [targetCustomer, setTargetCustomer] = useState('');
+  const [targetRegion, setTargetRegion] = useState('');
+  const [budgetAud, setBudgetAud] = useState('');
   const [comparisonOpen, setComparisonOpen] = useState(false);
   const [expires, setExpires] = useState<number>();
   const [ready, setReady] = useState(false);
@@ -47,7 +50,8 @@ export function IdeaEntry() {
         const { targetCustomer: customer = '', ...comparison } = submitted?.input.localOpportunity ?? {};
         const saved = draft.success ? draft.data : submitted && {
           expires: submitted.expires, idea: submitted.input.idea, consent: submitted.input.processingConsent,
-          marketing: submitted.input.marketingOptIn ?? false, opportunity: submitted.input.localOpportunity ? LocalOpportunityInput.parse(comparison) : null, targetCustomer: customer,
+          marketing: submitted.input.marketingOptIn ?? false, opportunity: submitted.input.localOpportunity ? LocalOpportunityInput.parse(comparison) : null, targetCustomer: submitted.input.targetCustomer ?? customer,
+          targetRegion: submitted.input.targetRegion ?? '', budgetAud: submitted.input.budgetAud === undefined ? '' : String(submitted.input.budgetAud),
         };
         if (saved && saved.expires > Date.now()) {
           setExpires(saved.expires);
@@ -57,6 +61,8 @@ export function IdeaEntry() {
           setOpportunity(saved.opportunity);
           setComparisonOpen(saved.opportunity !== null);
           setTargetCustomer(saved.targetCustomer);
+          setTargetRegion(saved.targetRegion);
+          setBudgetAud(saved.budgetAud);
         } else {
           sessionStorage.removeItem(draftKey);
         }
@@ -69,12 +75,12 @@ export function IdeaEntry() {
     if (!ready) return;
     try {
       if (expires && expires > Date.now()) {
-        sessionStorage.setItem(draftKey, JSON.stringify({ expires, idea, consent, marketing, opportunity, targetCustomer }));
+        sessionStorage.setItem(draftKey, JSON.stringify({ expires, idea, consent, marketing, opportunity, targetCustomer, targetRegion, budgetAud }));
       } else sessionStorage.removeItem(draftKey);
     } catch {
       if (expires) { setExpires(undefined); setError('Could not keep this draft.'); }
     }
-  }, [ready, expires, idea, consent, marketing, opportunity, targetCustomer]);
+  }, [ready, expires, idea, consent, marketing, opportunity, targetCustomer, targetRegion, budgetAud]);
 
   useEffect(() => {
     if (!expires) return;
@@ -91,6 +97,8 @@ export function IdeaEntry() {
     setOpportunity(null);
     setComparisonOpen(false);
     setTargetCustomer('');
+    setTargetRegion('');
+    setBudgetAud('');
     setError('');
     submission.current = null;
     ideaInput.current?.focus();
@@ -106,7 +114,10 @@ export function IdeaEntry() {
         idea, geography: { country: 'AU', granularity: 'national' },
         processingConsent: consent, noticeVersion: realAuth ? 'local-auth-preview-v1' : 'local-fixture-v1',
         marketingOptIn: marketing,
-        ...(opportunity ? { localOpportunity: { ...opportunity, targetCustomer } } : {}),
+        targetCustomer: targetCustomer.trim() || undefined,
+        targetRegion: targetRegion.trim() || undefined,
+        budgetAud: budgetAud === '' ? undefined : Number(budgetAud),
+        ...(opportunity ? { localOpportunity: { ...opportunity, targetCustomer: targetCustomer.trim() } } : {}),
       };
       const serialized = JSON.stringify(fields);
       if (submission.current?.fields !== serialized) submission.current = { fields: serialized, key: crypto.randomUUID() };
@@ -132,6 +143,16 @@ export function IdeaEntry() {
         <label className={styles.ideaLabel} htmlFor="idea">{t('Test business idea')}</label>
         <textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required value={idea} onChange={event => setIdea(event.target.value)} aria-describedby="idea-market" />
         <p className={styles.market} id="idea-market">{t('Market: Australia. The preview does not measure local demand.')}</p>
+        <fieldset className={styles.context}>
+          <legend>{t('Shape your research')} <span>{t('Optional')}</span></legend>
+          <label htmlFor="target-customer">{t('Target customers')}</label>
+          <input id="target-customer" maxLength={500} value={targetCustomer} onChange={e => setTargetCustomer(e.target.value)} placeholder={t('Who would you like to help?')} />
+          <div className={styles.contextRow}>
+            <div><label htmlFor="target-region">{t('Target region')}</label><input id="target-region" maxLength={300} value={targetRegion} onChange={e => setTargetRegion(e.target.value)} placeholder={t('City, neighbourhood or Australia-wide')} /></div>
+            <div><label htmlFor="project-budget">{t('Project budget (AUD)')}</label><input id="project-budget" type="number" min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" value={budgetAud} onChange={e => { setBudgetAud(e.target.value); if (opportunity) setOpportunity({ ...opportunity, budgetAud: e.target.value === '' ? undefined : Number(e.target.value) }); }} placeholder={t('Not decided yet')} /></div>
+          </div>
+          <p className={styles.market}>{t('An approximate startup budget is enough. You can change these details next.')}</p>
+        </fieldset>
         <div className={styles.options}>
           <details>
             <summary>{t('Use an example')}</summary>
@@ -157,7 +178,7 @@ export function IdeaEntry() {
               {opportunity && <>
                 <label htmlFor="comparison-customer">{t('Target customer hypothesis')}</label>
                 <input id="comparison-customer" value={targetCustomer} onChange={event => setTargetCustomer(event.target.value)} maxLength={500} />
-                <LocalOpportunityFields value={opportunity} onChange={setOpportunity} prefix="draft" />
+                <LocalOpportunityFields value={opportunity} onChange={value => { setOpportunity(value); setBudgetAud(value.budgetAud === undefined ? '' : String(value.budgetAud)); }} prefix="draft" />
               </>}
             </div>
           </details>

@@ -16,16 +16,19 @@ const failureText = {
 /** 渲染已验证的报告快照、证据来源和局限。 */
 export function ReportView({ report, index, locale }: { report: Report; index: number; locale: Locale }) {
   /** 按当前报告语言翻译界面标签。 */
-  const t=(text:string)=>translate(locale,text);
+  const t = (text: string) => {
+    const translated = translate(locale, text);
+    return translated === text ? text.split(/(?<=\.) /).map(sentence => translate(locale, sentence)).join(' ') : translated;
+  };
   const comparison = report.localOpportunity;
   const hasAbs = report.evidence.some(item => item.provider === 'abs');
   const numbers = new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN');
   return <article className="report" aria-label={`${t('Fixture report')} ${index+1}`}>
     <div className="report-header"><span className="eyebrow">{t('Fixture report')} / {String(index+1).padStart(2,'0')}</span><span className="chip warning">{t(hasAbs ? 'Development report with ABS data' : 'Synthetic fixture')}</span></div>
     <h2>{t(report.title)}</h2>
-    {report.referenceProfile && !comparison && <p>{t('Sydney computer repair reference report')}</p>}
+    {report.evidence.some(item => item.sourceRef === 'apple:store:sydney') && !comparison && <p>{t('Sydney computer repair reference report')}</p>}
     <p className="metadata">{t('Not human reviewed')} · <time dateTime={report.createdAt}>{new Intl.DateTimeFormat(locale==='en'?'en-AU':'zh-CN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(report.createdAt))}</time></p>
-    <p>{t('Target market')}: {report.referenceProfile ? 'Sydney, NSW, AU' : `${t(report.geography.country)} · ${t(report.geography.granularity)}`}</p>
+    <p>{t('Target market')}: {report.referenceProfile?.targetRegion || `${t(report.geography.country)} · ${t(report.geography.granularity)}`}</p>
     <ul className="limitations">{report.limitations.map(text=><li key={text}>{t(text)}</li>)}</ul>
     {comparison && <>
       <h3>{t('Business constraints')}</h3>

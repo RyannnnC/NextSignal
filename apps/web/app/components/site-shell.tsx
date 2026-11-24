@@ -100,13 +100,12 @@ export function SiteShell({children, realAuth = false}: {children: ReactNode; re
       </div>
     </header>
     <main id="main" className={home ? styles.homeMain : undefined}>{children}</main>
-    <footer className={`${styles.footer} ${home ? styles.homeFooter : ''}`}>
+    <footer className={styles.footer}>
       <div className={styles.footerInner}>
         <div className={styles.footerBrand}>
           <Image className={styles.brandImage} src={brandLogo} alt="NextSignal" sizes="160px" />
-          <p>{t(home ? 'Use a test idea in this preview.' : 'Local development only. Use test ideas, not confidential business information.')}</p>
+          <p>{t('Local development only. Use test ideas, not confidential business information.')}</p>
         </div>
-        {!home && <div className="trust-strip"><span>✓ {t('Idea text stays local')}</span><span>✓ {t('Private by default')}</span><span>✓ {t('No paid APIs')}</span></div>}
         <nav aria-label={t('Footer navigation')} className={styles.footerNav}>
           <Link href="/validate">{t('Try the free preview')}</Link>
           <Link href="/example-report">{t('Example report')}</Link>

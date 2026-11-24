@@ -6,7 +6,11 @@ import { cookies } from 'next/headers';
 import { isFixtureRoute } from '@nextsignal/contracts';
 import { supabaseServer } from './supabase-server';
 
-const Runtime = z.object({ url: z.literal('http://127.0.0.1:4311'), key: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
+const Runtime = z.object({ url: z.string().refine(value => {
+  if (!process.env.NEXTSIGNAL_E2E_PG_PORT) return value === 'http://127.0.0.1:4311';
+  const match = /^http:\/\/127\.0\.0\.1:(\d+)$/.exec(value);
+  return Boolean(match && Number(match[1]) > 0 && Number(match[1]) <= 65535);
+}), key: z.string().regex(/^[a-f0-9]{64}$/) }).strict();
 /** 检查本地运行开关、来源和路由，再转发到受保护的 worker。 */
 export async function bridge(request: Request, path: string): Promise<Response> {
   const realAuth = process.env.NEXTSIGNAL_AUTH_MODE === 'supabase-local';

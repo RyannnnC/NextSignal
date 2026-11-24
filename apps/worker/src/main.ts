@@ -22,9 +22,12 @@ const key = randomBytes(32).toString('hex');
 const abs = process.env.NEXTSIGNAL_ABS_ENABLED === '1'
   ? new AbsProvider(new PostgresAbsCache(work => local.db.asWorker(work))) : undefined;
 const { server, runner } = createFixtureServer(local.db, local.sessions, key, abs);
-server.listen(4311, '127.0.0.1', async () => {
-  await writeFile(resolve(root, '.local/runtime.json'), JSON.stringify({ url: 'http://127.0.0.1:4311', key }), { mode: 0o600 });
-  console.log(`Worker ready at 127.0.0.1:4311 using Docker PostgreSQL. ABS ${abs ? 'enabled' : 'disabled'}.`);
+server.listen(testPort ? 0 : 4311, '127.0.0.1', async () => {
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Expected a loopback TCP worker address.');
+  const url = `http://127.0.0.1:${address.port}`;
+  await writeFile(resolve(root, '.local/runtime.json'), JSON.stringify({ url, key }), { mode: 0o600 });
+  console.log(`Worker ready at ${url} using Docker PostgreSQL. ABS ${abs ? 'enabled' : 'disabled'}.`);
 });
 let active = false;
 const timer = setInterval(() => {

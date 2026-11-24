@@ -2,6 +2,16 @@
 
 NextSignal is an Australia-first business research platform. Validate My Idea and Grow My Business share an evidence engine and project lifecycle. Use `@nextsignal` for workspace packages.
 
+## CodeGraph
+
+- For an indexed checkout (a `.codegraph/` directory exists at the repository root), use the MCP tool `codegraph_explore` before searching or reading source to understand, locate, or change code. Discover the tool by name if it is deferred. Include exact symbols or paths, and name both endpoints when tracing a flow. For example, query `SiteShell LanguageSwitch` to inspect how the site shell changes the language.
+- If MCP is unavailable, run `codegraph explore "<symbols, paths, or question>"` from the repository root. Pass `projectPath` to the MCP tool when querying a different indexed checkout.
+- Use returned source, callers, and dependencies to scope changes. Avoid rereading fresh source already returned by CodeGraph. Use direct file reads for required project documents, unindexed or omitted files, and files flagged as stale. Use `codegraph status` to diagnose index freshness.
+- If this checkout has no index, or both MCP and CLI are unavailable, continue with repository tools. Run `codegraph init` or rebuild the index only at the owner's request. Keep generated index databases and runtime files out of Git.
+- Run the checks required by the task. CodeGraph describes code structure and dependencies, while tests and tooling verify behavior.
+
+[CodeGraph usage](https://github.com/colbymchenry/codegraph#agent-tool-guidance)
+
 ## Read by task
 
 Before proposing or changing code, read [Engineering Rules](docs/ENGINEERING_RULES.md). Read the applicable documents before working in their scope.

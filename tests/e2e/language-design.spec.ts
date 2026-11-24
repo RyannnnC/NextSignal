@@ -35,8 +35,8 @@ test('bilingual design: local fonts, accessible flags, persistence, input preser
   await page.getByRole('button',{name:'创建项目并检查创意',exact:true}).click();
   const id=(await (await created).json() as {id:string}).id;
   try {
-    await page.getByLabel('目标客户 — 创始人陈述',{exact:true}).fill('澳大利亚的独立创业者');
-    await expect(page.getByLabel('目标客户 — 创始人陈述',{exact:true})).toHaveValue('澳大利亚的独立创业者');
+    await page.getByLabel('目标客户 — 创始人陈述 · 选填',{exact:true}).fill('澳大利亚的独立创业者');
+    await expect(page.getByLabel('目标客户 — 创始人陈述 · 选填',{exact:true})).toHaveValue('澳大利亚的独立创业者');
     await page.getByRole('button',{name:'确认修正后的资料',exact:true}).click();
     await page.getByRole('button',{name:'生成预览报告',exact:true}).click();
     await page.getByRole('link',{name:'打开本次报告',exact:true}).click();

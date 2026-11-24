@@ -24,13 +24,21 @@ test('idea → correction → private fixture report → new version → deletio
   await login(page);
   await expect(page.getByRole('checkbox', { name: /Record optional marketing/ })).not.toBeChecked();
   await page.getByLabel('Test business idea').fill('A fixture service for Australian founders comparing business hypotheses');
+  await page.locator('#target-customer').fill('Independent software founders');
+  await page.locator('#target-region').fill('Melbourne VIC');
+  await page.locator('#project-budget').fill('0');
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
   const id = (await (await created).json() as { id: string }).id;
   try {
     await expect(page.getByRole('button', { name: 'Generate preview report' })).toBeDisabled();
+    await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Independent software founders');
+    await expect(page.locator('#target-region')).toHaveValue('Melbourne VIC');
+    await expect(page.locator('#project-budget')).toHaveValue('0');
     await page.getByLabel('Intended customer — founder statement').fill('Australian independent software founders');
+    await page.locator('#target-region').fill('Haymarket 2000');
+    await page.screenshot({ path: '.local/validate-review-context.png', fullPage: true });
     await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await expect(page.getByRole('button', { name: 'Generate preview report' })).toBeEnabled();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
@@ -42,18 +50,23 @@ test('idea → correction → private fixture report → new version → deletio
     // CI starts a fresh Next.js dev server and compiles this dynamic route on first navigation.
     await expect(page).toHaveURL(new URL(firstReportPath!, 'http://127.0.0.1:3001').href, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: 'Local fixture snapshot — not market research', exact: true })).toBeVisible({ timeout: 10_000 });
+    await page.screenshot({ path: '.local/validate-report-context.png', fullPage: true });
     expect((await context.cookies()).find(c => c.name === 'next_signal_session')).toMatchObject({ httpOnly: true, sameSite: 'Strict' });
     expect(await page.evaluate(() => document.cookie)).not.toContain('next_signal_session');
     const before = await (await page.request.get(`/api/projects/${id}`)).json() as { reports: unknown[] };
+    expect(before.reports[0]).toMatchObject({ referenceProfile: { customer: 'Australian independent software founders', targetRegion: 'Haymarket 2000', budgetAud: 0 }, actions: expect.arrayContaining([expect.objectContaining({ steps: expect.stringContaining('free recruitment channels') })]) });
     await page.getByRole('link', { name: 'Back to project', exact: true }).click();
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Australian independent software founders');
     await page.getByLabel('Intended customer — founder statement').fill('Australian early-stage founders with a corrected profile');
+    await page.locator('#target-region').fill('');
+    await page.locator('#project-budget').fill('');
     await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await expect(page.getByRole('status')).toContainText('Profile confirmed');
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     await expect(page.getByRole('link', { name: 'Open current report' })).toBeVisible();
     const after = await (await page.request.get(`/api/projects/${id}`)).json() as { reports: unknown[] };
     expect(after.reports[0]).toEqual(before.reports[0]);
+    expect(after.reports[1]).toMatchObject({ actions: expect.arrayContaining([expect.objectContaining({ steps: expect.stringContaining('choose an affordable experiment spending cap') })]) });
     await page.goto(firstReportPath!);
     await expect(page.getByRole('region', { name: 'Business Overview' }).getByText('Australian independent software founders', { exact: true })).toBeVisible();
     await page.setViewportSize({ width: 1440, height: 1000 });
@@ -70,6 +83,27 @@ test('idea → correction → private fixture report → new version → deletio
   } finally {
     await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3001' } });
   }
+});
+
+test('idea with all optional context blank can be confirmed and reported', async ({ page }) => {
+  await login(page);
+  await page.getByLabel('Test business idea').fill('A service to help founders compare their first business hypotheses');
+  await page.getByRole('checkbox', { name: /I understand/ }).check();
+  const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Create project and review idea' }).click();
+  const { id } = await (await created).json() as { id: string };
+  try {
+    await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('');
+    await expect(page.locator('#target-region')).toHaveValue('');
+    await expect(page.locator('#project-budget')).toHaveValue('');
+    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
+    await page.getByRole('button', { name: 'Generate preview report' }).click();
+    await expect(page.getByRole('link', { name: 'Open current report' })).toBeVisible();
+    const project = await (await page.request.get(`/api/projects/${id}`)).json();
+    expect(project.reports[0].referenceProfile.customer).toBe('');
+    expect(project.reports[0].referenceProfile.budgetAud).toBeUndefined();
+    expect(project.reports[0].actions[0].steps).toContain('First choose a possible customer group');
+  } finally { await page.request.delete(`/api/projects/${id}`, { headers: { origin: 'http://127.0.0.1:3001' } }); }
 });
 
 test('Sydney reference report preserves provenance and stays private after reopen', async ({ page, browser }) => {

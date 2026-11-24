@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
 import { api, ClientApiError } from '../lib/client-api';
 import { reportPath } from '../lib/report-presentation';
+import styles from './idea-entry.module.css';
 import { LocalOpportunityFields } from './components/local-opportunity-fields';
 
 
@@ -37,7 +38,7 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
     const value = ProjectView.parse(await api(`projects/${key}`, 'GET', undefined, signal));
     if (signal?.aborted) return;
     setProject(value);
-    if (edit) setProfile(value.profiles.at(-1)?.content ?? null);
+    if (edit) { const content = value.profiles.at(-1)?.content; setProfile(content?.customer.startsWith('Unknown —') ? { ...content, customer: '' } : content ?? null); }
   }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -69,7 +70,7 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
   const latest = project?.profiles.at(-1);
   const canStart = latest?.status === 'confirmed' && profile === latest.content;
   const report = project?.reports.find(item => item.runId === run?.id);
-  return <div className="flow-layout">
+  return <div className={mode === 'review' ? styles.entry : 'flow-layout'}>
     <div><h1>{t(mode === 'review' ? 'Review business profile' : 'Research runs')}</h1>
       <p>{t(mode === 'review' ? 'Check these details before starting research.' : 'Follow this research run and open its report when ready.')}</p></div>
     <div className="flow-content">
@@ -81,9 +82,13 @@ export function ProjectStep({ id, mode }: { id: string; mode: 'review' | 'progre
         <p className="metadata">{t('Version')} {latest.version} — <span className="chip neutral">{t(latest.status)}</span>. {t('Prepared by a deterministic fixture. Your input is a founder statement; assumptions remain hypotheses.')}</p>
         <form onSubmit={e => { e.preventDefault(); void act(async () => { await api(`projects/${project.id}/confirm`, 'POST', { profileId: latest.id, profile, requestKey: crypto.randomUUID() }); await open(project.id); setMessage('Profile confirmed as a new version. Earlier reports remain unchanged.'); }); }}>
           <label htmlFor="summary">{t('Idea summary — founder statement')}</label><textarea id="summary" value={profile.summary} onChange={e => setProfile({ ...profile, summary: e.target.value })} required maxLength={3000} />
-          <label htmlFor="customer">{t('Intended customer — founder statement')}</label><input id="customer" value={profile.customer==='Unknown — please describe the intended customer'?t(profile.customer):profile.customer} onChange={e => setProfile({ ...profile, customer: e.target.value })} required maxLength={500} />
+          <label htmlFor="customer">{t('Intended customer — founder statement')} · {t('Optional')}</label><input id="customer" value={profile.customer==='Unknown — please describe the intended customer'?t(profile.customer):profile.customer} onChange={e => setProfile({ ...profile, customer: e.target.value })} maxLength={500} />
+          <div className={styles.contextRow}>
+            <div><label htmlFor="target-region">{t('Target region')} · {t('Optional')}</label><input id="target-region" maxLength={300} value={profile.targetRegion ?? ''} onChange={e => setProfile({ ...profile, targetRegion: e.target.value || undefined })} /></div>
+            <div><label htmlFor="project-budget">{t('Project budget (AUD)')} · {t('Optional')}</label><input id="project-budget" type="number" min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" value={profile.budgetAud ?? ''} onChange={e => setProfile({ ...profile, budgetAud: e.target.value === '' ? undefined : Number(e.target.value), ...(profile.localOpportunity ? { localOpportunity: { ...profile.localOpportunity, budgetAud: e.target.value === '' ? undefined : Number(e.target.value) } } : {}) })} /></div>
+          </div>
           <label htmlFor="problem">{t('Problem to solve — founder statement')}</label><input id="problem" value={profile.problem==='Unknown — please describe the problem to solve'?t(profile.problem):profile.problem} onChange={e => setProfile({ ...profile, problem: e.target.value })} required maxLength={1000} />
-          {profile.localOpportunity && <LocalOpportunityFields value={profile.localOpportunity} onChange={localOpportunity => setProfile({ ...profile, localOpportunity })} prefix="confirm" />}
+          {profile.localOpportunity && <LocalOpportunityFields value={profile.localOpportunity} onChange={localOpportunity => setProfile({ ...profile, localOpportunity, budgetAud: localOpportunity.budgetAud })} prefix="confirm" />}
           <p className="hypothesis"><strong>{t('Hypothesis')}:</strong> {profile.assumptions.map(a=>a==='The intended customer experiences this problem. This has not been researched.'?t(a):a).join(' ')}</p><button className={canStart ? 'secondary' : undefined} disabled={busy || canStart || profile.localOpportunity?.areaIds.length === 0}>{t('Confirm corrected profile')}</button>
         </form>
         <div className="button-row">{active ? <Link className="button" href={`/validate/${id}/progress`}>{t('View research progress')}</Link>

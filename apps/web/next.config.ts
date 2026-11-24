@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const config: NextConfig = {
+  distDir: process.env.NEXTSIGNAL_E2E_PG_PORT ? '.next-e2e' : '.next',
   devIndicators: false,
   logging: { incomingRequests: { ignore: [/\/auth\//] } },
   transpilePackages: ['@nextsignal/contracts'],

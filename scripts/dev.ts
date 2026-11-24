@@ -10,7 +10,7 @@ const fixture = e2e || process.argv.includes('--fixture');
 const runtimeRoot = e2e ? process.env.NEXTSIGNAL_E2E_ROOT : root;
 if (!runtimeRoot || (e2e && !process.env.NEXTSIGNAL_E2E_PG_PORT)) throw new Error('Run npm run test:e2e to provision the isolated fixture database.');
 const port = fixture ? 3001 : 3000;
-for (const localPort of [port, 4311]) {
+for (const localPort of e2e ? [port] : [port, 4311]) {
   await new Promise<void>((done, reject) => {
     const probe = createServer();
     probe.once('error', () => reject(new Error(`Cannot bind 127.0.0.1:${localPort}. Stop the existing NextSignal application before starting this mode.`)));

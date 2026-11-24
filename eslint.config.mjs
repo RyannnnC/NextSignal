@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   { ignores: [
-    '**/node_modules/**', '**/.next/**', '**/next-env.d.ts', '.local/**',
+    '**/node_modules/**', '**/.next/**', '**/.next-e2e/**', '**/next-env.d.ts', '.local/**',
     'artifacts/**', 'test-results/**', 'playwright-report/**',
     // Bundled Impeccable tool code is maintained upstream.
     '.agents/skills/impeccable/scripts/**', '.github/skills/impeccable/scripts/**',

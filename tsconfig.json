@@ -17,5 +17,5 @@
     "types": ["node"]
   },
   "include": ["apps/**/*.ts", "apps/**/*.tsx", "packages/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts", "*.ts"],
-  "exclude": ["node_modules", "**/.next"]
+  "exclude": ["node_modules", "**/.next", "**/.next-e2e"]
 }

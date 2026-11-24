@@ -52,7 +52,9 @@ export class Projects {
       const { targetCustomer, ...comparison } = data.localOpportunity ?? {};
       const profile: ProfileType = Profile.parse({
         summary: data.idea,
-        customer: targetCustomer ?? (reference ? 'International students in Sydney who depend on a laptop for coursework' : 'Unknown — please describe the intended customer'),
+        customer: data.targetCustomer ?? targetCustomer ?? (reference ? 'International students in Sydney who depend on a laptop for coursework' : ''),
+        targetRegion: data.targetRegion,
+        budgetAud: data.budgetAud ?? data.localOpportunity?.budgetAud,
         problem: reference ? 'A laptop fault can interrupt coursework when a reliable repair is hard to arrange.' : 'Unknown — please describe the problem to solve',
         geography: reference || data.localOpportunity ? { country: 'AU', state: 'NSW', granularity: 'state' } : data.geography,
         assumptions: reference ? ['A clear diagnostic quote and a campus-area drop-off may make independent repair easier to book.'] : ['The intended customer experiences this problem. This has not been researched.'],

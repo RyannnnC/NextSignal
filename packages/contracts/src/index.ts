@@ -33,7 +33,9 @@ export const ClaimType = z.enum(['observed_fact', 'third_party_estimate', 'found
 export const RunStatus = z.enum(['queued', 'planning', 'collecting', 'analysing', 'validating', 'completed', 'partial', 'failed', 'cancelled']);
 export const Profile = z.object({
   summary: z.string().trim().min(1).max(3000),
-  customer: z.string().trim().min(1).max(500),
+  customer: z.string().trim().max(500),
+  targetRegion: z.string().trim().max(300).optional(),
+  budgetAud: z.number().finite().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
   problem: z.string().trim().min(1).max(1000),
   geography: Geography,
   assumptions: z.array(z.string().min(1).max(500)).max(8),
@@ -41,13 +43,16 @@ export const Profile = z.object({
 }).strict().refine(profile => !profile.localOpportunity || profile.geography.state === 'NSW', 'The Sydney comparison requires NSW geography');
 export const CreateProject = z.object({
   idea: z.string().trim().min(10).max(3000),
+  targetCustomer: z.string().trim().max(500).optional(),
+  targetRegion: z.string().trim().max(300).optional(),
+  budgetAud: z.number().finite().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
   geography: Geography,
   processingConsent: z.literal(true),
   noticeVersion: z.enum(['local-fixture-v1', 'local-auth-preview-v1']),
   marketingOptIn: z.boolean().default(false),
   scenario: Scenario.default('normal'),
   requestKey: Id,
-  localOpportunity: LocalOpportunityInput.extend({ targetCustomer: z.string().trim().min(1).max(500) }).optional(),
+  localOpportunity: LocalOpportunityInput.extend({ targetCustomer: z.string().trim().max(500) }).optional(),
 }).strict().refine(project => !project.localOpportunity || project.scenario === 'normal', 'The Sydney comparison uses the normal fixture scenario');
 export const ConfirmProfile = z.object({ profileId: Id, profile: Profile, requestKey: Id }).strict();
 export const StartRun = z.object({ profileId: Id, requestKey: Id }).strict();

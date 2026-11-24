@@ -6,6 +6,12 @@ import { compareLocalOpportunity, createLocalOpportunityReport } from '../packag
 import { createInput } from './helpers.js';
 
 describe('contracts and domain invariants', () => {
+  it('accepts omitted founder context and zero budgets while bounding supplied context', () => {
+    expect(CreateProject.safeParse({ ...createInput(), targetCustomer: '', targetRegion: '', budgetAud: 0 }).success).toBe(true);
+    for (const invalid of [{ budgetAud: -1 }, { budgetAud: Infinity }, { budgetAud: '100' }, { targetCustomer: 'x'.repeat(501) }, { targetRegion: 'x'.repeat(301) }]) {
+      expect(CreateProject.safeParse({ ...createInput(), ...invalid }).success).toBe(false);
+    }
+  });
   it('validates up to three distinct Sydney localities and preserves unresolved source mappings', () => {
     const base = { category: 'computer_repair', primaryMarket: 'sydney-nsw' };
     expect(LocalOpportunityInput.safeParse({ ...base, areaIds: ['haymarket', 'burwood-nsw', 'chatswood'], budgetAud: 0 }).success).toBe(true);

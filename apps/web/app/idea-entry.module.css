@@ -29,3 +29,10 @@
 .notice p { margin: 0 0 8px; color: var(--ns-text-secondary); font-size: 14px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .actions button { margin: 0; }
+
+.context { border: 0; padding: 0; margin: 24px 0; min-width: 0; }
+.context legend { font-weight: 600; padding: 0; margin-bottom: 12px; }
+.context legend span { font-size: 14px; font-weight: 400; color: var(--ns-text-secondary); margin-left: 8px; }
+.contextRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.contextRow > div { min-width: 0; }
+@media (max-width: 540px) { .contextRow { grid-template-columns: 1fr; gap: 0; } }

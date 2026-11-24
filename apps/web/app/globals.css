@@ -22,12 +22,21 @@
   --ns-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 * { box-sizing: border-box; }
-body { margin: 0; color: var(--ns-text); background: var(--ns-surface); font: 400 16px/1.62 var(--ns-font-sans); }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  color: var(--ns-text);
+  background: var(--ns-surface);
+  font: 400 16px/1.62 var(--ns-font-sans);
+}
 html[lang=zh-CN] { --ns-font-sans: 'DM Sans Variable', 'Microsoft YaHei', 'PingFang SC', Arial, Helvetica, sans-serif; }
 button,input,textarea,select { font: inherit; }
 button,a { touch-action: manipulation; }
 a { color: var(--ns-primary); text-underline-offset: 4px; }
-main { max-width: var(--ns-page-max-width); margin-inline: auto; padding-inline: var(--ns-page-gutter); }
+main { flex: 1 0 auto; width: 100%; max-width: var(--ns-page-max-width); margin-inline: auto; padding-inline: var(--ns-page-gutter); }
 .language-switch button { width: 44px; margin: 0; padding: 0; border-color: transparent; background: transparent; }
 .language-switch button:hover { background: var(--ns-surface-muted); }
 .language-switch button:active { background: var(--ns-brand-mint); }
@@ -121,12 +130,11 @@ dt { color: var(--ns-text-secondary); } dd { margin: 0; }
 .actions li::marker { font-family: var(--ns-font-mono); color: var(--ns-primary); }
 .project-controls { border-top: 1px solid var(--ns-border); margin-top: 24px; }
 .run-status { background: var(--ns-brand-mint-soft); padding: 12px 16px; border-radius: var(--ns-radius-input); }
-.trust-strip { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
 @media (max-width: 1023px) { h1 { font-size: 44px; } }
 @media (max-width: 639px) {
   h1 { font-size: 38px; } h2 { font-size: 28px; } h3 { font-size: 22px; } h4 { font-size: 18px; }
   section,article,.report { padding: 16px; } button,.button { width: 100%; }
   .button-row { gap: 0; } .button-row button { margin-top: 16px; }
-  dl>div { grid-template-columns: 1fr; gap: 4px; } .hypothesis,.reality-check { padding: 16px; } .trust-strip { gap: 12px; }
+  dl>div { grid-template-columns: 1fr; gap: 4px; } .hypothesis,.reality-check { padding: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }

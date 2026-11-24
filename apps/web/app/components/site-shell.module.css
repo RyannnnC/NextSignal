@@ -25,17 +25,27 @@
 .account summary::-webkit-details-marker { display: none; }
 .account > div { position: absolute; inset-inline-end: 0; min-width: max-content; padding: 8px 16px; background: var(--ns-canvas); border: 1px solid var(--ns-border-strong); border-radius: var(--ns-radius-card); }
 .account a { display: flex; align-items: center; min-height: 44px; }
-.footer { padding-block: 64px 48px; color: var(--ns-text-secondary); font-size: 14px; text-align: center; }
-.footerInner { width: min(100% - 2 * var(--ns-page-gutter), 1280px); margin-inline: auto; }
-.footerBrand .brandImage { width: 160px; margin-inline: auto; }
-.footerBrand p { margin: 8px auto 16px; }
-.footerNav { display: flex; justify-content: center; gap: 12px 24px; flex-wrap: wrap; margin-top: 24px; }
+.footer {
+  padding-block: 24px;
+  border-top: 1px solid var(--ns-border);
+  background: var(--ns-canvas);
+  color: var(--ns-text-secondary);
+  font-size: 14px;
+  text-align: start;
+}
+.footerInner {
+  width: min(100% - 2 * var(--ns-page-gutter), 1280px);
+  margin-inline: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 32px;
+}
+.footerBrand .brandImage { width: 160px; max-width: 100%; }
+.footerBrand p { margin: 4px 0 0; text-wrap: balance; }
+.footerNav { display: flex; flex-wrap: wrap; gap: 0 24px; }
 .footerNav a { min-height: 44px; display: inline-flex; align-items: center; }
-.homeFooter { padding-block: 24px; border-top: 1px solid var(--ns-border); background: var(--ns-canvas); text-align: start; }
-.homeFooter .footerInner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px 32px; }
-.homeFooter .brandImage { margin: 0; }
-.homeFooter p { margin: 4px 0 0; }
-.homeFooter .footerNav { margin: 0; gap: 0 24px; justify-content: flex-start; }
 .mobileAccount { display: none; }
 .focused .headerInner { max-width: none; padding-inline: max(var(--ns-page-gutter), calc((100% - 1280px) / 2)); }
 @media (max-width: 1023px) {
@@ -45,8 +55,8 @@
   .nav.open { display: grid; gap: 0; }
 }
 @media (max-width: 639px) {
-  .homeFooter .footerInner { display: grid; gap: 8px; }
-  .homeFooter .footerNav { gap: 0 16px; }
+  .footerInner { display: grid; gap: 8px; }
+  .footerNav { column-gap: 16px; }
   .headerInner { gap: 8px; padding-block: 8px; min-height: 62px; }
   .brandLink { width: min(100%, 144px); }
   .headerInner .menuToggle { padding-inline: 8px; border-color: transparent; }

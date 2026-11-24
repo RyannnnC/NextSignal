@@ -193,6 +193,8 @@ Only show completed when the server confirms it. API unavailable/insufficient da
 - Logged-in app: Projects | Reports | Saved Research | Settings.
 - Admin UI visually separate and access-controlled; never share customer/project reports publicly by default.
 - Cookie/privacy notification must accurately reflect actual data flows and consent implementation; no deceptive dark patterns.
+- Use one shared footer across routes. Align the wordmark and local development notice on the left and the navigation on the right within the 1280px content width. Stack the brand and navigation on mobile and allow links to wrap.
+- Let the main content fill any spare viewport height on short pages. On longer pages, place the footer after the content in the document flow.
 - Terms/privacy/disclaimer corrections accessible via footer and report view.
 
 ## 4. Page templates and flow
@@ -309,3 +311,5 @@ Map tokens to CSS variables / Tailwind theme once, and reuse in components. Do *
 - This is an **original NextSignal specification**, not MongoDB's design system and not an endorsement or affiliation.
 - **NextSignal** is the confirmed product name. Australian trade mark clearance and release asset checks are pre-launch tasks.
 - Amend this file when visual decisions change; record major changes in `docs/adr/` and update `AGENTS.md` to require the root `DESIGN.md`.
+
+Validate idea context uses a visible optional group below the idea, with customer full width and region/budget paired on desktop and stacked on mobile. Startup budget is AUD and zero is valid. Confirmation permits editing or clearing all three fields. Reports show saved founder context alongside suggested experiments.
