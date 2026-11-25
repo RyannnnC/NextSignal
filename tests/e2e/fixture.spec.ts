@@ -22,7 +22,6 @@ test('idea → correction → private fixture report → new version → deletio
     return route.continue();
   });
   await login(page);
-  await expect(page.getByRole('checkbox', { name: /Record optional marketing/ })).not.toBeChecked();
   await page.getByLabel('Test business idea').fill('A fixture service for Australian founders comparing business hypotheses');
   await page.locator('#target-customer').fill('Independent software founders');
   await page.locator('#target-region').fill('Melbourne VIC');
@@ -108,7 +107,6 @@ test('idea with all optional context blank can be confirmed and reported', async
 
 test('Sydney reference report preserves provenance and stays private after reopen', async ({ page, browser }) => {
   await login(page);
-  await page.getByText('Use an example', { exact: true }).click();
   await page.getByRole('button', { name: 'Load Sydney repair example' }).click();
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
@@ -143,7 +141,6 @@ test('Sydney reference report preserves provenance and stays private after reope
 
 test('local opportunity brief saves three locations and survives refresh with owner isolation', async ({ page, browser }) => {
   await login(page);
-  await page.getByText('Use an example', { exact: true }).click();
   await page.getByRole('button', { name: 'Load three-area comparison example' }).click();
   await page.getByLabel('Startup budget (AUD, optional)', { exact: true }).fill('1200');
   await page.getByRole('checkbox', { name: /I understand/ }).check();

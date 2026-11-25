@@ -210,7 +210,7 @@ Keep the shared sticky navigation. On desktop, align the wordmark left, center t
 
 ### 4.2 Validate My Idea `/validate`
 
-- Place the heading and idea form in a single centered column. Keep market limits with the idea field, example and comparison options in compact disclosures, and the processing notice with consent.
+- Pair the idea form with a compact example on desktop and stack the example above the form on mobile. Reveal Sydney comparison settings when its example is loaded. Put a short privacy note before the inputs and keep the full processing notice beside required consent.
 - AI displays inferred business model/target customer and **asks user to correct it** before paid API research where possible.
 - Snapshot: idea structure, 3–5 keyword seeds, limited evidence preview, first red-team question, next validation experiment.
 - Paid: deeper queries, verified Australia-relevant competitors, risk/contradictory evidence, full validation roadmap.

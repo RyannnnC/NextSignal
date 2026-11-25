@@ -122,6 +122,7 @@ test('opted-in draft survives reload and verification in another tab, then clear
   await page.reload();
   await expect(field).toHaveValue('');
   await field.fill(idea);
+  await page.getByText('Need to pause?', { exact: true }).click();
   await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
   await page.reload();
   await expect(field).toHaveValue(idea);
@@ -129,6 +130,7 @@ test('opted-in draft survives reload and verification in another tab, then clear
   await page.reload();
   await expect(field).toHaveValue('');
   await field.fill(idea);
+  await page.getByText('Need to pause?', { exact: true }).click();
   await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
   await page.evaluate(() => {
     const key = 'nextsignal-fixture-draft';
@@ -139,7 +141,7 @@ test('opted-in draft survives reload and verification in another tab, then clear
 
   await field.fill(idea);
   await page.getByRole('checkbox', { name: /I understand/ }).check();
-  await page.getByRole('checkbox', { name: /Record optional marketing/ }).check();
+  await page.getByText('Need to pause?', { exact: true }).click();
   await page.getByRole('checkbox', { name: /Keep this draft/ }).check();
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
   await expect(page).toHaveURL(/\/auth\/sign-in\?next=%2Fvalidate$/);
@@ -156,7 +158,6 @@ test('opted-in draft survives reload and verification in another tab, then clear
   await page.reload();
   await expect(field).toHaveValue(idea);
   await expect(page.getByRole('checkbox', { name: /I understand/ })).toBeChecked();
-  await expect(page.getByRole('checkbox', { name: /Record optional marketing/ })).toBeChecked();
   const creation = page.waitForResponse(response => response.url().endsWith('/api/projects') && response.request().method() === 'POST');
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
   const response = await creation;

@@ -86,7 +86,6 @@ test('real local account and report layouts @design', async ({ page }) => {
   await capture(page, 'empty-reports');
 
   await page.goto('/validate');
-  await page.getByText('Use an example', { exact: true }).click();
   await page.getByRole('button', { name: 'Load Sydney repair example' }).click();
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   const creation = page.waitForResponse(response => response.url().endsWith('/api/projects') && response.request().method() === 'POST');

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { CreateProject, FIXTURE_NOTICE, Id, LOCAL_AUTH_NOTICE, LOCAL_OPPORTUNITY_EXAMPLE, LocalOpportunityInput, SYDNEY_REFERENCE_IDEA, SydneyAreaId } from '@nextsignal/contracts';
+import { ArrowRightOutlined, BulbOutlined, LockOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from './components/site-shell';
 import { api, ClientApiError } from '../lib/client-api';
@@ -13,7 +14,7 @@ const IdResponse = z.object({ id: Id }).strict();
 const defaultOpportunity: LocalOpportunityInput = { category: 'computer_repair', primaryMarket: 'sydney-nsw', areaIds: ['haymarket'] };
 
 const Draft = z.object({
-  expires: z.number(), idea: z.string().max(3000), consent: z.boolean(), marketing: z.boolean(),
+  expires: z.number(), idea: z.string().max(3000), consent: z.boolean(),
   opportunity: LocalOpportunityInput.extend({ areaIds: z.array(SydneyAreaId).max(3), budgetAud: z.number().optional() }).nullable(),
   targetCustomer: z.string().max(500),
   targetRegion: z.string().max(300).default(''), budgetAud: z.string().default(''),
@@ -29,12 +30,10 @@ export function IdeaEntry() {
   const submission = useRef<{ fields: string; key: string }>(null);
   const [idea, setIdea] = useState('');
   const [consent, setConsent] = useState(false);
-  const [marketing, setMarketing] = useState(false);
   const [opportunity, setOpportunity] = useState<LocalOpportunityInput | null>(null);
   const [targetCustomer, setTargetCustomer] = useState('');
   const [targetRegion, setTargetRegion] = useState('');
   const [budgetAud, setBudgetAud] = useState('');
-  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [expires, setExpires] = useState<number>();
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -50,16 +49,14 @@ export function IdeaEntry() {
         const { targetCustomer: customer = '', ...comparison } = submitted?.input.localOpportunity ?? {};
         const saved = draft.success ? draft.data : submitted && {
           expires: submitted.expires, idea: submitted.input.idea, consent: submitted.input.processingConsent,
-          marketing: submitted.input.marketingOptIn ?? false, opportunity: submitted.input.localOpportunity ? LocalOpportunityInput.parse(comparison) : null, targetCustomer: submitted.input.targetCustomer ?? customer,
+          opportunity: submitted.input.localOpportunity ? LocalOpportunityInput.parse(comparison) : null, targetCustomer: submitted.input.targetCustomer ?? customer,
           targetRegion: submitted.input.targetRegion ?? '', budgetAud: submitted.input.budgetAud === undefined ? '' : String(submitted.input.budgetAud),
         };
         if (saved && saved.expires > Date.now()) {
           setExpires(saved.expires);
           setIdea(saved.idea);
           setConsent(saved.consent);
-          setMarketing(saved.marketing);
           setOpportunity(saved.opportunity);
-          setComparisonOpen(saved.opportunity !== null);
           setTargetCustomer(saved.targetCustomer);
           setTargetRegion(saved.targetRegion);
           setBudgetAud(saved.budgetAud);
@@ -75,12 +72,12 @@ export function IdeaEntry() {
     if (!ready) return;
     try {
       if (expires && expires > Date.now()) {
-        sessionStorage.setItem(draftKey, JSON.stringify({ expires, idea, consent, marketing, opportunity, targetCustomer, targetRegion, budgetAud }));
+        sessionStorage.setItem(draftKey, JSON.stringify({ expires, idea, consent, opportunity, targetCustomer, targetRegion, budgetAud }));
       } else sessionStorage.removeItem(draftKey);
     } catch {
       if (expires) { setExpires(undefined); setError('Could not keep this draft.'); }
     }
-  }, [ready, expires, idea, consent, marketing, opportunity, targetCustomer, targetRegion, budgetAud]);
+  }, [ready, expires, idea, consent, opportunity, targetCustomer, targetRegion, budgetAud]);
 
   useEffect(() => {
     if (!expires) return;
@@ -93,9 +90,7 @@ export function IdeaEntry() {
     setExpires(undefined);
     setIdea('');
     setConsent(false);
-    setMarketing(false);
     setOpportunity(null);
-    setComparisonOpen(false);
     setTargetCustomer('');
     setTargetRegion('');
     setBudgetAud('');
@@ -113,7 +108,7 @@ export function IdeaEntry() {
       const fields = {
         idea, geography: { country: 'AU', granularity: 'national' },
         processingConsent: consent, noticeVersion: realAuth ? 'local-auth-preview-v1' : 'local-fixture-v1',
-        marketingOptIn: marketing,
+        marketingOptIn: false,
         targetCustomer: targetCustomer.trim() || undefined,
         targetRegion: targetRegion.trim() || undefined,
         budgetAud: budgetAud === '' ? undefined : Number(budgetAud),
@@ -135,67 +130,67 @@ export function IdeaEntry() {
     finally { setBusy(false); }
   }
 
-  return <div className={styles.entry}>
-    <h1>{t('Validate My Idea')}</h1>
+  function loadExample(comparison: boolean) {
+    setIdea(comparison ? LOCAL_OPPORTUNITY_EXAMPLE : SYDNEY_REFERENCE_IDEA);
+    setTargetCustomer(comparison ? 'Students and young professionals' : '');
+    setTargetRegion('');
+    setBudgetAud('');
+    setOpportunity(comparison ? { ...defaultOpportunity, areaIds: [...SydneyAreaId.options] } : null);
+    ideaInput.current?.focus();
+  }
+
+  return <div className={styles.workspace}>
+    <header className={styles.heading}>
+      <h1>{t('Validate My Idea')}</h1>
+      <p>{t('Describe your idea to see what you could test first.')}</p>
+    </header>
+    <aside className={styles.guide} aria-labelledby="idea-guide">
+      <BulbOutlined aria-hidden="true" className={styles.bulb} />
+      <h2 id="idea-guide">{t('Start with a problem')}</h2>
+      <p>{t('Think of a specific person, what gets in their way and how you would help.')}</p>
+      <blockquote>{t('I want to offer same-day laptop repairs to Sydney students who need their computers for class.')}</blockquote>
+      <button type="button" className="secondary" disabled={!ready || busy} onClick={() => loadExample(false)}>{t('Load Sydney repair example')} <ArrowRightOutlined aria-hidden="true" /></button>
+      <button type="button" className={styles.textButton} disabled={!ready || busy} onClick={() => loadExample(true)}>{t('Load three-area comparison example')}</button>
+    </aside>
     <section className={styles.panel} aria-label={t('Describe')}>
+      <p className={styles.privacy}><LockOutlined aria-hidden="true" /> {t('Private local preview. Use a test idea.')}</p>
       {error && <p className="error-banner" role="alert">{t(error)}</p>}
       {ready && <form onSubmit={create} aria-busy={busy}>
         <label className={styles.ideaLabel} htmlFor="idea">{t('Test business idea')}</label>
-        <textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required value={idea} onChange={event => setIdea(event.target.value)} aria-describedby="idea-market" />
-        <p className={styles.market} id="idea-market">{t('Market: Australia. The preview does not measure local demand.')}</p>
+        <textarea ref={ideaInput} id="idea" name="idea" minLength={10} maxLength={3000} required value={idea} onChange={event => setIdea(event.target.value)} placeholder={t('What would you offer, and what problem would it solve?')} />
         <fieldset className={styles.context}>
           <legend>{t('Shape your research')} <span>{t('Optional')}</span></legend>
           <label htmlFor="target-customer">{t('Target customers')}</label>
           <input id="target-customer" maxLength={500} value={targetCustomer} onChange={e => setTargetCustomer(e.target.value)} placeholder={t('Who would you like to help?')} />
           <div className={styles.contextRow}>
-            <div><label htmlFor="target-region">{t('Target region')}</label><input id="target-region" maxLength={300} value={targetRegion} onChange={e => setTargetRegion(e.target.value)} placeholder={t('City, neighbourhood or Australia-wide')} /></div>
+            <div><label htmlFor="target-region">{t('Target region')}</label><input id="target-region" maxLength={300} value={targetRegion} onChange={e => setTargetRegion(e.target.value)} placeholder={t('e.g. Sydney or Australia-wide')} /></div>
             <div><label htmlFor="project-budget">{t('Project budget (AUD)')}</label><input id="project-budget" type="number" min="0" max={Number.MAX_SAFE_INTEGER} step="0.01" value={budgetAud} onChange={e => { setBudgetAud(e.target.value); if (opportunity) setOpportunity({ ...opportunity, budgetAud: e.target.value === '' ? undefined : Number(e.target.value) }); }} placeholder={t('Not decided yet')} /></div>
           </div>
-          <p className={styles.market}>{t('An approximate startup budget is enough. You can change these details next.')}</p>
         </fieldset>
-        <div className={styles.options}>
-          <details>
-            <summary>{t('Use an example')}</summary>
-            <div className={`button-row ${styles.examples}`}>
-              <button type="button" className="secondary" disabled={busy} onClick={() => {
-                setIdea(SYDNEY_REFERENCE_IDEA);
-                setOpportunity(null);
-                ideaInput.current?.focus();
-              }}>{t('Load Sydney repair example')}</button>
-              <button type="button" className="secondary" disabled={busy} onClick={() => {
-                setIdea(LOCAL_OPPORTUNITY_EXAMPLE);
-                setOpportunity({ ...defaultOpportunity, areaIds: [...SydneyAreaId.options] });
-                setTargetCustomer('Students and young professionals');
-                setComparisonOpen(true);
-                ideaInput.current?.focus();
-              }}>{t('Load three-area comparison example')}</button>
-            </div>
-          </details>
-          <details open={comparisonOpen} onToggle={event => setComparisonOpen(event.currentTarget.open)}>
-            <summary>{t('Sydney repair comparison options')}</summary>
-            <div className={styles.comparison}>
-              <label className="checkbox-label"><input type="checkbox" checked={opportunity !== null} onChange={event => setOpportunity(event.target.checked ? defaultOpportunity : null)} /> {t('Compare Sydney repair locations')}</label>
-              {opportunity && <>
-                <label htmlFor="comparison-customer">{t('Target customer hypothesis')}</label>
-                <input id="comparison-customer" value={targetCustomer} onChange={event => setTargetCustomer(event.target.value)} maxLength={500} />
-                <LocalOpportunityFields value={opportunity} onChange={value => { setOpportunity(value); setBudgetAud(value.budgetAud === undefined ? '' : String(value.budgetAud)); }} prefix="draft" />
-              </>}
-            </div>
-          </details>
-        </div>
+        {opportunity && <fieldset className={styles.comparison}>
+          <legend>{t('Sydney repair comparison options')}</legend>
+          <LocalOpportunityFields value={opportunity} onChange={value => {
+            setOpportunity(value);
+            setBudgetAud(value.budgetAud === undefined ? '' : String(value.budgetAud));
+          }} prefix="draft" />
+          <button type="button" className="secondary" onClick={() => setOpportunity(null)}>{t('Remove Sydney comparison')}</button>
+        </fieldset>}
         <div className={styles.consent}>
           <details className={styles.notice}>
             <summary>{t('Processing notice')}</summary>
             <p id="processing-notice">{t(realAuth ? LOCAL_AUTH_NOTICE : FIXTURE_NOTICE)}</p>
+            <p>{t('Market: Australia. The preview does not measure local demand.')}</p>
           </details>
           <label className="checkbox-label"><input type="checkbox" name="consent" required checked={consent} onChange={event => setConsent(event.target.checked)} /> {t('I understand the local processing notice.')}</label>
-          <label className="checkbox-label"><input type="checkbox" name="marketing" checked={marketing} onChange={event => setMarketing(event.target.checked)} /> {t('Record optional marketing interest (no messages are sent).')}</label>
-          <label className="checkbox-label"><input type="checkbox" name="saveDraft" checked={Boolean(expires)} onChange={event => setExpires(event.target.checked ? Date.now() + draftLifetime : undefined)} /> {t('Keep this draft in this tab for 15 minutes.')}</label>
         </div>
         <div className={styles.actions}>
-          <button disabled={busy || opportunity?.areaIds.length === 0}>{t(busy ? 'Creating project…' : 'Create project and review idea')}</button>
+          <button disabled={busy || opportunity?.areaIds.length === 0}>{t(busy ? 'Creating project…' : 'Create project and review idea')} <ArrowRightOutlined aria-hidden="true" /></button>
           {expires && <button type="button" className="secondary" onClick={discard} disabled={busy}>{t('Discard draft')}</button>}
         </div>
+        <details className={styles.draft}>
+          <summary>{t('Need to pause?')}</summary>
+          <label className="checkbox-label"><input type="checkbox" name="saveDraft" checked={Boolean(expires)} onChange={event => setExpires(event.target.checked ? Date.now() + draftLifetime : undefined)} /> {t('Keep this draft in this tab for 15 minutes.')}</label>
+        </details>
       </form>}
     </section>
   </div>;

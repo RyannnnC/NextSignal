@@ -5,6 +5,15 @@ export const Locale = z.enum(['en', 'zh-CN']);
 export type Locale = z.infer<typeof Locale>;
 export const homeHeadline = ['Test your idea.', 'Start with evidence.'] as const;
 const zh: Record<string, string> = {
+  'e.g. Sydney or Australia-wide': '例如悉尼或澳大利亚全国',
+  "Describe your idea to see what you could test first.": "描述你的创意，看看可以先验证什么。",
+  "Start with a problem": "从一个具体问题开始",
+  "Think of a specific person, what gets in their way and how you would help.": "想想你想帮助谁、对方遇到了什么困难，以及你打算怎么帮。",
+  "I want to offer same-day laptop repairs to Sydney students who need their computers for class.": "我想为需要用电脑上课的悉尼学生提供当天笔记本维修服务。",
+  "Private local preview. Use a test idea.": "私有本地预览，请使用测试创意。",
+  "What would you offer, and what problem would it solve?": "你想提供什么？它能解决什么问题？",
+  "Remove Sydney comparison": "移除悉尼地区比较",
+  "Need to pause?": "想稍后继续？",
 "Recruit people matching the target customer in your confirmed profile.": "招募符合已确认目标客户描述的人。",
 "Ask about their most recent experience, workaround and actual spending.": "询问他们最近的经历、现有解决办法和实际花费。",
 "First choose a possible customer group and ask about their most recent experience with the problem.": "先选择一类潜在客户，询问他们最近遇到这个问题的经历。",
