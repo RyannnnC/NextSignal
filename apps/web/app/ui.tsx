@@ -149,7 +149,7 @@ export function IdeaEntry() {
       <h2 id="idea-guide">{t('Start with a problem')}</h2>
       <p>{t('Think of a specific person, what gets in their way and how you would help.')}</p>
       <blockquote>{t('I want to offer same-day laptop repairs to Sydney students who need their computers for class.')}</blockquote>
-      <button type="button" className="secondary" disabled={!ready || busy} onClick={() => loadExample(false)}>{t('Load Sydney repair example')} <ArrowRightOutlined aria-hidden="true" /></button>
+      <button type="button" className="secondary" disabled={!ready || busy} onClick={() => loadExample(false)}>{t('Load example')} <ArrowRightOutlined aria-hidden="true" /></button>
       <button type="button" className={styles.textButton} disabled={!ready || busy} onClick={() => loadExample(true)}>{t('Load three-area comparison example')}</button>
     </aside>
     <section className={styles.panel} aria-label={t('Describe')}>

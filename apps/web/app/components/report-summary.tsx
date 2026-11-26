@@ -33,6 +33,7 @@ export function ReportSummary({ report, profile, locale }: {
         <div><dt>{t('Target customers')}</dt><dd>{profile.customer || t('Not decided yet')}</dd></div>
         <div><dt>{t('Target region')}</dt><dd>{profile.targetRegion || t('Not decided yet')}</dd></div>
         <div><dt>{t('Project budget (AUD)')}</dt><dd>{profile.budgetAud === undefined ? t('Not decided yet') : new Intl.NumberFormat(locale === 'en' ? 'en-AU' : 'zh-CN', { style: 'currency', currency: 'AUD' }).format(profile.budgetAud)}</dd></div>
+        {profile.researchFocus && <div><dt>{t('Research focus and constraints')}</dt><dd className={styles.researchFocus}>{profile.researchFocus}</dd></div>}
       </dl>}
       <div className={styles.actions}>
         <a className="button" href={`#action-${recommendation.id}`}>{t('First experiment')} <ArrowDownOutlined aria-hidden="true" /></a>

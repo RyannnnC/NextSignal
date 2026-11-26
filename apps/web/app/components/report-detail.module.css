@@ -62,3 +62,4 @@
   .evidenceHeading a { font-size: 13px; }
   .evidenceRows { padding-inline: 9px; }
 }
+.researchFocus { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -31,15 +31,16 @@ test('idea → correction → private fixture report → new version → deletio
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
   const id = (await (await created).json() as { id: string }).id;
   try {
-    await expect(page.getByRole('button', { name: 'Generate preview report' })).toBeDisabled();
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Independent software founders');
+    await expect(page.getByLabel('Problem to solve — founder statement')).toHaveCount(0);
     await expect(page.locator('#target-region')).toHaveValue('Melbourne VIC');
     await expect(page.locator('#project-budget')).toHaveValue('0');
+    await expect(page.getByLabel('Intended customer — founder statement')).toBeHidden();
+    await page.getByText('Edit project details', { exact: true }).click();
     await page.getByLabel('Intended customer — founder statement').fill('Australian independent software founders');
+    await page.getByLabel(/Research focus and constraints/).fill('Recruit on weekends and cap spending at A$0.');
     await page.locator('#target-region').fill('Haymarket 2000');
     await page.screenshot({ path: '.local/validate-review-context.png', fullPage: true });
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
-    await expect(page.getByRole('button', { name: 'Generate preview report' })).toBeEnabled();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     await expect(page.getByText('A report is available with evidence gaps.', { exact: true })).toBeVisible();
     const firstReportLink = page.getByRole('link', { name: 'Open current report', exact: true });
@@ -49,6 +50,8 @@ test('idea → correction → private fixture report → new version → deletio
     // CI starts a fresh Next.js dev server and compiles this dynamic route on first navigation.
     await expect(page).toHaveURL(new URL(firstReportPath!, 'http://127.0.0.1:3001').href, { timeout: 20_000 });
     await expect(page.getByRole('heading', { name: 'Local fixture snapshot — not market research', exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Recruit on weekends and cap spending at A$0.', { exact: true })).toBeVisible();
+    await expect(page.getByText(/Use the saved research focus to choose one extra check/)).toBeVisible();
     await page.screenshot({ path: '.local/validate-report-context.png', fullPage: true });
     expect((await context.cookies()).find(c => c.name === 'next_signal_session')).toMatchObject({ httpOnly: true, sameSite: 'Strict' });
     expect(await page.evaluate(() => document.cookie)).not.toContain('next_signal_session');
@@ -56,12 +59,13 @@ test('idea → correction → private fixture report → new version → deletio
     expect(before.reports[0]).toMatchObject({ referenceProfile: { customer: 'Australian independent software founders', targetRegion: 'Haymarket 2000', budgetAud: 0 }, actions: expect.arrayContaining([expect.objectContaining({ steps: expect.stringContaining('free recruitment channels') })]) });
     await page.getByRole('link', { name: 'Back to project', exact: true }).click();
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Australian independent software founders');
+    await expect(page.getByRole('link', { name: 'Open current report' })).toHaveAttribute('href', firstReportPath!);
+    await expect(page.getByLabel(/Research focus and constraints/)).toHaveValue('Recruit on weekends and cap spending at A$0.');
+    await page.getByText('Edit project details', { exact: true }).click();
     await page.getByLabel('Intended customer — founder statement').fill('Australian early-stage founders with a corrected profile');
     await page.locator('#target-region').fill('');
     await page.locator('#project-budget').fill('');
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
-    await expect(page.getByRole('status')).toContainText('Profile confirmed');
-    await page.getByRole('button', { name: 'Generate preview report' }).click();
+    await page.getByRole('button', { name: 'Update preview report' }).click();
     await expect(page.getByRole('link', { name: 'Open current report' })).toBeVisible();
     const after = await (await page.request.get(`/api/projects/${id}`)).json() as { reports: unknown[] };
     expect(after.reports[0]).toEqual(before.reports[0]);
@@ -95,7 +99,6 @@ test('idea with all optional context blank can be confirmed and reported', async
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('');
     await expect(page.locator('#target-region')).toHaveValue('');
     await expect(page.locator('#project-budget')).toHaveValue('');
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     await expect(page.getByRole('link', { name: 'Open current report' })).toBeVisible();
     const project = await (await page.request.get(`/api/projects/${id}`)).json();
@@ -107,7 +110,7 @@ test('idea with all optional context blank can be confirmed and reported', async
 
 test('Sydney reference report preserves provenance and stays private after reopen', async ({ page, browser }) => {
   await login(page);
-  await page.getByRole('button', { name: 'Load Sydney repair example' }).click();
+  await page.getByRole('button', { name: 'Load example' }).click();
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   const created = page.waitForResponse(r => r.url().endsWith('/api/projects') && r.request().method() === 'POST');
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
@@ -115,7 +118,6 @@ test('Sydney reference report preserves provenance and stays private after reope
   const origin = { origin: 'http://127.0.0.1:3001' };
   try {
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue(/International students in Sydney/);
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     await page.getByRole('link', { name: 'Open current report', exact: true }).click();
     await expect(page.getByText('Sydney computer repair reference report')).toBeVisible();
@@ -150,7 +152,6 @@ test('local opportunity brief saves three locations and survives refresh with ow
   const origin = { origin: 'http://127.0.0.1:3001' };
   try {
     await expect(page.getByLabel('Intended customer — founder statement')).toHaveValue('Students and young professionals');
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     await page.getByRole('link', { name: 'Open current report', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'Local Opportunity Brief' })).toBeVisible();

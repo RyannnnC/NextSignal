@@ -129,12 +129,14 @@ export function contextualiseExperiments(report: Report, profile: Profile): Repo
     : profile.budgetAud !== undefined
       ? 'Get quotes for a small manual pilot and compare setup costs with your stated startup budget. Set a separate experiment spending cap before committing any funds.'
       : 'Estimate the resources for a manual pilot and choose an affordable experiment spending cap before committing any funds.';
+  const firstExperiment = [audience, region];
+  if (profile.researchFocus) firstExperiment.push('Use the saved research focus to choose one extra check for this experiment. Record what would satisfy the condition or answer the question.');
   return validateReport({
     ...report,
     referenceProfile: profile,
     actions: report.actions.map((action, index) => ({
       ...action,
-      steps: index === 0 ? `${audience} ${region}` : index === 2 ? budget : `${action.steps} ${region}`,
+      steps: index === 0 ? firstExperiment.join(' ') : index === 2 ? budget : `${action.steps} ${region}`,
       rationale: index === 0 ? 'Test the customer and location assumptions recorded in your profile before investing in delivery.' : action.rationale,
     })),
   });

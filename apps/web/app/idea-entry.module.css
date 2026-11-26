@@ -66,6 +66,29 @@
 .context legend span { font-size: 14px; font-weight: 400; color: var(--ns-text-secondary); margin-left: 8px; }
 .contextRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .contextRow > div { min-width: 0; }
+.brief {
+  padding: clamp(16px, 3vw, 24px);
+  border-radius: var(--ns-radius-input);
+  background: var(--ns-brand-mint-soft);
+}
+.brief h2, .runStatus h2 { margin: 0 0 8px; font-size: 1.25rem; }
+.brief p { margin: 0; white-space: pre-wrap; }
+.brief dl { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--ns-border); }
+.brief dl > div { margin: 6px 0 0; }
+.briefEdit { margin: 4px 0 16px; }
+.briefEdit summary { color: var(--ns-primary-hover); }
+.focus { border-top: 1px solid var(--ns-border); padding-top: 12px; }
+.focus label { font-weight: 600; }
+.focus label span { margin-inline-start: 4px; color: var(--ns-text-secondary); font-size: 14px; font-weight: 400; }
+.focus textarea { min-height: 96px; }
+.runStatus p { margin: 0; color: var(--ns-text-secondary); }
+.activityTrack { height: 6px; overflow: hidden; border-radius: var(--ns-radius-pill); background: var(--ns-surface-muted); margin-block: 16px; }
+.activityTrack span { display: block; height: 100%; width: 40%; border-radius: inherit; background: var(--ns-primary); animation: research-activity 1.5s ease-in-out infinite alternate; }
+@keyframes research-activity {
+  from { transform: translateX(-45%); }
+  to { transform: translateX(195%); }
+}
+@media (prefers-reduced-motion: reduce) { .activityTrack span { animation: none; } }
 @media (max-width: 540px) { .contextRow { grid-template-columns: 1fr; gap: 0; } }
 
 @media (max-width: 800px) {

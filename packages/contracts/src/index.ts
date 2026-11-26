@@ -32,6 +32,7 @@ export function isSydneyReferenceIdea(idea: string): boolean {
 export const ClaimType = z.enum(['observed_fact', 'third_party_estimate', 'founder_statement', 'ai_hypothesis', 'research_hypothesis']);
 export const RunStatus = z.enum(['queued', 'planning', 'collecting', 'analysing', 'validating', 'completed', 'partial', 'failed', 'cancelled']);
 export const Profile = z.object({
+  researchFocus: z.string().trim().max(500).optional(),
   summary: z.string().trim().min(1).max(3000),
   customer: z.string().trim().max(500),
   targetRegion: z.string().trim().max(300).optional(),

@@ -5,6 +5,19 @@ export const Locale = z.enum(['en', 'zh-CN']);
 export type Locale = z.infer<typeof Locale>;
 export const homeHeadline = ['Test your idea.', 'Start with evidence.'] as const;
 const zh: Record<string, string> = {
+  "Load example": "载入示例",
+  "Research brief": "研究简报",
+  "Your idea": "你的创意",
+  "Edit project details": "编辑项目资料",
+  "Research focus and constraints": "研究重点与限制",
+  "e.g. Can I test demand on weekends without paying for ads?": "例如：我能否只在周末、且不投放广告的情况下测试需求？",
+  "Report progress": "报告进度",
+  "Generating your report": "正在生成报告",
+  "Use the saved research focus to choose one extra check for this experiment.": "结合已保存的研究重点，为这次实验增加一个检查项。",
+  "Record what would satisfy the condition or answer the question.": "记录什么结果能满足该条件或回答这个问题。",
+  'Make any changes, then generate your preview report.': '如有需要可以修改，然后生成预览报告。',
+  'Starting research…': '正在启动研究…',
+  'Update preview report': '更新预览报告',
   'e.g. Sydney or Australia-wide': '例如悉尼或澳大利亚全国',
   "Describe your idea to see what you could test first.": "描述你的创意，看看可以先验证什么。",
   "Start with a problem": "从一个具体问题开始",

@@ -211,7 +211,7 @@ Keep the shared sticky navigation. On desktop, align the wordmark left, center t
 ### 4.2 Validate My Idea `/validate`
 
 - Pair the idea form with a compact example on desktop and stack the example above the form on mobile. Reveal Sydney comparison settings when its example is loaded. Put a short privacy note before the inputs and keep the full processing notice beside required consent.
-- AI displays inferred business model/target customer and **asks user to correct it** before paid API research where possible.
+- Review opens on a read-only project summary with an expandable editor. A separate optional research focus captures follow-up questions or constraints and appears in the report snapshot. During generation, show the actual run status with an indeterminate indicator that respects reduced motion.
 - Snapshot: idea structure, 3–5 keyword seeds, limited evidence preview, first red-team question, next validation experiment.
 - Paid: deeper queries, verified Australia-relevant competitors, risk/contradictory evidence, full validation roadmap.
 

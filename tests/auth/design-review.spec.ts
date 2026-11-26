@@ -86,7 +86,7 @@ test('real local account and report layouts @design', async ({ page }) => {
   await capture(page, 'empty-reports');
 
   await page.goto('/validate');
-  await page.getByRole('button', { name: 'Load Sydney repair example' }).click();
+  await page.getByRole('button', { name: 'Load example' }).click();
   await page.getByRole('checkbox', { name: /I understand/ }).check();
   const creation = page.waitForResponse(response => response.url().endsWith('/api/projects') && response.request().method() === 'POST');
   await page.getByRole('button', { name: 'Create project and review idea' }).click();
@@ -94,9 +94,8 @@ test('real local account and report layouts @design', async ({ page }) => {
   expect(response.status()).toBe(201);
   const { id } = await response.json();
   try {
-    await expect(page.getByRole('heading', { name: 'Review business profile' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Research brief' })).toBeVisible();
     await capture(page, 'review');
-    await page.getByRole('button', { name: 'Confirm corrected profile' }).click();
     await page.getByRole('button', { name: 'Generate preview report' }).click();
     const current = page.getByRole('link', { name: 'Open current report' });
     await expect(current).toBeVisible({ timeout: 20_000 });
